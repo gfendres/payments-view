@@ -137,15 +137,15 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Install Shadcn/UI
-- [ ] Configure Tailwind with theme colors
-- [ ] Create Button component
-- [ ] Create Card component
-- [ ] Create Input component
-- [ ] Create Badge component
-- [ ] Create Skeleton component
-- [ ] Create Dialog component
-- [ ] Set up CSS variables for theming
+- [x] Install Shadcn/UI
+- [x] Configure Tailwind with theme colors
+- [x] Create Button component
+- [x] Create Card component
+- [x] Create Input component
+- [x] Create Badge component
+- [x] Create Skeleton component
+- [x] Create Dialog component
+- [x] Set up CSS variables for theming
 
 **Acceptance Criteria**:
 
