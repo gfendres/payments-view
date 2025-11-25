@@ -9,6 +9,7 @@ import { useAuthContext } from '@/features/auth';
 import {
   TransactionList,
   FilterPanel,
+  SpendingChart,
   useTransactions,
   useTransactionFilters,
   type SerializedTransaction,
@@ -123,41 +124,54 @@ function DashboardContent() {
 
       {/* Main Content */}
       <main className="mx-auto max-w-5xl px-6 py-8">
-        {/* Stats Cards */}
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {hasActiveFilters ? 'Filtered Results' : 'Total Transactions'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{transactions.length}</p>
-              {hasActiveFilters && rawTransactions.length !== transactions.length && (
-                <p className="text-xs text-muted-foreground">of {rawTransactions.length} total</p>
-              )}
-            </CardContent>
-          </Card>
+        {/* Stats and Chart Row */}
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Left column - Stats */}
+          <div className="space-y-4 lg:col-span-1">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {hasActiveFilters ? 'Filtered Results' : 'Total Transactions'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{transactions.length}</p>
+                {hasActiveFilters && rawTransactions.length !== transactions.length && (
+                  <p className="text-xs text-muted-foreground">of {rawTransactions.length} total</p>
+                )}
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                This Month
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{thisMonthCount}</p>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  This Month
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{thisMonthCount}</p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Cashback Eligible
-              </CardTitle>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Cashback Eligible
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-emerald-500">{cashbackEligibleCount}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right column - Spending Chart */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Spending by Category</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-emerald-500">{cashbackEligibleCount}</p>
+              <SpendingChart transactions={transactions} />
             </CardContent>
           </Card>
         </div>

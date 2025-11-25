@@ -286,14 +286,14 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Install Recharts
-- [ ] Create `SpendingChart` organism
-- [ ] Create category aggregation logic
-- [ ] Implement pie/donut chart
-- [ ] Add chart legend
-- [ ] Add tooltip with details
+- [x] Install Recharts
+- [x] Create `SpendingChart` organism
+- [x] Create category aggregation logic
+- [x] Implement pie/donut chart
+- [x] Add chart legend
+- [x] Add tooltip with details
 - [ ] Add time period selector
-- [ ] Connect to transaction data
+- [x] Connect to transaction data
 
 **Acceptance Criteria**:
 

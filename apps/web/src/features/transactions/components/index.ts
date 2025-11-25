@@ -9,4 +9,5 @@ export { DateRangePicker } from './date-range-picker';
 export type { DateRange } from './date-range-picker';
 export { FilterPanel } from './filter-panel';
 export type { TransactionFilters } from './filter-panel';
+export { SpendingChart } from './spending-chart';
 
