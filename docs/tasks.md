@@ -337,11 +337,11 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create `CashbackCalculator` service
-- [ ] Implement tier calculation
-- [ ] Calculate cashback per transaction
-- [ ] Calculate total earnings
-- [ ] Implement tier progress calculation
+- [x] Create `CashbackCalculator` service
+- [x] Implement tier calculation
+- [x] Calculate cashback per transaction
+- [x] Calculate total earnings
+- [x] Implement tier progress calculation
 
 **Acceptance Criteria**:
 
