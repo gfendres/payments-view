@@ -1,2 +1,2 @@
-// Mappings will be exported here as they are implemented
-export {};
+export * from './mcc-to-category.mapping';
+export * from './category.mapping';

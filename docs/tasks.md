@@ -87,15 +87,15 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create `TransactionKind` enum
-- [ ] Create `TransactionStatus` enum
-- [ ] Create `TransactionType` enum
-- [ ] Create `CashbackTier` enum with tier configs
-- [ ] Create `CategoryId` enum
-- [ ] Create MCC to category mapping
-- [ ] Create API configuration constants
-- [ ] Create auth configuration constants
-- [ ] Create pagination configuration constants
+- [x] Create `TransactionKind` enum
+- [x] Create `TransactionStatus` enum
+- [x] Create `TransactionType` enum
+- [x] Create `CashbackTier` enum with tier configs
+- [x] Create `CategoryId` enum
+- [x] Create MCC to category mapping
+- [x] Create API configuration constants
+- [x] Create auth configuration constants
+- [x] Create pagination configuration constants
 
 **Acceptance Criteria**:
 
