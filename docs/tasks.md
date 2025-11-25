@@ -403,12 +403,12 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create time-series aggregation logic
-- [ ] Create line/bar chart component
-- [ ] Add weekly/monthly toggle
-- [ ] Add comparison with previous period
-- [ ] Add trend indicators
-- [ ] Add hover tooltips
+- [x] Create time-series aggregation logic
+- [x] Create line/bar chart component
+- [x] Add weekly/monthly toggle
+- [x] Add comparison with previous period
+- [x] Add trend indicators
+- [x] Add hover tooltips
 
 **Acceptance Criteria**:
 

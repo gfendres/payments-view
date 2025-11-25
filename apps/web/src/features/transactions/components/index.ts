@@ -12,4 +12,5 @@ export type { AmountRange } from './amount-range-input';
 export { FilterPanel } from './filter-panel';
 export type { TransactionFilters } from './filter-panel';
 export { SpendingChart } from './spending-chart';
+export { SpendingTrendChart } from './spending-trend-chart';
 
