@@ -1,4 +1,4 @@
-import { EthereumAddress } from '../../transaction/value-objects/ethereum-address';
+import type { EthereumAddress } from '../../transaction/value-objects/ethereum-address';
 import { TokenExpiredError } from '../../shared/errors';
 import { AUTH_CONFIG } from '@payments-view/constants';
 
@@ -83,4 +83,3 @@ export class Session {
     }
   }
 }
-

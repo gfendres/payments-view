@@ -1,4 +1,4 @@
-import { EthereumAddress } from '../../transaction/value-objects/ethereum-address';
+import type { EthereumAddress } from '../../transaction/value-objects/ethereum-address';
 
 /**
  * Wallet entity props
@@ -56,4 +56,3 @@ export class Wallet {
     this._isConnected = false;
   }
 }
-
