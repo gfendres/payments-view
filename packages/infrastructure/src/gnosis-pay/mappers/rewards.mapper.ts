@@ -7,15 +7,17 @@ import type { ApiRewardsResponse } from '../types';
  * Map API rewards response to domain RewardsInfo entity
  */
 export function mapRewardsInfo(apiRewards: ApiRewardsResponse): RewardsInfo {
+  const totalCurrency = apiRewards.totalEarned.currency || CurrencyCodeEnum.EUR;
   const totalEarned = Money.create(
     apiRewards.totalEarned.value,
-    (apiRewards.totalEarned.currency as CurrencyCode) ?? CurrencyCodeEnum.EUR,
+    totalCurrency as CurrencyCode,
     apiRewards.totalEarned.decimals
   );
 
+  const monthCurrency = apiRewards.earnedThisMonth.currency || CurrencyCodeEnum.EUR;
   const earnedThisMonth = Money.create(
     apiRewards.earnedThisMonth.value,
-    (apiRewards.earnedThisMonth.currency as CurrencyCode) ?? CurrencyCodeEnum.EUR,
+    monthCurrency as CurrencyCode,
     apiRewards.earnedThisMonth.decimals
   );
 

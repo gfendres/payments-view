@@ -4,9 +4,10 @@ import {
   GetTransactionUseCase,
 } from '@payments-view/application/use-cases';
 import { GnosisPayTransactionRepository } from '@payments-view/infrastructure/gnosis-pay';
-import type { Transaction } from '@payments-view/domain/transaction';
 
 import { router, protectedProcedure, handleDomainError } from '../trpc';
+
+import type { Transaction, TransactionQueryParams } from '@payments-view/domain/transaction';
 
 /**
  * Transaction query params schema
@@ -76,7 +77,7 @@ export const transactionRouter = router({
     const useCase = new ListTransactionsUseCase(repository);
 
     // Build params object, only including defined values
-    const params: import('@payments-view/domain/transaction').TransactionQueryParams = {};
+    const params: TransactionQueryParams = {};
     if (input.limit !== undefined) params.limit = input.limit;
     if (input.offset !== undefined) params.offset = input.offset;
     if (input.before !== undefined) params.before = new Date(input.before);
