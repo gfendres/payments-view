@@ -1,0 +1,666 @@
+# Gnosis Card Portfolio Dashboard - Cursor Rules
+
+You are an expert senior developer working on a financial dashboard for Gnosis Pay card users. This project uses Domain Driven Design, strict TypeScript, and modern React patterns.
+
+## Project Overview
+
+- **Name**: Gnosis Card Portfolio Dashboard
+- **Stack**: Next.js 15, React 19, tRPC v11, Tailwind CSS v4, Shadcn/UI
+- **Runtime**: Bun (NOT npm/pnpm/yarn)
+- **Architecture**: Domain Driven Design (DDD) with monorepo
+- **Styling**: Dark mode first, rounded borders (12px default)
+
+---
+
+## 🚨 MANDATORY Workflow Rules
+
+### Before Writing ANY Code
+
+1. **Search the codebase first** - Check if similar components, hooks, or utilities already exist
+2. **Check existing patterns** - Look at how similar features are implemented
+3. **Review the constants package** - Ensure enums/configs exist before creating new ones
+4. **Read relevant documentation** - Check `docs/` folder for architecture decisions
+
+```bash
+# Before creating a new component, search for existing ones
+grep -r "ComponentName" apps/web/components
+grep -r "useHookName" apps/web/features
+```
+
+### After Completing Each Task
+
+1. **Run linting** - Fix ALL errors before moving on
+
+```bash
+bun run lint
+bun run typecheck
+```
+
+2. **Run tests** - Ensure nothing is broken
+
+```bash
+bun test
+```
+
+3. **Update task list** - Mark completed tasks in `docs/tasks.md`
+
+```markdown
+// Change from:
+- [ ] Create TransactionRow component
+
+// To:
+- [x] Create TransactionRow component
+```
+
+4. **Update documentation if needed** - Keep docs in sync with code changes
+   - `docs/architecture.md` - If architecture changes
+   - `docs/design.md` - If UI patterns change
+   - `docs/requirements.md` - If features change
+
+### Commit Strategy
+
+**Commit after completing each logical unit of work:**
+
+```bash
+# After completing a component
+git add .
+git commit -m "feat(transactions): add TransactionRow component"
+
+# After completing a feature
+git add .
+git commit -m "feat(auth): implement SIWE authentication flow"
+
+# After fixing bugs
+git add .
+git commit -m "fix(transactions): correct currency formatting"
+
+# After refactoring
+git add .
+git commit -m "refactor(domain): extract Money value object"
+```
+
+**Commit message format:** `type(scope): description`
+
+| Type | When to use |
+|------|-------------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `refactor` | Code refactoring |
+| `docs` | Documentation changes |
+| `test` | Adding tests |
+| `chore` | Maintenance tasks |
+
+**Milestone commits (larger features):**
+
+```bash
+git commit -m "feat(transactions): complete transaction list feature
+
+- Add TransactionRow component
+- Add TransactionList organism
+- Add useTransactions hook
+- Add transaction filtering
+- Update tasks.md with completed items"
+```
+
+### Quality Checklist (Before Moving to Next Task)
+
+- [ ] Code compiles without errors (`bun run typecheck`)
+- [ ] Linting passes (`bun run lint`)
+- [ ] Tests pass (`bun test`)
+- [ ] No `any` types used
+- [ ] No magic numbers
+- [ ] Using enums from constants package
+- [ ] File is under 500 lines
+- [ ] Functions are under 30 lines
+- [ ] Task marked complete in `docs/tasks.md`
+- [ ] Changes committed with proper message
+
+### Do NOT Proceed If
+
+❌ There are TypeScript errors
+❌ There are ESLint errors
+❌ Tests are failing
+❌ You haven't checked for existing code
+❌ You're duplicating existing functionality
+
+---
+
+## Critical Rules
+
+### 1. File Size Limits
+
+- **Max 500 lines per file** - Split into smaller modules if exceeded
+- **Max 30 lines per function** - Extract helper functions
+- **Max complexity of 10** - Simplify nested logic
+
+### 2. No Magic Numbers
+
+```typescript
+// ❌ BAD
+if (gnoBalance >= 100) { ... }
+setTimeout(() => {}, 300000);
+
+// ✅ GOOD
+import { CASHBACK_TIER_CONFIG } from '@payments-view/constants';
+import { AUTH_CONFIG } from '@payments-view/constants';
+
+if (gnoBalance >= CASHBACK_TIER_CONFIG[4].minGno) { ... }
+setTimeout(() => {}, AUTH_CONFIG.JWT_EXPIRY_BUFFER_MS);
+```
+
+### 3. Enums Over Literal Strings
+
+```typescript
+// ❌ BAD
+if (transaction.kind === 'Payment') { ... }
+if (status === 'Approved') { ... }
+
+// ✅ GOOD
+import { TransactionKind, TransactionStatus } from '@payments-view/constants';
+
+if (transaction.kind === TransactionKind.PAYMENT) { ... }
+if (status === TransactionStatus.APPROVED) { ... }
+```
+
+### 4. Result Type for Error Handling
+
+```typescript
+// ❌ BAD - Throwing errors
+async function getTransaction(id: string): Promise<Transaction> {
+  const result = await api.get(id);
+  if (!result) throw new Error('Not found');
+  return result;
+}
+
+// ✅ GOOD - Result type
+import { Result } from '@payments-view/domain/shared';
+
+async function getTransaction(id: string): Promise<Result<Transaction, NotFoundError>> {
+  const result = await api.get(id);
+  if (!result) return Result.err(new NotFoundError(id));
+  return Result.ok(result);
+}
+```
+
+## Architecture Layers
+
+### Domain Layer (`packages/domain`)
+
+- Pure business logic, NO external dependencies
+- Entities, Value Objects, Domain Services
+- No I/O operations (no fetch, no database)
+
+```typescript
+// packages/domain/src/transaction/value-objects/money.ts
+export class Money {
+  private constructor(
+    private readonly _amount: bigint,
+    private readonly _currency: CurrencyCode,
+    private readonly _decimals: number
+  ) {}
+
+  static create(amount: string, currency: CurrencyCode, decimals: number): Money {
+    return new Money(BigInt(amount), currency, decimals);
+  }
+
+  toNumber(): number {
+    return Number(this._amount) / Math.pow(10, this._decimals);
+  }
+}
+```
+
+### Application Layer (`packages/application`)
+
+- Use cases / Application services
+- Orchestrates domain objects
+- Returns Result<T, E> types
+
+```typescript
+// packages/application/src/use-cases/transactions/list-transactions.use-case.ts
+export class ListTransactionsUseCase {
+  constructor(private readonly repo: TransactionRepository) {}
+
+  async execute(input: ListTransactionsInput): Promise<Result<TransactionsOutput, Error>> {
+    // Orchestration logic here
+  }
+}
+```
+
+### Infrastructure Layer (`packages/infrastructure`)
+
+- External API clients (Gnosis Pay, OpenAI)
+- Repository implementations
+- Mappers (API → Domain)
+
+### API Layer (`packages/api`)
+
+- tRPC routers and procedures
+- Input validation with Zod
+- Calls use cases from application layer
+
+### UI Layer (`apps/web`)
+
+- Next.js App Router pages
+- React components (Atomic Design)
+- Feature modules with hooks
+
+## File Organization
+
+```
+packages/
+├── constants/src/
+│   ├── enums/           # All enums (TransactionKind, Status, etc.)
+│   ├── config/          # Configuration constants (API, Auth, etc.)
+│   └── mappings/        # MCC category mappings
+├── domain/src/
+│   ├── transaction/
+│   │   ├── entities/
+│   │   ├── value-objects/
+│   │   ├── services/
+│   │   └── repositories/  # Interfaces only!
+│   └── shared/
+│       ├── errors/
+│       └── types/
+├── application/src/
+│   └── use-cases/
+├── infrastructure/src/
+│   ├── gnosis-pay/
+│   │   ├── client.ts
+│   │   ├── mappers/
+│   │   └── repositories/
+│   └── logging/
+├── api/src/
+│   ├── routers/
+│   ├── middleware/
+│   └── context.ts
+└── ui/src/
+    ├── primitives/      # Shadcn components
+    └── theme/
+
+apps/web/
+├── app/                 # Next.js App Router
+│   ├── (auth)/
+│   ├── (dashboard)/
+│   └── api/trpc/
+├── components/
+│   ├── atoms/
+│   ├── molecules/
+│   ├── organisms/
+│   └── templates/
+├── features/            # Feature modules
+│   ├── auth/
+│   │   ├── hooks/
+│   │   └── components/
+│   └── transactions/
+└── lib/
+```
+
+## Naming Conventions
+
+### Files
+
+- `kebab-case` for all files: `transaction-list.tsx`, `use-auth.ts`
+- Suffix by type: `.service.ts`, `.use-case.ts`, `.repository.ts`, `.mapper.ts`
+- Test files: `money.test.ts` (same directory or `__tests__` folder)
+
+### Code
+
+- `PascalCase`: Components, Classes, Types, Interfaces, Enums
+- `camelCase`: Functions, variables, hooks
+- `SCREAMING_SNAKE_CASE`: Constants only in config files
+- Prefix interfaces with `I` only for dependency injection: `ILogger`, `ITransactionRepository`
+
+### Components
+
+```typescript
+// Component file: transaction-row.tsx
+export interface TransactionRowProps {
+  transaction: Transaction;
+  onSelect?: (id: string) => void;
+}
+
+export function TransactionRow({ transaction, onSelect }: TransactionRowProps) {
+  // ...
+}
+```
+
+### Hooks
+
+```typescript
+// Hook file: use-transactions.ts
+export function useTransactions(options?: UseTransactionsOptions) {
+  // Always return object, not tuple
+  return {
+    transactions,
+    isLoading,
+    error,
+    refetch,
+  };
+}
+```
+
+## Component Patterns
+
+### Atomic Design Hierarchy
+
+1. **Atoms**: Button, Badge, Input, Skeleton
+2. **Molecules**: TransactionRow, StatCard, SearchBar
+3. **Organisms**: TransactionList, SpendingChart, FilterPanel
+4. **Templates**: DashboardLayout, AuthLayout
+
+### Component Structure
+
+```tsx
+// 1. Imports (organized)
+import { useState, useCallback } from 'react';
+
+import { Card, CardContent } from '@payments-view/ui';
+import { TransactionKind } from '@payments-view/constants';
+
+import { useTransactions } from '@/features/transactions';
+import { cn } from '@/lib/utils/cn';
+
+// 2. Types
+interface TransactionListProps {
+  className?: string;
+  limit?: number;
+}
+
+// 3. Component
+export function TransactionList({ className, limit }: TransactionListProps) {
+  // Hooks first
+  const { transactions, isLoading } = useTransactions({ limit });
+
+  // Derived state
+  const isEmpty = transactions.length === 0;
+
+  // Callbacks
+  const handleSelect = useCallback((id: string) => {
+    // ...
+  }, []);
+
+  // Early returns for loading/error/empty
+  if (isLoading) return <TransactionListSkeleton />;
+  if (isEmpty) return <EmptyState />;
+
+  // Main render
+  return (
+    <div className={cn('space-y-3', className)}>
+      {transactions.map((tx) => (
+        <TransactionRow key={tx.id} transaction={tx} onSelect={handleSelect} />
+      ))}
+    </div>
+  );
+}
+```
+
+## Styling Rules
+
+### Tailwind Classes
+
+```tsx
+// ❌ BAD - Inline styles, inconsistent
+<div style={{ borderRadius: '12px' }}>
+<div className="rounded-md">  // Wrong radius
+
+// ✅ GOOD - Use theme values
+<div className="rounded-2xl">  // 24px for cards
+<div className="rounded-xl">   // 16px for inner elements
+<div className="rounded-lg">   // 12px default
+```
+
+### Dark Mode First
+
+```tsx
+// Colors should work in dark mode by default
+<div className="bg-card text-card-foreground">
+<span className="text-muted-foreground">
+<div className="border-border">
+```
+
+### Spacing
+
+```tsx
+// Use consistent spacing scale
+<div className="p-4">        // 16px padding
+<div className="space-y-3">  // 12px gap
+<div className="gap-4">      // 16px flex gap
+```
+
+## Import Organization
+
+```typescript
+// 1. React/Next.js
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+// 2. External packages
+import { z } from 'zod';
+
+// 3. Internal packages (@payments-view/*)
+import { TransactionKind } from '@payments-view/constants';
+import { Money } from '@payments-view/domain/transaction';
+
+// 4. Local imports (@/*)
+import { useAuth } from '@/features/auth';
+import { cn } from '@/lib/utils/cn';
+
+// 5. Relative imports
+import { TransactionRow } from './transaction-row';
+
+// 6. Types (always last with 'type' keyword)
+import type { Transaction } from '@payments-view/domain/transaction';
+```
+
+## Bun Commands
+
+Always use `bun` instead of npm/pnpm:
+
+```bash
+# Install dependencies
+bun install
+
+# Run dev server
+bun dev
+
+# Run tests
+bun test
+
+# Add package
+bun add <package>
+
+# Add dev dependency
+bun add -D <package>
+
+# Run script
+bun run <script>
+
+# Execute package binary
+bunx <command>
+```
+
+## Testing Patterns
+
+```typescript
+// Use bun:test
+import { describe, test, expect, beforeEach, mock } from 'bun:test';
+
+describe('Money', () => {
+  test('should format currency correctly', () => {
+    const money = Money.create('2550', 'EUR', 2);
+    expect(money.format()).toBe('€25.50');
+  });
+});
+
+// Mock external dependencies
+const mockFetch = mock(() => Promise.resolve({ ok: true, json: () => ({}) }));
+```
+
+## Error Messages
+
+Always provide user-friendly error messages:
+
+```typescript
+// ❌ BAD
+throw new Error('INVALID_INPUT');
+
+// ✅ GOOD
+throw new ValidationError([
+  { field: 'amount', message: 'Amount must be greater than 0', code: 'invalid_range' }
+]);
+```
+
+## API Patterns
+
+### tRPC Procedures
+
+```typescript
+// packages/api/src/routers/transaction.router.ts
+export const transactionRouter = router({
+  list: protectedProcedure
+    .input(listTransactionsSchema)
+    .query(async ({ ctx, input }) => {
+      const useCase = new ListTransactionsUseCase(ctx.transactionRepo);
+      const result = await useCase.execute({ ...input, token: ctx.token });
+
+      if (result.isFailure) {
+        throw handleError(result.error, ctx.correlationId);
+      }
+
+      return result.value;
+    }),
+});
+```
+
+## Things to AVOID
+
+1. **Any type**: Never use `any`, use `unknown` and narrow types
+2. **Console.log in production**: Use the logger from infrastructure
+3. **Direct API calls in components**: Always go through tRPC
+4. **Inline styles**: Use Tailwind classes
+5. **Magic strings**: Use enums from constants package
+6. **Throwing errors**: Use Result type pattern
+7. **Large files**: Split if > 500 lines
+8. **Complex functions**: Split if > 30 lines
+9. **npm/pnpm commands**: Use bun
+10. **Non-dark-mode colors**: Use CSS variables
+11. **Skipping linting**: Always run `bun run lint` before moving on
+12. **Creating duplicate code**: Search codebase first for existing solutions
+13. **Ignoring tests**: Run `bun test` after changes
+14. **Forgetting to update docs**: Keep documentation in sync
+15. **Uncommitted work**: Commit after completing each task
+
+---
+
+## 📋 Task Management
+
+### Task File Location
+
+All tasks are tracked in `docs/tasks.md`
+
+### Marking Tasks Complete
+
+```markdown
+// When starting a task:
+- [ ] Create TransactionRow component  ← Currently working on
+
+// When task is complete:
+- [x] Create TransactionRow component  ← Done!
+```
+
+### Task Completion Workflow
+
+1. Complete the implementation
+2. Run `bun run lint` - fix any errors
+3. Run `bun run typecheck` - fix any type errors
+4. Run `bun test` - ensure tests pass
+5. Update `docs/tasks.md` - mark task as complete
+6. Commit with appropriate message
+7. Move to next task
+
+---
+
+## 📚 Documentation Updates
+
+### When to Update Documentation
+
+| Document | Update When |
+|----------|-------------|
+| `docs/requirements.md` | Feature requirements change |
+| `docs/architecture.md` | Architecture decisions change, new patterns introduced |
+| `docs/design.md` | UI patterns change, new components added |
+| `docs/tasks.md` | Tasks completed, new tasks identified |
+
+### Documentation Update Checklist
+
+- [ ] Is the change significant enough to document?
+- [ ] Does it affect how other developers work?
+- [ ] Will future you need to remember this?
+
+If yes to any, update the relevant doc!
+
+---
+
+## Quick Reference
+
+| Pattern | Location |
+|---------|----------|
+| Enums | `@payments-view/constants/enums` |
+| Config | `@payments-view/constants/config` |
+| Domain entities | `@payments-view/domain/<domain>/entities` |
+| Value objects | `@payments-view/domain/<domain>/value-objects` |
+| Use cases | `@payments-view/application/use-cases` |
+| API clients | `@payments-view/infrastructure/<service>` |
+| tRPC routers | `@payments-view/api/routers` |
+| UI primitives | `@payments-view/ui/primitives` |
+| Feature hooks | `@/features/<feature>/hooks` |
+| Components | `@/components/<atomic-level>` |
+
+---
+
+## 🔍 Before Creating Anything New
+
+### Search Commands
+
+```bash
+# Search for existing components
+grep -r "ComponentName" apps/web/components/
+
+# Search for existing hooks
+grep -r "useHookName" apps/web/features/
+
+# Search for existing utilities
+grep -r "functionName" packages/
+
+# Search for existing types
+grep -r "TypeName" packages/domain/
+
+# Search for existing constants
+grep -r "CONSTANT_NAME" packages/constants/
+```
+
+### Questions to Ask
+
+1. Does this component/hook/utility already exist?
+2. Is there a similar pattern I can extend?
+3. Can I reuse code from another feature?
+4. Is this the right architectural layer for this code?
+
+---
+
+## ✅ Final Checklist (Use Before Every Commit)
+
+```
+□ Searched codebase for existing code
+□ No TypeScript errors (bun run typecheck)
+□ No ESLint errors (bun run lint)
+□ Tests pass (bun test)
+□ No `any` types
+□ No magic numbers (using constants)
+□ Using enums (not string literals)
+□ Files under 500 lines
+□ Functions under 30 lines
+□ Updated docs/tasks.md
+□ Updated relevant documentation
+□ Meaningful commit message
+```
