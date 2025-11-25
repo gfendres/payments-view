@@ -18,6 +18,7 @@
     "@payments-view/application": "workspace:*",
     "@payments-view/constants": "workspace:*",
     "@payments-view/domain": "workspace:*",
+    "@payments-view/infrastructure": "workspace:*",
     "@trpc/server": "^11.0.0-rc.648",
     "zod": "^3.23.8"
   },

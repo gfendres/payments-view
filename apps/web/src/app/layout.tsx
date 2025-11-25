@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { Space_Grotesk } from 'next/font/google';
+import { Outfit } from 'next/font/google';
+
+import { Providers } from '@/providers';
 
 import './globals.css';
 
-const spaceGrotesk = Space_Grotesk({
+const outfit = Outfit({
   subsets: ['latin'],
   variable: '--font-sans',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -20,7 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${spaceGrotesk.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${outfit.variable} font-sans antialiased`}>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

@@ -18,13 +18,20 @@
     "@payments-view/domain": "workspace:*",
     "@payments-view/infrastructure": "workspace:*",
     "@payments-view/ui": "workspace:*",
+    "@rainbow-me/rainbowkit": "2.1.7",
+    "@safe-global/safe-apps-provider": "0.18.6",
+    "@safe-global/safe-apps-sdk": "9.1.0",
     "@tanstack/react-query": "^5.62.8",
     "@trpc/client": "^11.0.0-rc.648",
     "@trpc/react-query": "^11.0.0-rc.648",
     "@trpc/server": "^11.0.0-rc.648",
+    "@walletconnect/ethereum-provider": "2.23.0",
     "next": "^15.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "siwe": "3.0.0",
+    "viem": "2.40.2",
+    "wagmi": "2.12.30",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -38,4 +45,3 @@
     "typescript": "^5.7.2"
   }
 }
-

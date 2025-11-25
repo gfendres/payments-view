@@ -164,15 +164,15 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Set up wagmi + RainbowKit
-- [ ] Create SIWE message generation
-- [ ] Create auth service in domain layer
-- [ ] Create Gnosis Pay auth client in infrastructure
-- [ ] Create authenticate use case
-- [ ] Create auth tRPC router
-- [ ] Create wallet connection UI
-- [ ] Implement token refresh logic
-- [ ] Create auth middleware
+- [x] Set up wagmi + RainbowKit
+- [x] Create SIWE message generation
+- [x] Create auth service in domain layer
+- [x] Create Gnosis Pay auth client in infrastructure
+- [x] Create authenticate use case
+- [x] Create auth tRPC router
+- [x] Create wallet connection UI
+- [x] Implement token refresh logic
+- [x] Create auth middleware
 
 **Acceptance Criteria**:
 

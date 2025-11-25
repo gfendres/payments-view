@@ -7,12 +7,12 @@ export const LOG_CONFIG = {
   /**
    * Default log level based on environment
    */
-  DEFAULT_LEVEL: process.env['NODE_ENV'] === 'production' ? LogLevel.INFO : LogLevel.DEBUG,
+  DEFAULT_LEVEL: process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG,
 
   /**
    * Include stack traces in non-production environments
    */
-  INCLUDE_STACK_TRACE: process.env['NODE_ENV'] !== 'production',
+  INCLUDE_STACK_TRACE: process.env.NODE_ENV !== 'production',
 
   /**
    * Fields to redact from logs

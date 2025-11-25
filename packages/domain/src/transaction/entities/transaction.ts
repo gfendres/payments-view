@@ -6,9 +6,9 @@ import {
   isSuccessStatus,
 } from '@payments-view/constants';
 
-import { Money } from '../value-objects/money';
-import { Category } from '../value-objects/category';
-import { Merchant } from './merchant';
+import type { Money } from '../value-objects/money';
+import type { Category } from '../value-objects/category';
+import type { Merchant } from './merchant';
 
 /**
  * Transaction entity props

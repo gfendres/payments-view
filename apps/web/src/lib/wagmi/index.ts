@@ -1,0 +1,2 @@
+export { wagmiConfig } from './config';
+
