@@ -2,15 +2,23 @@
 
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { Wallet } from 'lucide-react';
 import { Button } from '@payments-view/ui';
 
 import { useAuth } from '../hooks/use-auth';
 
+interface WalletButtonProps {
+  /** Variant for different contexts */
+  variant?: 'default' | 'hero';
+}
+
 /**
  * Wallet connection button with SIWE authentication
  */
-export function WalletButton() {
+export function WalletButton({ variant = 'default' }: WalletButtonProps) {
   const { isAuthenticated, isLoading, isConnected, signIn, signOut } = useAuth();
+
+  const isHero = variant === 'hero';
 
   return (
     <ConnectButton.Custom>
@@ -33,7 +41,17 @@ export function WalletButton() {
               // Not connected - show connect button
               if (!connected) {
                 return (
-                  <Button onClick={openConnectModal} variant="default" size="lg">
+                  <Button
+                    onClick={openConnectModal}
+                    variant="default"
+                    size="lg"
+                    className={
+                      isHero
+                        ? 'h-14 px-8 text-base font-semibold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30'
+                        : undefined
+                    }
+                  >
+                    {isHero && <Wallet className="mr-2 h-5 w-5" />}
                     Connect Wallet
                   </Button>
                 );
@@ -42,7 +60,16 @@ export function WalletButton() {
               // Wrong chain - show switch chain
               if (chain.unsupported) {
                 return (
-                  <Button onClick={openChainModal} variant="destructive" size="lg">
+                  <Button
+                    onClick={openChainModal}
+                    variant="destructive"
+                    size={isHero ? 'lg' : 'default'}
+                    className={
+                      isHero
+                        ? 'h-14 px-8 text-base font-semibold'
+                        : undefined
+                    }
+                  >
                     Wrong Network
                   </Button>
                 );
@@ -56,14 +83,22 @@ export function WalletButton() {
                     disabled={isLoading || !isConnected}
                     variant="default"
                     size="lg"
+                    className={
+                      isHero
+                        ? 'h-14 px-8 text-base font-semibold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30'
+                        : undefined
+                    }
                   >
                     {isLoading ? (
                       <>
                         <LoadingSpinner />
-                        Signing in...
+                        <span className="ml-2">Signing in...</span>
                       </>
                     ) : (
-                      'Sign in with Ethereum'
+                      <>
+                        {isHero && <Wallet className="mr-2 h-5 w-5" />}
+                        Sign in with Ethereum
+                      </>
                     )}
                   </Button>
                 );
@@ -135,4 +170,3 @@ function LoadingSpinner() {
     </svg>
   );
 }
-

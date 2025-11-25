@@ -5,6 +5,10 @@ import {
   RETRY_DELAY_MS,
 } from '@payments-view/constants';
 
+import type { ILogger } from '@payments-view/domain';
+
+import { createLogger } from '../logging';
+
 import type { ApiErrorResponse, ApiResult } from './types';
 
 /**
@@ -90,41 +94,95 @@ const parseJsonError = async (response: Response): Promise<ApiErrorResponse> => 
 };
 
 /**
+ * Generate a correlation ID for request tracing
+ */
+const generateCorrelationId = (): string => {
+  return `gp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+};
+
+/**
  * Base HTTP client for Gnosis Pay API
  */
 export class GnosisPayClient {
   private readonly baseUrl: string;
+  private readonly logger: ILogger;
 
-  constructor(baseUrl?: string) {
+  constructor(baseUrl?: string, logger?: ILogger) {
     this.baseUrl = baseUrl ?? API_CONFIG.GNOSIS_PAY.BASE_URL;
+    this.logger = logger ?? createLogger({ service: 'GnosisPayClient' });
   }
 
   /**
    * Make an HTTP request with retry logic
    */
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
-    const {
-      method = 'GET',
-      body,
-      token,
-      timeout = REQUEST_TIMEOUT_MS,
-      retries = MAX_RETRY_ATTEMPTS,
-    } = options;
+    const { method = 'GET', body, token, timeout = REQUEST_TIMEOUT_MS, retries = MAX_RETRY_ATTEMPTS } = options;
 
-    const headers = this.buildHeaders(token);
-    const url = `${this.baseUrl}${endpoint}`;
+    const ctx = {
+      correlationId: generateCorrelationId(),
+      headers: this.buildHeaders(token),
+      url: `${this.baseUrl}${endpoint}`,
+      startTime: Date.now(),
+    };
 
+    this.logRequestStart(ctx.correlationId, method, ctx.url, Boolean(body), Boolean(token));
+
+    return this.executeWithRetry<T>(ctx, method, body, timeout, retries);
+  }
+
+  private logRequestStart(correlationId: string, method: string, url: string, hasBody: boolean, hasToken: boolean): void {
+    this.logger.info('API request started', { correlationId, method, url: this.sanitizeUrl(url), hasBody, hasToken });
+  }
+
+  private async executeWithRetry<T>(
+    ctx: { correlationId: string; headers: Record<string, string>; url: string; startTime: number },
+    method: HttpMethod,
+    body: unknown,
+    timeout: number,
+    retries: number
+  ): Promise<ApiResult<T>> {
     for (let attempt = 0; attempt <= retries; attempt++) {
-      const result = await this.executeRequest<T>(url, method, headers, body, timeout);
+      if (attempt > 0) {
+        this.logger.debug('Retrying request', { correlationId: ctx.correlationId, attempt, maxRetries: retries });
+      }
+
+      const result = await this.executeRequest<T>(ctx.url, method, ctx.headers, body, timeout);
 
       if (result.shouldRetry && attempt < retries) {
-        await sleep(RETRY_DELAY_MS * (attempt + 1));
+        await this.handleRetry(ctx.correlationId, attempt, result.response);
         continue;
       }
 
+      this.logResponse(ctx.correlationId, method, ctx.url, result.response, Date.now() - ctx.startTime);
       return result.response;
     }
 
+    return this.handleMaxRetriesExceeded(ctx, method, retries);
+  }
+
+  private async handleRetry<T>(correlationId: string, attempt: number, response: ApiResult<T>): Promise<void> {
+    const delayMs = RETRY_DELAY_MS * (attempt + 1);
+    this.logger.warn('Request failed, will retry', {
+      correlationId,
+      attempt,
+      delayMs,
+      error: response.success ? undefined : response.error.error,
+    });
+    await sleep(delayMs);
+  }
+
+  private handleMaxRetriesExceeded(
+    ctx: { correlationId: string; url: string; startTime: number },
+    method: string,
+    retries: number
+  ): ApiResult<never> {
+    this.logger.error('Max retries exceeded', undefined, {
+      correlationId: ctx.correlationId,
+      method,
+      url: this.sanitizeUrl(ctx.url),
+      durationMs: Date.now() - ctx.startTime,
+      attempts: retries + 1,
+    });
     return createMaxRetriesError();
   }
 
@@ -187,8 +245,24 @@ export class GnosisPayClient {
       return { response: { success: false, error: errorData }, shouldRetry };
     }
 
-    const data = (await response.json()) as T;
-    return { response: { success: true, data }, shouldRetry: false };
+    try {
+      const data = (await response.json()) as T;
+      return { response: { success: true, data }, shouldRetry: false };
+    } catch (parseError) {
+      // Response was successful but body is not valid JSON
+      const message = parseError instanceof Error ? parseError.message : 'Invalid JSON response';
+      return {
+        response: {
+          success: false,
+          error: {
+            error: 'INVALID_RESPONSE',
+            message: `Failed to parse response: ${message}`,
+            statusCode: response.status,
+          },
+        },
+        shouldRetry: false,
+      };
+    }
   }
 
   /**
@@ -200,5 +274,70 @@ export class GnosisPayClient {
     }
 
     return Promise.resolve({ response: createNetworkError(error), shouldRetry: true });
+  }
+
+  /**
+   * Log API response
+   */
+  private logResponse<T>(
+    correlationId: string,
+    method: string,
+    url: string,
+    result: ApiResult<T>,
+    durationMs: number
+  ): void {
+    const baseContext = {
+      correlationId,
+      method,
+      url: this.sanitizeUrl(url),
+      durationMs,
+    };
+
+    if (result.success) {
+      this.logger.info('API request completed', {
+        ...baseContext,
+        statusCode: 200,
+        success: true,
+      });
+    } else {
+      const statusCode = result.error.statusCode ?? 0;
+      const isClientError = statusCode >= 400 && statusCode < 500;
+
+      if (isClientError) {
+        this.logger.warn('API request failed (client error)', {
+          ...baseContext,
+          statusCode,
+          errorCode: result.error.error,
+          errorMessage: result.error.message,
+        });
+      } else {
+        this.logger.error('API request failed', undefined, {
+          ...baseContext,
+          statusCode,
+          errorCode: result.error.error,
+          errorMessage: result.error.message,
+        });
+      }
+    }
+  }
+
+  /**
+   * Sanitize URL for logging (remove sensitive query params)
+   */
+  private sanitizeUrl(url: string): string {
+    try {
+      const parsed = new URL(url);
+      const sensitiveParams = ['token', 'apiKey', 'key', 'secret'];
+
+      for (const param of sensitiveParams) {
+        if (parsed.searchParams.has(param)) {
+          parsed.searchParams.set(param, '[REDACTED]');
+        }
+      }
+
+      return parsed.toString();
+    } catch {
+      return url;
+    }
   }
 }

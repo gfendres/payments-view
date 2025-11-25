@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { BarChart3, Coins, Tags, FileDown, Wallet } from 'lucide-react';
+
 import { WalletButton, useAuthContext } from '@/features/auth';
 
 export default function HomePage() {
@@ -16,19 +18,41 @@ export default function HomePage() {
   }, [isAuthenticated, isLoading, router]);
 
   return (
-    <main className="bg-background relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-6">
+    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-6">
+      {/* Background grid lines */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* Vertical lines */}
+        <div className="absolute inset-0 flex justify-around">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={`v-${i}`}
+              className="h-full w-px bg-gradient-to-b from-transparent via-border/30 to-transparent"
+            />
+          ))}
+        </div>
+        {/* Horizontal lines */}
+        <div className="absolute inset-0 flex flex-col justify-around">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={`h-${i}`}
+              className="h-px w-full bg-gradient-to-r from-transparent via-border/30 to-transparent"
+            />
+          ))}
+        </div>
+      </div>
+
       {/* Background gradient effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="bg-primary/10 absolute -top-1/4 -left-1/4 h-1/2 w-1/2 rounded-full blur-3xl" />
-        <div className="absolute -right-1/4 -bottom-1/4 h-1/2 w-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-1/4 -top-1/4 h-1/2 w-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 max-w-2xl text-center">
         {/* Logo */}
         <div className="mb-8 flex justify-center">
-          <div className="bg-primary text-primary-foreground shadow-primary/20 flex h-20 w-20 items-center justify-center rounded-2xl text-4xl font-bold shadow-lg">
-            G
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+            <Wallet className="h-10 w-10" />
           </div>
         </div>
 
@@ -39,45 +63,63 @@ export default function HomePage() {
         </h1>
 
         {/* Subtitle */}
-        <p className="text-muted-foreground mx-auto mb-8 max-w-lg text-lg">
+        <p className="mx-auto mb-10 max-w-lg text-lg text-muted-foreground">
           Track your card transactions, analyze spending patterns, and maximize your GNO cashback
           rewards — all in one beautiful dashboard.
         </p>
 
         {/* Connect button */}
         <div className="mb-12">
-          <WalletButton />
+          <WalletButton variant="hero" />
         </div>
 
         {/* Features */}
         <div className="grid grid-cols-2 gap-4 text-left sm:grid-cols-4">
-          <div className="border-border bg-card/50 rounded-xl border p-4 backdrop-blur-sm">
-            <div className="mb-2 text-2xl">📊</div>
-            <p className="text-sm font-medium">Analytics</p>
-            <p className="text-muted-foreground text-xs">Spending insights</p>
-          </div>
-          <div className="border-border bg-card/50 rounded-xl border p-4 backdrop-blur-sm">
-            <div className="mb-2 text-2xl">💰</div>
-            <p className="text-sm font-medium">Cashback</p>
-            <p className="text-muted-foreground text-xs">Track rewards</p>
-          </div>
-          <div className="border-border bg-card/50 rounded-xl border p-4 backdrop-blur-sm">
-            <div className="mb-2 text-2xl">🏷️</div>
-            <p className="text-sm font-medium">Categories</p>
-            <p className="text-muted-foreground text-xs">Smart sorting</p>
-          </div>
-          <div className="border-border bg-card/50 rounded-xl border p-4 backdrop-blur-sm">
-            <div className="mb-2 text-2xl">📤</div>
-            <p className="text-sm font-medium">Export</p>
-            <p className="text-muted-foreground text-xs">CSV & reports</p>
-          </div>
+          <FeatureCard
+            icon={BarChart3}
+            title="Analytics"
+            description="Spending insights"
+          />
+          <FeatureCard
+            icon={Coins}
+            title="Cashback"
+            description="Track rewards"
+          />
+          <FeatureCard
+            icon={Tags}
+            title="Categories"
+            description="Smart sorting"
+          />
+          <FeatureCard
+            icon={FileDown}
+            title="Export"
+            description="CSV & reports"
+          />
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="text-muted-foreground absolute bottom-6 text-center text-sm">
-        <p>Built for the Gnosis ecosystem • Sign in with Ethereum</p>
+      <footer className="absolute bottom-6 text-center text-sm text-muted-foreground">
+        <p>Built for the Gnosis ecosystem</p>
       </footer>
     </main>
+  );
+}
+
+interface FeatureCardProps {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+}
+
+function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
+  return (
+    <div className="rounded-xl border border-border bg-card/50 p-4 backdrop-blur-sm transition-colors hover:bg-card/80">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+        <Icon className="h-5 w-5 text-primary" />
+      </div>
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </div>
   );
 }

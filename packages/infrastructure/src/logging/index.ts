@@ -1,3 +1,1 @@
-// Logging service will be exported here
-export {};
-
+export { Logger, createLogger } from './logger';
