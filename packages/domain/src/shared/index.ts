@@ -1,3 +1,2 @@
-// Shared domain exports (Result type, errors, etc.)
-export {};
-
+export * from './result';
+export * from './errors';

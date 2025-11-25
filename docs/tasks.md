@@ -112,15 +112,15 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create `Wallet` entity
-- [ ] Create `Session` entity
-- [ ] Create `Transaction` entity
-- [ ] Create `Merchant` entity
-- [ ] Create `RewardsInfo` entity
-- [ ] Create `Money` value object
-- [ ] Create `Category` value object
-- [ ] Create `EthereumAddress` value object
-- [ ] Create `CashbackTier` value object
+- [x] Create `Wallet` entity
+- [x] Create `Session` entity
+- [x] Create `Transaction` entity
+- [x] Create `Merchant` entity
+- [x] Create `RewardsInfo` entity
+- [x] Create `Money` value object
+- [x] Create `Category` value object
+- [x] Create `EthereumAddress` value object
+- [x] Create `CashbackTier` value object
 
 **Acceptance Criteria**:
 

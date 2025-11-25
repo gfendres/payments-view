@@ -1,3 +1,2 @@
-// Rewards domain exports
-export {};
-
+export * from './entities';
+export * from './value-objects';

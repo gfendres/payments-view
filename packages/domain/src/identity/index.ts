@@ -1,3 +1,1 @@
-// Identity domain exports
-export {};
-
+export * from './entities';
