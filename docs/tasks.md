@@ -311,13 +311,13 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create `DashboardLayout` template
-- [ ] Create navigation sidebar
-- [ ] Create header with wallet button
-- [ ] Create responsive layout
-- [ ] Add theme toggle button
-- [ ] Implement navigation routing
-- [ ] Add loading states
+- [x] Create `DashboardLayout` template
+- [x] Create navigation sidebar
+- [x] Create header with wallet button
+- [x] Create responsive layout
+- [x] Add theme toggle button
+- [x] Implement navigation routing
+- [x] Add loading states
 
 **Acceptance Criteria**:
 

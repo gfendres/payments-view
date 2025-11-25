@@ -1,129 +1,83 @@
 'use client';
 
-import { WalletButton, useAuth } from '@/features/auth';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { WalletButton, useAuthContext } from '@/features/auth';
 
-export default function Home() {
-  const { isAuthenticated } = useAuth();
+export default function HomePage() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuthContext();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background">
-      {/* Background Pattern */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 left-1/2 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-emerald-500/5 blur-3xl" />
-        <div className="absolute -bottom-1/2 right-0 h-[600px] w-[600px] rounded-full bg-cyan-500/5 blur-3xl" />
-        <div className="absolute left-0 top-1/4 h-[400px] w-[400px] rounded-full bg-teal-500/5 blur-3xl" />
-
-        {/* Grid Pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, currentColor 1px, transparent 1px),
-              linear-gradient(to bottom, currentColor 1px, transparent 1px)
-            `,
-            backgroundSize: '64px 64px',
-          }}
-        />
+    <main className="bg-background relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-6">
+      {/* Background gradient effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="bg-primary/10 absolute -top-1/4 -left-1/4 h-1/2 w-1/2 rounded-full blur-3xl" />
+        <div className="absolute -right-1/4 -bottom-1/4 h-1/2 w-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center px-6 text-center">
-        {/* Logo/Icon */}
-        <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20">
-          <GnosisIcon className="h-10 w-10 text-white" />
+      <div className="relative z-10 max-w-2xl text-center">
+        {/* Logo */}
+        <div className="mb-8 flex justify-center">
+          <div className="bg-primary text-primary-foreground shadow-primary/20 flex h-20 w-20 items-center justify-center rounded-2xl text-4xl font-bold shadow-lg">
+            G
+          </div>
         </div>
 
-        {/* Heading */}
-        <h1 className="mb-4 text-5xl font-bold tracking-tight text-foreground">
-          Gnosis Pay
-          <span className="mt-1 block text-3xl font-medium text-emerald-500">
-            Portfolio Dashboard
-          </span>
+        {/* Title */}
+        <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+          <span className="text-primary">Gnosis Pay</span>{' '}
+          <span className="text-foreground">Dashboard</span>
         </h1>
 
-        {/* Description */}
-        <p className="mb-10 max-w-lg text-lg text-muted-foreground">
+        {/* Subtitle */}
+        <p className="text-muted-foreground mx-auto mb-8 max-w-lg text-lg">
           Track your card transactions, analyze spending patterns, and maximize your GNO cashback
-          rewards — all in one place.
+          rewards — all in one beautiful dashboard.
         </p>
 
-        {/* Wallet Button */}
-        <WalletButton />
+        {/* Connect button */}
+        <div className="mb-12">
+          <WalletButton />
+        </div>
 
-        {/* Stats Preview (shown when not authenticated) */}
-        {!isAuthenticated && (
-          <div className="mt-16 grid grid-cols-3 gap-8">
-            <StatCard label="Transaction Tracking" value="Real-time" />
-            <StatCard label="Up to" value="5% Cashback" highlight />
-            <StatCard label="Spending Analytics" value="Visual" />
+        {/* Features */}
+        <div className="grid grid-cols-2 gap-4 text-left sm:grid-cols-4">
+          <div className="border-border bg-card/50 rounded-xl border p-4 backdrop-blur-sm">
+            <div className="mb-2 text-2xl">📊</div>
+            <p className="text-sm font-medium">Analytics</p>
+            <p className="text-muted-foreground text-xs">Spending insights</p>
           </div>
-        )}
-
-        {/* Feature Pills */}
-        <div className="mt-12 flex flex-wrap justify-center gap-3">
-          <FeaturePill>SIWE Authentication</FeaturePill>
-          <FeaturePill>GNO Rewards</FeaturePill>
-          <FeaturePill>Category Insights</FeaturePill>
-          <FeaturePill>Export Reports</FeaturePill>
+          <div className="border-border bg-card/50 rounded-xl border p-4 backdrop-blur-sm">
+            <div className="mb-2 text-2xl">💰</div>
+            <p className="text-sm font-medium">Cashback</p>
+            <p className="text-muted-foreground text-xs">Track rewards</p>
+          </div>
+          <div className="border-border bg-card/50 rounded-xl border p-4 backdrop-blur-sm">
+            <div className="mb-2 text-2xl">🏷️</div>
+            <p className="text-sm font-medium">Categories</p>
+            <p className="text-muted-foreground text-xs">Smart sorting</p>
+          </div>
+          <div className="border-border bg-card/50 rounded-xl border p-4 backdrop-blur-sm">
+            <div className="mb-2 text-2xl">📤</div>
+            <p className="text-sm font-medium">Export</p>
+            <p className="text-muted-foreground text-xs">CSV & reports</p>
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="absolute bottom-6 text-sm text-muted-foreground/60">
-        Built for the Gnosis ecosystem
+      <footer className="text-muted-foreground absolute bottom-6 text-center text-sm">
+        <p>Built for the Gnosis ecosystem • Sign in with Ethereum</p>
       </footer>
     </main>
-  );
-}
-
-/**
- * Stat card component
- */
-function StatCard({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex flex-col items-center">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={`text-2xl font-bold ${highlight ? 'text-emerald-500' : 'text-foreground'}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-/**
- * Feature pill component
- */
-function FeaturePill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded-full border border-border/50 bg-card/50 px-4 py-1.5 text-sm text-muted-foreground backdrop-blur-sm">
-      {children}
-    </span>
-  );
-}
-
-/**
- * Gnosis icon
- */
-function GnosisIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
-        fill="currentColor"
-      />
-      <path
-        d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"
-        fill="currentColor"
-      />
-      <circle cx="12" cy="12" r="2" fill="currentColor" />
-    </svg>
   );
 }

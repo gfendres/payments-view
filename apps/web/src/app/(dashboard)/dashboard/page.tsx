@@ -45,7 +45,7 @@ function filterTransactions(
 }
 
 /**
- * Dashboard content component (needs Suspense for useSearchParams)
+ * Dashboard content component
  */
 function DashboardContent() {
   const { filters, setFilters, hasActiveFilters, queryParams } = useTransactionFilters();
@@ -78,17 +78,17 @@ function DashboardContent() {
   const cashbackEligibleCount = transactions.filter((t) => t.isEligibleForCashback).length;
 
   return (
-    <div className="p-6">
-      {/* Page title */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold">Overview</h1>
         <p className="text-muted-foreground">
-          Overview of your Gnosis Pay card activity
+          Track your spending and cashback rewards
         </p>
       </div>
 
       {/* Stats and Chart Row */}
-      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left column - Stats */}
         <div className="space-y-4 lg:col-span-1">
           <Card>
@@ -140,7 +140,7 @@ function DashboardContent() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6">
+      <div>
         <FilterPanel filters={filters} onFiltersChange={setFilters} />
       </div>
 
@@ -188,16 +188,16 @@ function DashboardContent() {
 }
 
 /**
- * Dashboard page with Suspense boundary for useSearchParams
+ * Dashboard overview page
  */
-export default function DashboardPage() {
+export default function DashboardOverviewPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="mb-4 animate-pulse text-4xl">📊</div>
-            <p className="text-muted-foreground">Loading dashboard...</p>
+            <p className="text-muted-foreground">Loading...</p>
           </div>
         </div>
       }
@@ -206,3 +206,4 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
+
