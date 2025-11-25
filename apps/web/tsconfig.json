@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@payments-view/constants": ["../../packages/constants/src/index.ts"],
+      "@payments-view/constants/*": ["../../packages/constants/src/*"],
+      "@payments-view/domain": ["../../packages/domain/src/index.ts"],
+      "@payments-view/domain/*": ["../../packages/domain/src/*"],
+      "@payments-view/application": ["../../packages/application/src/index.ts"],
+      "@payments-view/application/*": ["../../packages/application/src/*"],
+      "@payments-view/infrastructure": ["../../packages/infrastructure/src/index.ts"],
+      "@payments-view/infrastructure/*": ["../../packages/infrastructure/src/*"],
+      "@payments-view/api": ["../../packages/api/src/index.ts"],
+      "@payments-view/api/*": ["../../packages/api/src/*"],
+      "@payments-view/ui": ["../../packages/ui/src/index.ts"],
+      "@payments-view/ui/*": ["../../packages/ui/src/*"]
+    },
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["next-env.d.ts", ".next/types/**/*.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}
+

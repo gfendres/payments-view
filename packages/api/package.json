@@ -1,0 +1,25 @@
+{
+  "name": "@payments-view/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./routers": "./src/routers/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@payments-view/application": "workspace:*",
+    "@payments-view/constants": "workspace:*",
+    "@payments-view/domain": "workspace:*",
+    "@trpc/server": "^11.0.0-rc.648",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {}
+}
