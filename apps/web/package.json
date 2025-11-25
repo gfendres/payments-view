@@ -26,6 +26,7 @@
     "@trpc/react-query": "^11.0.0-rc.648",
     "@trpc/server": "^11.0.0-rc.648",
     "@walletconnect/ethereum-provider": "2.23.0",
+    "lucide-react": "0.554.0",
     "next": "^15.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -1,19 +1,75 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@payments-view/ui';
+import { CATEGORIES } from '@payments-view/constants';
 
 import { useAuthContext } from '@/features/auth';
-import { TransactionList, useTransactions } from '@/features/transactions';
+import {
+  TransactionList,
+  FilterPanel,
+  useTransactions,
+  useTransactionFilters,
+  type SerializedTransaction,
+} from '@/features/transactions';
 
-export default function DashboardPage() {
+/**
+ * Filter transactions client-side based on search and categories
+ */
+function filterTransactions(
+  transactions: SerializedTransaction[],
+  filters: ReturnType<typeof useTransactionFilters>['filters']
+): SerializedTransaction[] {
+  return transactions.filter((tx) => {
+    // Search filter
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const matchesMerchant = tx.merchant.name.toLowerCase().includes(searchLower);
+      const matchesCategory = tx.merchant.category.toLowerCase().includes(searchLower);
+      if (!matchesMerchant && !matchesCategory) return false;
+    }
+
+    // Category filter
+    if (filters.categories.length > 0) {
+      const categoryNames = filters.categories.map((id) => CATEGORIES[id].name);
+      if (!categoryNames.includes(tx.merchant.category)) return false;
+    }
+
+    // Status filter
+    if (filters.status && tx.status !== filters.status) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+/**
+ * Dashboard content component (needs Suspense for useSearchParams)
+ */
+function DashboardContent() {
   const router = useRouter();
   const { isAuthenticated, isConnected, walletAddress, signOut } = useAuthContext();
-  const { transactions, isLoading, error, hasMore, refetch } = useTransactions({
-    limit: 20,
+  const { filters, setFilters, hasActiveFilters, queryParams } = useTransactionFilters();
+
+  const {
+    transactions: rawTransactions,
+    isLoading,
+    error,
+    hasMore,
+    refetch,
+  } = useTransactions({
+    limit: 50,
     enabled: isAuthenticated,
+    ...queryParams,
   });
+
+  // Apply client-side filters
+  const transactions = useMemo(
+    () => filterTransactions(rawTransactions, filters),
+    [rawTransactions, filters]
+  );
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -39,10 +95,19 @@ export default function DashboardPage() {
     );
   }
 
+  // Calculate stats from filtered transactions
+  const thisMonthCount = transactions.filter((t) => {
+    const date = new Date(t.createdAt);
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }).length;
+
+  const cashbackEligibleCount = transactions.filter((t) => t.isEligibleForCashback).length;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div>
             <h1 className="text-xl font-bold text-foreground">Gnosis Pay Dashboard</h1>
@@ -63,11 +128,14 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Transactions
+                {hasActiveFilters ? 'Filtered Results' : 'Total Transactions'}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{transactions.length}</p>
+              {hasActiveFilters && rawTransactions.length !== transactions.length && (
+                <p className="text-xs text-muted-foreground">of {rawTransactions.length} total</p>
+              )}
             </CardContent>
           </Card>
 
@@ -78,15 +146,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">
-                {transactions.filter((t) => {
-                  const date = new Date(t.createdAt);
-                  const now = new Date();
-                  return (
-                    date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
-                  );
-                }).length}
-              </p>
+              <p className="text-2xl font-bold">{thisMonthCount}</p>
             </CardContent>
           </Card>
 
@@ -97,17 +157,22 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-emerald-500">
-                {transactions.filter((t) => t.isEligibleForCashback).length}
-              </p>
+              <p className="text-2xl font-bold text-emerald-500">{cashbackEligibleCount}</p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Filters */}
+        <div className="mb-6">
+          <FilterPanel filters={filters} onFiltersChange={setFilters} />
         </div>
 
         {/* Transactions Section */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Transactions</CardTitle>
+            <CardTitle>
+              {hasActiveFilters ? 'Filtered Transactions' : 'Recent Transactions'}
+            </CardTitle>
             <Button variant="ghost" size="sm" onClick={() => refetch()}>
               Refresh
             </Button>
@@ -123,9 +188,18 @@ export default function DashboardPage() {
             ) : (
               <>
                 <TransactionList transactions={transactions} isLoading={isLoading} />
-                {hasMore && !isLoading && (
+                {hasMore && !isLoading && transactions.length > 0 && (
                   <div className="mt-4 text-center">
                     <Button variant="outline">Load More</Button>
+                  </div>
+                )}
+                {!isLoading && transactions.length === 0 && rawTransactions.length > 0 && (
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/30 py-12">
+                    <div className="mb-4 text-4xl opacity-50">🔍</div>
+                    <h3 className="text-lg font-medium text-foreground">No matching transactions</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Try adjusting your filters
+                    </p>
                   </div>
                 )}
               </>
@@ -137,3 +211,22 @@ export default function DashboardPage() {
   );
 }
 
+/**
+ * Dashboard page with Suspense boundary for useSearchParams
+ */
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="mb-4 animate-pulse text-4xl">📊</div>
+            <p className="text-muted-foreground">Loading dashboard...</p>
+          </div>
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
+  );
+}

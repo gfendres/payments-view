@@ -261,14 +261,14 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create `FilterPanel` organism
-- [ ] Create `FilterChip` molecule
-- [ ] Create date range picker
-- [ ] Create category selector
-- [ ] Create status selector
+- [x] Create `FilterPanel` organism
+- [x] Create `FilterChip` molecule
+- [x] Create date range picker
+- [x] Create category selector
+- [x] Create status selector
 - [ ] Create amount range input
-- [ ] Implement search bar
-- [ ] Connect filters to use case
+- [x] Implement search bar
+- [x] Connect filters to use case
 
 **Acceptance Criteria**:
 
