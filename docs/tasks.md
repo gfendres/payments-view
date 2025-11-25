@@ -190,13 +190,13 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create HTTP client wrapper
-- [ ] Create transaction mapper (API → Domain)
-- [ ] Create rewards mapper
-- [ ] Create transaction repository implementation
-- [ ] Create rewards repository implementation
-- [ ] Handle API errors gracefully
-- [ ] Implement request retry logic
+- [x] Create HTTP client wrapper
+- [x] Create transaction mapper (API → Domain)
+- [x] Create rewards mapper
+- [x] Create transaction repository implementation
+- [x] Create rewards repository implementation
+- [x] Handle API errors gracefully
+- [x] Implement request retry logic
 - [ ] Add request/response logging
 
 **Acceptance Criteria**:
@@ -214,12 +214,12 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create `ListTransactionsUseCase`
-- [ ] Create `GetTransactionUseCase`
+- [x] Create `ListTransactionsUseCase`
+- [x] Create `GetTransactionUseCase`
 - [ ] Create `FilterTransactionsUseCase`
 - [ ] Create category resolver service
-- [ ] Implement transaction filtering logic
-- [ ] Implement pagination logic
+- [x] Implement transaction filtering logic
+- [x] Implement pagination logic
 
 **Acceptance Criteria**:
 

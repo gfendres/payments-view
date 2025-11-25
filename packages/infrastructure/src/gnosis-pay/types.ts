@@ -40,3 +40,6 @@ export type ApiResult<T> =
   | { success: true; data: T }
   | { success: false; error: ApiErrorResponse };
 
+// Re-export transaction and rewards types
+export * from './types/index';
+
