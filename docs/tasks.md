@@ -266,7 +266,7 @@ Tasks are organized by implementation phases. Each task includes:
 - [x] Create date range picker
 - [x] Create category selector
 - [x] Create status selector
-- [ ] Create amount range input
+- [x] Create amount range input
 - [x] Implement search bar
 - [x] Connect filters to use case
 

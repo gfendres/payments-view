@@ -7,6 +7,7 @@ import { Button, Input } from '@payments-view/ui';
 
 import { CategorySelector } from './category-selector';
 import { DateRangePicker, type DateRange } from './date-range-picker';
+import { AmountRangeInput, type AmountRange } from './amount-range-input';
 import { ActiveFilters } from './filter-chip';
 
 /**
@@ -17,6 +18,7 @@ export interface TransactionFilters {
   categories: CategoryId[];
   dateRange: DateRange;
   status?: TransactionStatus;
+  amountRange: AmountRange;
 }
 
 interface FilterPanelProps {
@@ -75,6 +77,13 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
     [filters, onFiltersChange]
   );
 
+  const handleAmountRangeChange = useCallback(
+    (amountRange: AmountRange) => {
+      onFiltersChange({ ...filters, amountRange });
+    },
+    [filters, onFiltersChange]
+  );
+
   const clearAllFilters = useCallback(() => {
     setSearchValue('');
     onFiltersChange({
@@ -82,6 +91,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
       categories: [],
       dateRange: {},
       status: undefined,
+      amountRange: {},
     });
   }, [onFiltersChange]);
 
@@ -118,6 +128,13 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
       list.push({ key: 'status', label: 'Status', value: statusLabel });
     }
 
+    if (filters.amountRange.min !== undefined || filters.amountRange.max !== undefined) {
+      const min = filters.amountRange.min?.toFixed(2);
+      const max = filters.amountRange.max?.toFixed(2);
+      const value = min && max ? `€${min} - €${max}` : min ? `Min €${min}` : `Max €${max}`;
+      list.push({ key: 'amountRange', label: 'Amount', value });
+    }
+
     return list;
   }, [filters]);
 
@@ -136,6 +153,8 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
         onFiltersChange({ ...filters, dateRange: {} });
       } else if (key === 'status') {
         onFiltersChange({ ...filters, status: undefined });
+      } else if (key === 'amountRange') {
+        onFiltersChange({ ...filters, amountRange: {} });
       }
     },
     [filters, onFiltersChange]
@@ -188,7 +207,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
 
       {/* Expanded filters */}
       {isExpanded && (
-        <div className="grid grid-cols-1 gap-4 rounded-xl border border-border bg-card/50 p-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 rounded-xl border border-border bg-card/50 p-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Category</label>
             <CategorySelector
@@ -200,6 +219,14 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Date Range</label>
             <DateRangePicker value={filters.dateRange} onChange={handleDateRangeChange} />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Amount</label>
+            <AmountRangeInput
+              value={filters.amountRange}
+              onChange={handleAmountRangeChange}
+            />
           </div>
 
           <div className="space-y-2">
