@@ -10,10 +10,12 @@ import { wagmiConfig } from '@/lib/wagmi';
 import { trpc } from '@/lib/trpc';
 import { AuthProvider } from '@/features/auth';
 import { ThemeProvider } from './theme-provider';
+import { ToastProvider } from './toast-provider';
 
 import '@rainbow-me/rainbowkit/styles.css';
 
 export { ThemeProvider, useTheme } from './theme-provider';
+export { ToastProvider, useToast } from './toast-provider';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -77,15 +79,17 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <ThemeProvider defaultTheme="dark">
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <WagmiProvider config={wagmiConfig}>
-            <RainbowKitProvider theme={customTheme} modalSize="compact">
-              <AuthProvider>{children}</AuthProvider>
-            </RainbowKitProvider>
-          </WagmiProvider>
-        </QueryClientProvider>
-      </trpc.Provider>
+      <ToastProvider>
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
+          <QueryClientProvider client={queryClient}>
+            <WagmiProvider config={wagmiConfig}>
+              <RainbowKitProvider theme={customTheme} modalSize="compact">
+                <AuthProvider>{children}</AuthProvider>
+              </RainbowKitProvider>
+            </WagmiProvider>
+          </QueryClientProvider>
+        </trpc.Provider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }
