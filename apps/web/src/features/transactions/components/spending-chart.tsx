@@ -1,10 +1,25 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { BarChart3 } from 'lucide-react';
 import { CATEGORIES, CategoryId } from '@payments-view/constants';
+import { Button } from '@payments-view/ui';
 
 import type { SerializedTransaction } from './transaction-row';
+
+/**
+ * Time period options for filtering
+ */
+type TimePeriod = 'week' | 'month' | 'quarter' | 'year' | 'all';
+
+const TIME_PERIODS: Array<{ value: TimePeriod; label: string }> = [
+  { value: 'week', label: '7D' },
+  { value: 'month', label: '30D' },
+  { value: 'quarter', label: '90D' },
+  { value: 'year', label: '1Y' },
+  { value: 'all', label: 'All' },
+];
 
 interface SpendingChartProps {
   transactions: SerializedTransaction[];
@@ -19,6 +34,43 @@ interface CategorySpending {
   amount: number;
   count: number;
   percentage: number;
+}
+
+/**
+ * Get date threshold for time period
+ */
+function getDateThreshold(period: TimePeriod): Date | undefined {
+  if (period === 'all') return undefined;
+
+  const now = new Date();
+  switch (period) {
+    case 'week':
+      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    case 'month':
+      return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    case 'quarter':
+      return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    case 'year':
+      return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Filter transactions by time period
+ */
+function filterByTimePeriod(
+  transactions: SerializedTransaction[],
+  period: TimePeriod
+): SerializedTransaction[] {
+  const threshold = getDateThreshold(period);
+  if (!threshold) return transactions;
+
+  return transactions.filter((tx) => {
+    const txDate = new Date(tx.createdAt);
+    return txDate >= threshold;
+  });
 }
 
 /**
@@ -89,7 +141,10 @@ function CustomTooltip({
   return (
     <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
       <div className="flex items-center gap-2">
-        <span className="text-xl">{data.icon}</span>
+        <div
+          className="h-3 w-3 rounded-full"
+          style={{ backgroundColor: data.color }}
+        />
         <span className="font-medium">{data.name}</span>
       </div>
       <div className="mt-2 space-y-1 text-sm">
@@ -150,10 +205,52 @@ function CustomLegend({ categories }: { categories: CategorySpending[] }) {
 }
 
 /**
+ * Time period selector component
+ */
+function TimePeriodSelector({
+  value,
+  onChange,
+}: {
+  value: TimePeriod;
+  onChange: (period: TimePeriod) => void;
+}) {
+  return (
+    <div className="flex gap-1 rounded-lg bg-muted p-1">
+      {TIME_PERIODS.map((period) => (
+        <Button
+          key={period.value}
+          type="button"
+          variant={value === period.value ? 'default' : 'ghost'}
+          size="sm"
+          className="h-7 px-3 text-xs"
+          onClick={() => onChange(period.value)}
+        >
+          {period.label}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+/**
  * Spending by category chart component
  */
 export function SpendingChart({ transactions, className }: SpendingChartProps) {
-  const categoryData = useMemo(() => aggregateByCategory(transactions), [transactions]);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
+
+  const handlePeriodChange = useCallback((period: TimePeriod) => {
+    setTimePeriod(period);
+  }, []);
+
+  const filteredTransactions = useMemo(
+    () => filterByTimePeriod(transactions, timePeriod),
+    [transactions, timePeriod]
+  );
+
+  const categoryData = useMemo(
+    () => aggregateByCategory(filteredTransactions),
+    [filteredTransactions]
+  );
 
   const totalSpending = useMemo(
     () => categoryData.reduce((sum, cat) => sum + cat.amount, 0),
@@ -162,19 +259,33 @@ export function SpendingChart({ transactions, className }: SpendingChartProps) {
 
   if (categoryData.length === 0) {
     return (
-      <div className={`flex flex-col items-center justify-center py-12 ${className ?? ''}`}>
-        <div className="mb-3 text-4xl opacity-50">📊</div>
-        <p className="text-sm text-muted-foreground">No spending data available</p>
+      <div className={`flex flex-col ${className ?? ''}`}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-medium text-muted-foreground">Spending by Category</h3>
+          <TimePeriodSelector value={timePeriod} onChange={handlePeriodChange} />
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center py-12">
+          <BarChart3 className="mb-3 h-10 w-10 text-muted-foreground/50" />
+          <p className="text-sm text-muted-foreground">No spending data for this period</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className={className}>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-medium text-muted-foreground">Spending by Category</h3>
+        <TimePeriodSelector value={timePeriod} onChange={handlePeriodChange} />
+      </div>
+
       <div className="mb-4 text-center">
         <p className="text-sm text-muted-foreground">Total Spending</p>
         <p className="text-3xl font-bold">
           €{totalSpending.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {filteredTransactions.length} transactions
         </p>
       </div>
 
@@ -209,4 +320,3 @@ export function SpendingChart({ transactions, className }: SpendingChartProps) {
     </div>
   );
 }
-

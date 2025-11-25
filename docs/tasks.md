@@ -292,7 +292,7 @@ Tasks are organized by implementation phases. Each task includes:
 - [x] Implement pie/donut chart
 - [x] Add chart legend
 - [x] Add tooltip with details
-- [ ] Add time period selector
+- [x] Add time period selector
 - [x] Connect to transaction data
 
 **Acceptance Criteria**:
