@@ -14,3 +14,10 @@ export type {
   TransactionFilterCriteria,
 } from './filter-transactions.use-case';
 
+export { ExportTransactionsUseCase } from './export-transactions.use-case';
+export type {
+  ExportTransactionsInput,
+  ExportTransactionsOutput,
+  ExportFormat,
+} from './export-transactions.use-case';
+

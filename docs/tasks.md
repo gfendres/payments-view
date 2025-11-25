@@ -426,12 +426,12 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create CSV export use case
+- [x] Create CSV export use case
 - [ ] Create PDF export use case
-- [ ] Add export button to UI
-- [ ] Implement date range selection for export
-- [ ] Format data for export
-- [ ] Handle large datasets
+- [x] Add export button to UI
+- [x] Implement date range selection for export
+- [x] Format data for export
+- [x] Handle large datasets
 
 **Acceptance Criteria**:
 

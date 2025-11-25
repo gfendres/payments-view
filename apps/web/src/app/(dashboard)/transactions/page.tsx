@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, Suspense } from 'react';
+import { Download, RefreshCw, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@payments-view/ui';
 import { CATEGORIES } from '@payments-view/constants';
 
@@ -9,11 +10,12 @@ import {
   FilterPanel,
   useTransactions,
   useTransactionFilters,
+  useExportTransactions,
   type SerializedTransaction,
 } from '@/features/transactions';
 
 /**
- * Filter transactions client-side based on search and categories
+ * Filter transactions client-side based on search, categories, and amount
  */
 function filterTransactions(
   transactions: SerializedTransaction[],
@@ -36,12 +38,22 @@ function filterTransactions(
       return false;
     }
 
+    // Amount range filtering
+    const amount = Math.abs(tx.billingAmount.amount);
+    if (filters.amountRange.min !== undefined && amount < filters.amountRange.min) {
+      return false;
+    }
+    if (filters.amountRange.max !== undefined && amount > filters.amountRange.max) {
+      return false;
+    }
+
     return true;
   });
 }
 
 function TransactionsContent() {
   const { filters, setFilters, hasActiveFilters, queryParams } = useTransactionFilters();
+  const { exportToCsv, isExporting } = useExportTransactions();
 
   const {
     transactions: rawTransactions,
@@ -60,11 +72,25 @@ function TransactionsContent() {
     [rawTransactions, filters]
   );
 
+  const handleExport = () => {
+    exportToCsv(transactions);
+  };
+
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Transactions</h1>
-        <p className="text-muted-foreground">View and manage your card transactions</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Transactions</h1>
+          <p className="text-muted-foreground">View and manage your card transactions</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleExport}
+          disabled={isExporting || transactions.length === 0}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       <div className="mb-6">
@@ -75,8 +101,14 @@ function TransactionsContent() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
             {hasActiveFilters ? 'Filtered Transactions' : 'All Transactions'}
+            {transactions.length > 0 && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                ({transactions.length} transactions)
+              </span>
+            )}
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
         </CardHeader>
@@ -110,7 +142,7 @@ export default function TransactionsPage() {
       fallback={
         <div className="flex min-h-[50vh] items-center justify-center">
           <div className="text-center">
-            <div className="mb-4 animate-pulse text-4xl">💳</div>
+            <CreditCard className="mx-auto mb-4 h-10 w-10 animate-pulse text-muted-foreground" />
             <p className="text-muted-foreground">Loading transactions...</p>
           </div>
         </div>
