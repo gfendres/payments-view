@@ -16,6 +16,7 @@ import {
 import { Button } from '@payments-view/ui';
 
 import { WalletButton } from '@/features/auth';
+import { useTheme } from '@/providers';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -38,19 +39,7 @@ const navItems: NavItem[] = [
  * Theme toggle component
  */
 function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'dark';
-    const stored = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return (stored as 'light' | 'dark') || (systemPrefersDark ? 'dark' : 'light');
-  });
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
-    localStorage.setItem('theme', newTheme);
-  };
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   return (
     <Button
@@ -60,7 +49,7 @@ function ThemeToggle() {
       onClick={toggleTheme}
       className="h-9 w-9 p-0"
     >
-      {theme === 'dark' ? (
+      {resolvedTheme === 'dark' ? (
         <Sun className="h-4 w-4" />
       ) : (
         <Moon className="h-4 w-4" />

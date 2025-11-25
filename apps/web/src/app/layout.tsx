@@ -16,13 +16,31 @@ export const metadata: Metadata = {
   description: 'Track your Gnosis Pay card transactions, spending, and cashback rewards',
 };
 
+/**
+ * Script to prevent flash of wrong theme
+ * Runs before React hydration to set the correct theme class
+ */
+const themeScript = `
+  (function() {
+    const stored = localStorage.getItem('theme');
+    const theme = stored === 'light' ? 'light' :
+      stored === 'dark' ? 'dark' :
+      stored === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :
+      'dark';
+    document.documentElement.classList.add(theme);
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={`${outfit.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>

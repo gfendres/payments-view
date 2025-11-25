@@ -9,8 +9,11 @@ import { httpBatchLink } from '@trpc/client';
 import { wagmiConfig } from '@/lib/wagmi';
 import { trpc } from '@/lib/trpc';
 import { AuthProvider } from '@/features/auth';
+import { ThemeProvider } from './theme-provider';
 
 import '@rainbow-me/rainbowkit/styles.css';
+
+export { ThemeProvider, useTheme } from './theme-provider';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -73,14 +76,16 @@ export function Providers({ children }: ProvidersProps) {
   );
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={wagmiConfig}>
-          <RainbowKitProvider theme={customTheme} modalSize="compact">
-            <AuthProvider>{children}</AuthProvider>
-          </RainbowKitProvider>
-        </WagmiProvider>
-      </QueryClientProvider>
-    </trpc.Provider>
+    <ThemeProvider defaultTheme="dark">
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <WagmiProvider config={wagmiConfig}>
+            <RainbowKitProvider theme={customTheme} modalSize="compact">
+              <AuthProvider>{children}</AuthProvider>
+            </RainbowKitProvider>
+          </WagmiProvider>
+        </QueryClientProvider>
+      </trpc.Provider>
+    </ThemeProvider>
   );
 }
