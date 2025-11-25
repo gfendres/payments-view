@@ -216,8 +216,8 @@ Tasks are organized by implementation phases. Each task includes:
 
 - [x] Create `ListTransactionsUseCase`
 - [x] Create `GetTransactionUseCase`
-- [ ] Create `FilterTransactionsUseCase`
-- [ ] Create category resolver service
+- [x] Create `FilterTransactionsUseCase`
+- [x] Create category resolver service
 - [x] Implement transaction filtering logic
 - [x] Implement pagination logic
 

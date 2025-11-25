@@ -7,3 +7,10 @@ export type { GetTransactionInput, GetTransactionOutput } from './get-transactio
 export { GetRewardsUseCase } from './get-rewards.use-case';
 export type { GetRewardsInput, GetRewardsOutput } from './get-rewards.use-case';
 
+export { FilterTransactionsUseCase } from './filter-transactions.use-case';
+export type {
+  FilterTransactionsInput,
+  FilterTransactionsOutput,
+  TransactionFilterCriteria,
+} from './filter-transactions.use-case';
+
