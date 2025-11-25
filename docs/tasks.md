@@ -18,12 +18,12 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Initialize project with `bun init`
-- [ ] Configure Bun workspaces in `package.json`
-- [ ] Create `bunfig.toml` for Bun configuration
-- [ ] Set up root `package.json` with workspace scripts
-- [ ] Set up shared TypeScript configs
-- [ ] Verify Bun workspace resolution works
+- [x] Initialize project with `bun init`
+- [x] Configure Bun workspaces in `package.json`
+- [x] Create `bunfig.toml` for Bun configuration
+- [x] Set up root `package.json` with workspace scripts
+- [x] Set up shared TypeScript configs
+- [x] Verify Bun workspace resolution works
 
 **Acceptance Criteria**:
 
@@ -41,14 +41,14 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create `packages/domain` package
-- [ ] Create `packages/application` package
-- [ ] Create `packages/infrastructure` package
-- [ ] Create `packages/api` package
-- [ ] Create `packages/ui` package
-- [ ] Create `packages/constants` package
-- [ ] Create `apps/web` Next.js app
-- [ ] Set up `package.json` for each package with workspace references
+- [x] Create `packages/domain` package
+- [x] Create `packages/application` package
+- [x] Create `packages/infrastructure` package
+- [x] Create `packages/api` package
+- [x] Create `packages/ui` package
+- [x] Create `packages/constants` package
+- [x] Create `apps/web` Next.js app
+- [x] Set up `package.json` for each package with workspace references
 
 **Acceptance Criteria**:
 
@@ -65,12 +65,12 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Set up root `tsconfig.json` with strict mode
-- [ ] Configure ESLint with all rules from architecture.md
-- [ ] Configure Prettier with Tailwind plugin
-- [ ] Set up VS Code settings and extensions
-- [ ] Configure Husky + lint-staged
-- [ ] Set up commitlint
+- [x] Set up root `tsconfig.json` with strict mode
+- [x] Configure ESLint with all rules from architecture.md
+- [x] Configure Prettier with Tailwind plugin
+- [x] Set up VS Code settings and extensions
+- [x] Configure Husky + lint-staged
+- [x] Set up commitlint
 
 **Acceptance Criteria**:
 
