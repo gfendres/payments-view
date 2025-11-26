@@ -43,14 +43,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     highlight: '[href="/dashboard/rewards"]',
   },
   {
-    id: 'analytics',
-    title: 'Spending Insights',
-    description:
-      'Understand your spending patterns with visual charts. See where your money goes by category and time.',
-    icon: '📊',
-    highlight: '[href="/dashboard/analytics"]',
-  },
-  {
     id: 'export',
     title: 'Export Your Data',
     description:
@@ -157,4 +149,3 @@ export function useOnboarding() {
     closeOnboarding,
   };
 }
-

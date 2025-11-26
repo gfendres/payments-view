@@ -3,17 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  CreditCard,
-  TrendingUp,
-  Settings,
-  Menu,
-  X,
-  Moon,
-  Sun,
-  Gift,
-} from 'lucide-react';
+import { LayoutDashboard, CreditCard, Settings, Menu, X, Moon, Sun, Gift } from 'lucide-react';
 import { Button } from '@payments-view/ui';
 
 import { WalletButton } from '@/features/auth';
@@ -34,7 +24,6 @@ const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/transactions', label: 'Transactions', icon: CreditCard },
   { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
-  { href: '/dashboard/analytics', label: 'Analytics', icon: TrendingUp },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -167,4 +156,3 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     </div>
   );
 }
-
