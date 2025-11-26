@@ -127,19 +127,9 @@ export class ExportTransactionsUseCase {
   execute(input: ExportTransactionsInput): Result<ExportTransactionsOutput, never> {
     const { transactions, format, filename, includeHeaders = true } = input;
 
-    let content: string;
-    let mimeType: string;
-
-    switch (format) {
-      case 'csv':
-        content = generateCsv(transactions, includeHeaders);
-        mimeType = 'text/csv';
-        break;
-      default:
-        content = generateCsv(transactions, includeHeaders);
-        mimeType = 'text/csv';
-    }
-
+    // Only CSV is currently supported; keep logic explicit for future formats
+    const content = generateCsv(transactions, includeHeaders);
+    const mimeType = 'text/csv';
     const finalFilename = filename ?? generateFilename(transactions, format);
 
     return Result.ok({
@@ -149,4 +139,3 @@ export class ExportTransactionsUseCase {
     });
   }
 }
-

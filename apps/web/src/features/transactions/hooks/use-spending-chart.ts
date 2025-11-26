@@ -9,6 +9,7 @@ import type { SerializedTransaction } from '../components/transaction-row';
 
 export type TimePeriod = 'week' | 'month' | 'quarter' | 'year' | 'all';
 export type ViewMode = 'overview' | 'trends';
+export type TrendGrouping = 'week' | 'month' | 'year';
 
 export interface CategorySpending {
   id: CategoryId;
@@ -20,9 +21,9 @@ export interface CategorySpending {
   percentage: number;
 }
 
-export interface WeeklyData {
-  weekLabel: string;
-  weekStart: Date;
+export interface TrendPeriodData {
+  periodLabel: string;
+  periodStart: Date;
   total: number;
   [categoryName: string]: string | number | Date;
 }
@@ -49,6 +50,12 @@ export const TIME_PERIODS: Array<{ value: TimePeriod; label: string }> = [
 export const VIEW_MODES: Array<{ value: ViewMode; label: string }> = [
   { value: 'overview', label: 'Overview' },
   { value: 'trends', label: 'Trends' },
+];
+
+export const TREND_GROUPINGS: Array<{ value: TrendGrouping; label: string }> = [
+  { value: 'week', label: 'Weekly' },
+  { value: 'month', label: 'Monthly' },
+  { value: 'year', label: 'Yearly' },
 ];
 
 // ============================================================================
@@ -96,10 +103,47 @@ function getMonthStart(date: Date): Date {
 }
 
 /**
+ * Get the first day of the year for a given date
+ */
+function getYearStart(date: Date): Date {
+  return new Date(date.getFullYear(), 0, 1);
+}
+
+/**
  * Format week label for display
  */
 function formatWeekLabel(date: Date): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Format period label based on grouping
+ */
+function formatPeriodLabel(date: Date, grouping: TrendGrouping): string {
+  if (grouping === 'week') {
+    return formatWeekLabel(date);
+  }
+
+  if (grouping === 'month') {
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+
+  return date.getFullYear().toString();
+}
+
+/**
+ * Normalize date to start of selected grouping
+ */
+function getPeriodStart(date: Date, grouping: TrendGrouping): Date {
+  if (grouping === 'week') {
+    return getWeekStart(date);
+  }
+
+  if (grouping === 'month') {
+    return getMonthStart(date);
+  }
+
+  return getYearStart(date);
 }
 
 // ============================================================================
@@ -180,41 +224,39 @@ function aggregateByCategory(transactions: SerializedTransaction[]): CategorySpe
 }
 
 /**
- * Aggregate spending by week and category for historical trends
+ * Aggregate spending by period and category for historical trends
  */
-function aggregateByWeekAndCategory(
-  transactions: SerializedTransaction[]
-): WeeklyData[] {
-  const weekMap = new Map<string, Map<string, number>>();
+function aggregateByPeriodAndCategory(
+  transactions: SerializedTransaction[],
+  grouping: TrendGrouping
+): TrendPeriodData[] {
+  const periodMap = new Map<string, Map<string, number>>();
   const spendingTx = filterSpendingTransactions(transactions);
 
-  // Aggregate by week and category
   for (const tx of spendingTx) {
     const date = new Date(tx.createdAt);
-    const weekStart = getWeekStart(date);
-    const weekKey = weekStart.toISOString();
+    const periodStart = getPeriodStart(date, grouping);
+    const periodKey = periodStart.toISOString();
     const categoryName = tx.merchant.category;
 
-    if (!weekMap.has(weekKey)) {
-      weekMap.set(weekKey, new Map());
+    if (!periodMap.has(periodKey)) {
+      periodMap.set(periodKey, new Map());
     }
 
-    const categoryMap = weekMap.get(weekKey)!;
+    const categoryMap = periodMap.get(periodKey)!;
     const existing = categoryMap.get(categoryName) ?? 0;
     categoryMap.set(categoryName, existing + Math.abs(tx.billingAmount.amount));
   }
 
-  // Convert to array and sort by date
-  const result: WeeklyData[] = [];
-  const sortedWeeks = Array.from(weekMap.entries()).sort(
+  const sortedPeriods = Array.from(periodMap.entries()).sort(
     (a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime()
   );
 
-  for (const [weekKey, categoryMap] of sortedWeeks) {
-    const weekStart = new Date(weekKey);
-    const data: WeeklyData = {
-      weekLabel: formatWeekLabel(weekStart),
-      weekStart,
+  return sortedPeriods.map(([periodKey, categoryMap]) => {
+    const periodStart = new Date(periodKey);
+    const data: TrendPeriodData = {
+      periodLabel: formatPeriodLabel(periodStart, grouping),
+      periodStart,
       total: 0,
     };
 
@@ -223,10 +265,8 @@ function aggregateByWeekAndCategory(
       data.total += amount;
     }
 
-    result.push(data);
-  }
-
-  return result;
+    return data;
+  });
 }
 
 /**
@@ -335,22 +375,25 @@ export interface UseSpendingChartOptions {
   transactions: SerializedTransaction[];
   initialTimePeriod?: TimePeriod;
   initialViewMode?: ViewMode;
+  initialTrendGrouping?: TrendGrouping;
 }
 
 export interface UseSpendingChartReturn {
   // State
   timePeriod: TimePeriod;
   viewMode: ViewMode;
+  trendGrouping: TrendGrouping;
 
   // Handlers
   setTimePeriod: (period: TimePeriod) => void;
   setViewMode: (mode: ViewMode) => void;
+  setTrendGrouping: (grouping: TrendGrouping) => void;
 
   // Computed data
   filteredTransactions: SerializedTransaction[];
   categoryData: CategorySpending[];
   totalSpending: number;
-  weeklyData: WeeklyData[];
+  trendData: TrendPeriodData[];
   categoryTrends: CategoryTrend[];
   topCategories: CategorySpending[];
 
@@ -366,17 +409,20 @@ export interface UseSpendingChartReturn {
  * Separates business logic from UI concerns:
  * - Time period filtering
  * - Category aggregation
- * - Weekly/monthly trend calculations
+ * - Weekly/monthly/yearly trend calculations
  * - Forecast predictions
  */
 export function useSpendingChart({
   transactions,
   initialTimePeriod = 'month',
   initialViewMode = 'overview',
+  initialTrendGrouping = 'week',
 }: UseSpendingChartOptions): UseSpendingChartReturn {
   // State
   const [timePeriod, setTimePeriodState] = useState<TimePeriod>(initialTimePeriod);
   const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
+  const [trendGrouping, setTrendGroupingState] =
+    useState<TrendGrouping>(initialTrendGrouping);
 
   // Handlers with useCallback for stable references
   const setTimePeriod = useCallback((period: TimePeriod) => {
@@ -385,6 +431,10 @@ export function useSpendingChart({
 
   const setViewMode = useCallback((mode: ViewMode) => {
     setViewModeState(mode);
+  }, []);
+
+  const setTrendGrouping = useCallback((grouping: TrendGrouping) => {
+    setTrendGroupingState(grouping);
   }, []);
 
   // Computed data with useMemo for performance
@@ -403,9 +453,9 @@ export function useSpendingChart({
     [categoryData]
   );
 
-  const weeklyData = useMemo(
-    () => aggregateByWeekAndCategory(filteredTransactions),
-    [filteredTransactions]
+  const trendData = useMemo(
+    () => aggregateByPeriodAndCategory(filteredTransactions, trendGrouping),
+    [filteredTransactions, trendGrouping]
   );
 
   // Use all transactions for trend calculation (not filtered)
@@ -425,16 +475,18 @@ export function useSpendingChart({
     // State
     timePeriod,
     viewMode,
+    trendGrouping,
 
     // Handlers
     setTimePeriod,
     setViewMode,
+    setTrendGrouping,
 
     // Computed data
     filteredTransactions,
     categoryData,
     totalSpending,
-    weeklyData,
+    trendData,
     categoryTrends,
     topCategories,
 
@@ -444,4 +496,3 @@ export function useSpendingChart({
     daysIntoMonth,
   };
 }
-

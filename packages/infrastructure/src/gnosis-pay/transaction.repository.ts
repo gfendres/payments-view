@@ -78,39 +78,9 @@ export class GnosisPayTransactionRepository implements ITransactionRepository {
       );
     }
 
-    // Debug: Log actual response structure
-    console.log('[TransactionRepo] Response type:', typeof result.data);
-    console.log('[TransactionRepo] Is array:', Array.isArray(result.data));
-    console.log('[TransactionRepo] Keys:', result.data && typeof result.data === 'object' ? Object.keys(result.data) : 'N/A');
-
-    // Handle different API response formats:
-    // 1. Paginated: { count, next, previous, results: [...] }
-    // 2. Array directly: [...]
-    // 3. Wrapper: { data: [...] }
-    interface PaginatedResponse { count?: number; next?: string | null; results?: unknown[] }
-
-    let rawTransactions: unknown[];
-    let apiTotal: number | undefined;
-    let hasMore = false;
-
-    if (Array.isArray(result.data)) {
-      rawTransactions = result.data;
-    } else if ((result.data as PaginatedResponse).results) {
-      // Paginated response format
-      const paginated = result.data as PaginatedResponse;
-      rawTransactions = paginated.results ?? [];
-      apiTotal = paginated.count;
-      hasMore = paginated.next != null;
-    } else {
-      rawTransactions = (result.data as { data?: unknown[] }).data ?? [];
-    }
-
-    const apiTransactions = rawTransactions as ApiTransaction[];
-    const transactions = mapTransactions(apiTransactions);
-
+    const { transactions, total, hasMore } = this.mapApiTransactions(result.data, params);
     const limit = params.limit ?? transactions.length;
     const offset = params.offset ?? 0;
-    const total = apiTotal ?? transactions.length;
 
     return Result.ok({
       transactions,
@@ -119,6 +89,34 @@ export class GnosisPayTransactionRepository implements ITransactionRepository {
       offset,
       hasMore,
     });
+  }
+
+  private mapApiTransactions(
+    data: unknown,
+    _params: TransactionQueryParams
+  ): { transactions: Transaction[]; total: number; hasMore: boolean } {
+    interface PaginatedResponse { count?: number; next?: string | null; results?: unknown[] }
+
+    let rawTransactions: unknown[] = [];
+    let apiTotal: number | undefined;
+    let hasMore = false;
+
+    if (Array.isArray(data)) {
+      rawTransactions = data;
+    } else if ((data as PaginatedResponse).results) {
+      const paginated = data as PaginatedResponse;
+      rawTransactions = paginated.results ?? [];
+      apiTotal = paginated.count;
+      hasMore = paginated.next !== null && paginated.next !== undefined;
+    } else {
+      rawTransactions = (data as { data?: unknown[] }).data ?? [];
+    }
+
+    const apiTransactions = rawTransactions as ApiTransaction[];
+    const transactions = mapTransactions(apiTransactions);
+    const total = apiTotal ?? transactions.length;
+
+    return { transactions, total, hasMore };
   }
 
   /**
@@ -146,4 +144,3 @@ export class GnosisPayTransactionRepository implements ITransactionRepository {
     return Result.ok(mapTransaction(result.data));
   }
 }
-

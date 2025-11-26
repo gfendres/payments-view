@@ -83,7 +83,9 @@ export class CashbackTierInfo {
    */
   get gnoNeededForNextTier(): number {
     if (this.isMaxTier) return 0;
-    return this.maxGnoForCurrentTier! - this._gnoBalance;
+
+    const maxGno = this.maxGnoForCurrentTier;
+    return maxGno !== null ? maxGno - this._gnoBalance : 0;
   }
 
   /**
@@ -93,10 +95,11 @@ export class CashbackTierInfo {
     if (this.isMaxTier) return 100;
 
     const min = this.minGnoForCurrentTier;
-    const max = this.maxGnoForCurrentTier!;
-    const range = max - min;
+    const max = this.maxGnoForCurrentTier;
+    if (max === null) return 100;
 
-    return ((this._gnoBalance - min) / range) * 100;
+    const range = max - min;
+    return range > 0 ? ((this._gnoBalance - min) / range) * 100 : 100;
   }
 
   /**
@@ -116,4 +119,3 @@ export class CashbackTierInfo {
     return this._isOgHolder ? OG_BONUS_RATE : 0;
   }
 }
-

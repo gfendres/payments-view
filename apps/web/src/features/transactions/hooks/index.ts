@@ -8,14 +8,14 @@ export { useTransactionFilters } from './use-transaction-filters';
 
 export { useExportTransactions } from './use-export-transactions';
 
-export { useSpendingChart, TIME_PERIODS, VIEW_MODES } from './use-spending-chart';
+export { useSpendingChart, TIME_PERIODS, VIEW_MODES, TREND_GROUPINGS } from './use-spending-chart';
 export type {
   UseSpendingChartOptions,
   UseSpendingChartReturn,
   CategorySpending,
   CategoryTrend,
-  WeeklyData,
+  TrendPeriodData,
   TimePeriod,
   ViewMode,
+  TrendGrouping,
 } from './use-spending-chart';
-

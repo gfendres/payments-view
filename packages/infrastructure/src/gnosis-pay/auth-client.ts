@@ -27,7 +27,9 @@ export class GnosisPayAuthClient {
   async getNonce(): Promise<ApiResult<NonceResponse>> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, REQUEST_TIMEOUT_MS);
 
       const response = await fetch(
         `${this.baseUrl}${API_CONFIG.GNOSIS_PAY.ENDPOINTS.AUTH_NONCE}`,
@@ -77,13 +79,6 @@ export class GnosisPayAuthClient {
       }
     );
 
-    // Debug logging to see actual API response
-    if (result.success) {
-      console.log('[GnosisPayAuthClient] Challenge response data:', JSON.stringify(result.data));
-      console.log('[GnosisPayAuthClient] Token field:', result.data.token ? `${result.data.token.substring(0, 20)}...` : 'MISSING');
-    }
-
     return result;
   }
 }
-

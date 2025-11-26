@@ -1,6 +1,10 @@
-import { type CashbackTier, CASHBACK_TIER_CONFIG, getTotalCashbackRate } from '@payments-view/constants';
+import {
+  type CashbackTier as CashbackTierEnum,
+  CASHBACK_TIER_CONFIG,
+  getTotalCashbackRate,
+} from '@payments-view/constants';
 
-import { CashbackTierInfo } from '../value-objects/cashback-tier';
+import type { CashbackTierInfo } from '../value-objects/cashback-tier';
 
 /**
  * Transaction data needed for cashback calculation
@@ -38,10 +42,10 @@ export interface CashbackSummary {
  * Tier progress information
  */
 export interface TierProgress {
-  currentTier: CashbackTier;
+  currentTier: CashbackTierEnum;
   currentTierLabel: string;
   currentRate: number;
-  nextTier: CashbackTier | null;
+  nextTier: CashbackTierEnum | null;
   nextTierLabel: string | null;
   nextRate: number | null;
   gnoBalance: number;
@@ -131,7 +135,7 @@ export class CashbackCalculatorService {
     const isMaxTier = tierInfo.isMaxTier;
 
     // Calculate next tier info
-    const nextTier = isMaxTier ? null : ((currentTier + 1) as CashbackTier);
+    const nextTier = isMaxTier ? null : ((currentTier + 1) as CashbackTierEnum);
     const nextTierConfig = nextTier !== null ? CASHBACK_TIER_CONFIG[nextTier] : null;
     const nextRate = nextTier !== null ? getTotalCashbackRate(nextTier, tierInfo.isOgHolder) : null;
 
@@ -184,4 +188,3 @@ export class CashbackCalculatorService {
     return result;
   }
 }
-

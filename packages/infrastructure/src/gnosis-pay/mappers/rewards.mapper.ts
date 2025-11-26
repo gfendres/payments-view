@@ -15,17 +15,6 @@ import type { ApiRewardsResponse } from '../types';
  * so we provide default values for those.
  */
 export function mapRewardsInfo(apiRewards: ApiRewardsResponse): RewardsInfo {
-  // Debug: Log API response
-  console.log('[RewardsMapper] API response:', JSON.stringify(apiRewards));
-  console.log(
-    '[RewardsMapper] isOg:',
-    apiRewards.isOg,
-    'gnoBalance:',
-    apiRewards.gnoBalance,
-    'cashbackRate:',
-    apiRewards.cashbackRate
-  );
-
   // Use API-provided cashbackRate instead of calculating from tier
   // API provides BASE rate; OG bonus (+1%) is added in domain entity
   return RewardsInfo.create({

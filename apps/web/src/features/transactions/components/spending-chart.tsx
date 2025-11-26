@@ -22,8 +22,11 @@ import {
   useSpendingChart,
   TIME_PERIODS,
   VIEW_MODES,
+  TREND_GROUPINGS,
   type CategorySpending,
   type CategoryTrend,
+  type TrendGrouping,
+  type TrendPeriodData,
 } from '../hooks/use-spending-chart';
 
 // ============================================================================
@@ -81,24 +84,32 @@ function PieTooltip({
 }
 
 /**
- * Bar chart tooltip for weekly data
+ * Bar chart tooltip for grouped trend data
  */
-function WeeklyTooltip({
+function PeriodTooltip({
   active,
   payload,
   label,
+  grouping,
 }: {
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
   label?: string;
+  grouping: TrendGrouping;
 }) {
   if (!active || !payload?.length) return null;
 
   const total = payload.reduce((sum, entry) => sum + entry.value, 0);
+  const title = (() => {
+    if (!label) return 'Spending';
+    if (grouping === 'year') return `Year ${label}`;
+    if (grouping === 'month') return `Month of ${label}`;
+    return `Week of ${label}`;
+  })();
 
   return (
     <div className="border-border bg-card rounded-lg border p-3 shadow-lg">
-      <p className="mb-2 font-medium">Week of {label}</p>
+      <p className="mb-2 font-medium">{title}</p>
       <div className="space-y-1 text-sm">
         {payload.map((entry) => (
           <div key={entry.name} className="flex items-center justify-between gap-4">
@@ -270,18 +281,20 @@ function EmptyState() {
  *
  * Displays spending data in two views:
  * - Overview: Pie chart with category breakdown
- * - Trends: Stacked bar chart with weekly data and monthly predictions
+ * - Trends: Stacked bar chart with selectable period data and monthly predictions
  */
 export function SpendingChart({ transactions, className }: SpendingChartProps) {
   const {
     timePeriod,
     viewMode,
+    trendGrouping,
     setTimePeriod,
     setViewMode,
+    setTrendGrouping,
     filteredTransactions,
     categoryData,
     totalSpending,
-    weeklyData,
+    trendData,
     categoryTrends,
     topCategories,
     isEmpty,
@@ -293,12 +306,22 @@ export function SpendingChart({ transactions, className }: SpendingChartProps) {
   const controls = (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
       <SegmentedControl size="sm" options={VIEW_MODES} value={viewMode} onChange={setViewMode} />
-      <SegmentedControl
-        size="sm"
-        options={TIME_PERIODS}
-        value={timePeriod}
-        onChange={setTimePeriod}
-      />
+      <div className="flex flex-wrap gap-2">
+        <SegmentedControl
+          size="sm"
+          options={TIME_PERIODS}
+          value={timePeriod}
+          onChange={setTimePeriod}
+        />
+        {viewMode === 'trends' ? (
+          <SegmentedControl
+            size="sm"
+            options={TREND_GROUPINGS}
+            value={trendGrouping}
+            onChange={setTrendGrouping}
+          />
+        ) : null}
+      </div>
     </div>
   );
 
@@ -324,7 +347,8 @@ export function SpendingChart({ transactions, className }: SpendingChartProps) {
         />
       ) : (
         <TrendsView
-          weeklyData={weeklyData}
+          trendData={trendData}
+          trendGrouping={trendGrouping}
           categoryData={categoryData}
           categoryTrends={categoryTrends}
           topCategories={topCategories}
@@ -399,7 +423,8 @@ function OverviewView({
  * Trends view with stacked bar chart
  */
 function TrendsView({
-  weeklyData,
+  trendData,
+  trendGrouping,
   categoryData,
   categoryTrends,
   topCategories,
@@ -407,7 +432,8 @@ function TrendsView({
   currentMonthName,
   daysIntoMonth,
 }: {
-  weeklyData: Array<Record<string, unknown>>;
+  trendData: TrendPeriodData[];
+  trendGrouping: TrendGrouping;
   categoryData: CategorySpending[];
   categoryTrends: CategoryTrend[];
   topCategories: CategorySpending[];
@@ -415,28 +441,37 @@ function TrendsView({
   currentMonthName: string;
   daysIntoMonth: number;
 }) {
+  const groupingLabel =
+    TREND_GROUPINGS.find((group) => group.value === trendGrouping)?.label ?? 'Weekly';
+  const periodUnit =
+    trendGrouping === 'year' ? 'years' : trendGrouping === 'month' ? 'months' : 'weeks';
+
   return (
     <>
       <div className="mb-4">
-        <p className="text-muted-foreground text-sm">Weekly Spending by Category</p>
+        <p className="text-muted-foreground text-sm">{groupingLabel} Spending by Category</p>
         <p className="text-2xl font-bold">
           €{totalSpending.toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </p>
-        <p className="text-muted-foreground text-xs">{weeklyData.length} weeks</p>
+        <p className="text-muted-foreground text-xs">
+          {trendData.length} {periodUnit}
+        </p>
       </div>
 
-      {weeklyData.length === 0 ? (
+      {trendData.length === 0 ? (
         <div className="flex h-64 flex-col items-center justify-center">
           <BarChart3 className="text-muted-foreground/50 mb-3 h-10 w-10" />
-          <p className="text-muted-foreground text-sm">Not enough data for weekly trends</p>
+          <p className="text-muted-foreground text-sm">
+            Not enough data for {groupingLabel.toLowerCase()} trends
+          </p>
         </div>
       ) : (
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weeklyData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+            <BarChart data={trendData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis
-                dataKey="weekLabel"
+                dataKey="periodLabel"
                 tick={{ fontSize: 11 }}
                 className="text-muted-foreground"
                 tickLine={false}
@@ -451,7 +486,7 @@ function TrendsView({
                   `€${value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}`
                 }
               />
-              <Tooltip content={<WeeklyTooltip />} />
+              <Tooltip content={<PeriodTooltip grouping={trendGrouping} />} />
               <Legend
                 wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
                 iconType="circle"

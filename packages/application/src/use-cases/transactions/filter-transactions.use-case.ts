@@ -56,8 +56,9 @@ export class FilterTransactionsUseCase {
     let filtered = [...transactions];
 
     // Apply search filter
-    if (criteria.search && criteria.search.trim()) {
-      const searchLower = criteria.search.toLowerCase().trim();
+    const searchTerm = criteria.search?.trim();
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter((tx) =>
         tx.merchant.name.toLowerCase().includes(searchLower)
       );
@@ -65,21 +66,23 @@ export class FilterTransactionsUseCase {
     }
 
     // Apply category filter
-    if (criteria.categories && criteria.categories.length > 0) {
+    const categories = criteria.categories;
+    if (categories?.length) {
       filtered = filtered.filter((tx) =>
-        this.categoryResolver.mccMatchesCategories(tx.merchant.mcc, criteria.categories!)
+        this.categoryResolver.mccMatchesCategories(tx.merchant.mcc, categories)
       );
       appliedFilters.push('categories');
     }
 
     // Apply date range filter
-    if (criteria.after) {
-      filtered = filtered.filter((tx) => tx.createdAt >= criteria.after!);
+    const { after, before } = criteria;
+    if (after) {
+      filtered = filtered.filter((tx) => tx.createdAt >= after);
       appliedFilters.push('after');
     }
 
-    if (criteria.before) {
-      filtered = filtered.filter((tx) => tx.createdAt <= criteria.before!);
+    if (before) {
+      filtered = filtered.filter((tx) => tx.createdAt <= before);
       appliedFilters.push('before');
     }
 
@@ -90,13 +93,14 @@ export class FilterTransactionsUseCase {
     }
 
     // Apply amount range filters
-    if (criteria.minAmount !== undefined) {
-      filtered = filtered.filter((tx) => tx.billingAmount.toNumber() >= criteria.minAmount!);
+    const { minAmount, maxAmount } = criteria;
+    if (minAmount !== undefined) {
+      filtered = filtered.filter((tx) => tx.billingAmount.toNumber() >= minAmount);
       appliedFilters.push('minAmount');
     }
 
-    if (criteria.maxAmount !== undefined) {
-      filtered = filtered.filter((tx) => tx.billingAmount.toNumber() <= criteria.maxAmount!);
+    if (maxAmount !== undefined) {
+      filtered = filtered.filter((tx) => tx.billingAmount.toNumber() <= maxAmount);
       appliedFilters.push('maxAmount');
     }
 
@@ -107,4 +111,3 @@ export class FilterTransactionsUseCase {
     });
   }
 }
-
