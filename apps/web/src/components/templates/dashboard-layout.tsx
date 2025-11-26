@@ -130,7 +130,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Footer */}
           <div className="border-t border-border p-4">
-            <WalletButton />
+            <WalletButton redirectTo={undefined} />
           </div>
         </div>
       </aside>
@@ -155,7 +155,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
 
       {/* Onboarding dialog for new users */}

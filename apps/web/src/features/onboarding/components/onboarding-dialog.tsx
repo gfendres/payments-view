@@ -5,6 +5,8 @@ import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
   Button,
 } from '@payments-view/ui';
 
@@ -94,7 +96,13 @@ export function OnboardingDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeOnboarding()}>
-      <DialogContent className="max-w-lg overflow-hidden p-0">
+      <DialogContent className="max-w-lg overflow-hidden p-0" aria-describedby={undefined}>
+        {/* Accessibility: Visually hidden title for screen readers */}
+        <DialogTitle className="sr-only">Welcome to Gnosis Pay Dashboard</DialogTitle>
+        <DialogDescription className="sr-only">
+          An onboarding tour to help you get started with your Gnosis Pay dashboard
+        </DialogDescription>
+
         {/* Progress bar */}
         <div className="h-1 bg-muted">
           <div
