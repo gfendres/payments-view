@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, Suspense } from 'react';
-import { RefreshCw, CreditCard, Calendar, Coins } from 'lucide-react';
+import { useMemo, Suspense, useState } from 'react';
+import { RefreshCw, CreditCard, Calendar, Coins, Download, FileText, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@payments-view/ui';
 import { CATEGORIES } from '@payments-view/constants';
 
@@ -13,6 +13,7 @@ import {
   SpendingChart,
   useTransactions,
   useTransactionFilters,
+  useExportTransactions,
   type SerializedTransaction,
 } from '@/features/transactions';
 
@@ -63,6 +64,8 @@ function filterTransactions(
 function DashboardContent() {
   const { isAuthenticated } = useAuth();
   const { filters, setFilters, hasActiveFilters, queryParams } = useTransactionFilters();
+  const { exportToCsv, exportToPdf, isExporting } = useExportTransactions();
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const {
     transactions: rawTransactions,
@@ -208,10 +211,60 @@ function DashboardContent() {
           <CardTitle>
             {hasActiveFilters ? 'Filtered Transactions' : 'Recent Transactions'}
           </CardTitle>
-          <Button variant="subtle" size="sm" onClick={() => refetch()} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            <span className="hidden sm:inline">Refresh</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowExportMenu((prev) => !prev)}
+                disabled={isExporting || transactions.length === 0}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Export</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              {showExportMenu ? (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
+                  <div className="border-border bg-card absolute right-0 z-50 mt-2 w-48 rounded-lg border shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportToCsv(transactions);
+                        setShowExportMenu(false);
+                      }}
+                      className="hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-left text-sm"
+                    >
+                      <Download className="text-muted-foreground h-4 w-4" />
+                      <div>
+                        <div className="font-medium">Export CSV</div>
+                        <div className="text-muted-foreground text-xs">Spreadsheet format</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportToPdf(transactions);
+                        setShowExportMenu(false);
+                      }}
+                      className="hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-left text-sm"
+                    >
+                      <FileText className="text-muted-foreground h-4 w-4" />
+                      <div>
+                        <div className="font-medium">Export PDF</div>
+                        <div className="text-muted-foreground text-xs">Printable report</div>
+                      </div>
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </div>
+            <Button variant="subtle" size="sm" onClick={() => refetch()} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {error ? (
