@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Wallet } from 'lucide-react';
+import { Wallet, Copy, Check } from 'lucide-react';
 import { Button } from '@payments-view/ui';
 
 import { useAuth } from '../hooks/use-auth';
@@ -22,6 +22,9 @@ interface WalletButtonProps {
 export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }: WalletButtonProps) {
   const router = useRouter();
   const { isAuthenticated, isLoading, isConnected, signIn, signOut } = useAuth();
+  const [copied, setCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Redirect when authenticated
   useEffect(() => {
@@ -33,6 +36,31 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
   const handleSignIn = useCallback(async () => {
     await signIn();
   }, [signIn]);
+
+  const handleCopy = useCallback(
+    async (address: string) => {
+      try {
+        await navigator.clipboard.writeText(address);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      } catch {
+        // no-op
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const isHero = variant === 'hero';
 
@@ -122,26 +150,55 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
 
               // Authenticated - show account info
               return (
-                <div className="flex items-center gap-3">
+                <div className="relative" ref={menuRef}>
                   <button
-                    onClick={openChainModal}
-                    className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary/80"
+                    onClick={() => setMenuOpen((prev) => !prev)}
+                    className="flex min-w-0 items-center gap-2 rounded-2xl bg-secondary px-3 py-2 text-sm font-semibold transition-colors hover:bg-secondary/80"
                     type="button"
+                    title={chain.name}
                   >
                     {chain.hasIcon && chain.iconUrl && (
                       <Image
                         src={chain.iconUrl}
                         alt={chain.name ?? 'Chain icon'}
-                        width={16}
-                        height={16}
+                        width={18}
+                        height={18}
                         className="rounded-full"
                       />
                     )}
-                    {chain.name}
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-foreground">{chain.name}</span>
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {account.address.slice(0, 5)}
+                      </span>
+                    </div>
                   </button>
-                  <Button onClick={signOut} variant="outline" size="default">
-                    {formatAddress(account.address)}
-                  </Button>
+
+                  {menuOpen ? (
+                    <div className="absolute left-0 mt-2 w-64 rounded-2xl border border-border bg-card p-3 shadow-xl">
+                      <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2">
+                        <span className="font-mono text-sm text-foreground truncate">
+                          {formatAddress(account.address)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(account.address)}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label="Copy address"
+                        >
+                          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <Button
+                        onClick={signOut}
+                        variant="outline"
+                        size="default"
+                        className="mt-3 w-full justify-center"
+                      >
+                        Disconnect
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               );
             })()}

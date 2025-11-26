@@ -27,6 +27,8 @@ import {
   type CategoryTrend,
   type TrendGrouping,
   type TrendPeriodData,
+  type TimePeriod,
+  type ViewMode,
 } from '../hooks/use-spending-chart';
 
 // ============================================================================
@@ -36,6 +38,10 @@ import {
 interface SpendingChartProps {
   transactions: SerializedTransaction[];
   className?: string;
+  showTimeControls?: boolean;
+  initialTimePeriod?: TimePeriod;
+  initialViewMode?: ViewMode;
+  initialTrendGrouping?: TrendGrouping;
 }
 
 // ============================================================================
@@ -283,7 +289,14 @@ function EmptyState() {
  * - Overview: Pie chart with category breakdown
  * - Trends: Stacked bar chart with selectable period data and monthly predictions
  */
-export function SpendingChart({ transactions, className }: SpendingChartProps) {
+export function SpendingChart({
+  transactions,
+  className,
+  showTimeControls = true,
+  initialTimePeriod,
+  initialViewMode,
+  initialTrendGrouping,
+}: SpendingChartProps) {
   const {
     timePeriod,
     viewMode,
@@ -300,28 +313,35 @@ export function SpendingChart({ transactions, className }: SpendingChartProps) {
     isEmpty,
     currentMonthName,
     daysIntoMonth,
-  } = useSpendingChart({ transactions });
+  } = useSpendingChart({
+    transactions,
+    initialTimePeriod,
+    initialViewMode,
+    initialTrendGrouping,
+  });
 
   // Controls (shared between views)
   const controls = (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
       <SegmentedControl size="sm" options={VIEW_MODES} value={viewMode} onChange={setViewMode} />
-      <div className="flex flex-wrap gap-2">
-        <SegmentedControl
-          size="sm"
-          options={TIME_PERIODS}
-          value={timePeriod}
-          onChange={setTimePeriod}
-        />
-        {viewMode === 'trends' ? (
+      {showTimeControls ? (
+        <div className="flex flex-wrap gap-2">
           <SegmentedControl
             size="sm"
-            options={TREND_GROUPINGS}
-            value={trendGrouping}
-            onChange={setTrendGrouping}
+            options={TIME_PERIODS}
+            value={timePeriod}
+            onChange={setTimePeriod}
           />
-        ) : null}
-      </div>
+          {viewMode === 'trends' ? (
+            <SegmentedControl
+              size="sm"
+              options={TREND_GROUPINGS}
+              value={trendGrouping}
+              onChange={setTrendGrouping}
+            />
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 

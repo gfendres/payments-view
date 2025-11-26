@@ -70,13 +70,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform border-r border-border bg-card transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 min-w-[16rem] max-w-[16rem] flex-none transform transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col bg-background">
           {/* Logo/Header */}
-          <div className="flex h-16 items-center justify-between border-b border-border px-6">
+          <div className="flex h-16 items-center justify-between px-6">
             <Link href="/dashboard" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <CreditCard className="h-5 w-5" />
@@ -92,6 +92,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               <X className="h-5 w-5" />
             </Button>
+          </div>
+
+          {/* Wallet action at top */}
+          <div className="p-4">
+            <WalletButton redirectTo={undefined} />
           </div>
 
           {/* Navigation */}
@@ -120,18 +125,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               );
             })}
           </nav>
-
-          {/* Footer */}
-          <div className="border-t border-border p-4">
-            <WalletButton redirectTo={undefined} />
-          </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col lg:ml-0">
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-0">
         {/* Top header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-sm px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-background px-6">
           <Button
             type="button"
             variant="ghost"

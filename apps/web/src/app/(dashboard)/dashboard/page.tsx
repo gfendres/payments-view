@@ -24,6 +24,16 @@ function filterTransactions(
   filters: ReturnType<typeof useTransactionFilters>['filters']
 ): SerializedTransaction[] {
   return transactions.filter((tx) => {
+    const txDate = new Date(tx.createdAt);
+
+    // Date range filter
+    if (filters.dateRange.from && txDate < filters.dateRange.from) {
+      return false;
+    }
+    if (filters.dateRange.to && txDate > filters.dateRange.to) {
+      return false;
+    }
+
     // Search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
@@ -123,9 +133,15 @@ function DashboardContent() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Overview</h1>
-        <p className="text-muted-foreground">Track your spending and cashback rewards</p>
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-bold">Overview</h1>
+          <p className="text-muted-foreground">Track your spending and cashback rewards</p>
+        </div>
+
+        <div className="space-y-3 rounded-2xl border border-border bg-card/50 p-4 shadow-sm">
+          <FilterPanel filters={filters} onFiltersChange={setFilters} />
+        </div>
       </div>
 
       {/* Stats and Chart Row */}
@@ -177,14 +193,13 @@ function DashboardContent() {
             <CardTitle>Spending by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <SpendingChart transactions={transactions} />
+            <SpendingChart
+              transactions={transactions}
+              showTimeControls={false}
+              initialTimePeriod="all"
+            />
           </CardContent>
         </Card>
-      </div>
-
-      {/* Filters */}
-      <div>
-        <FilterPanel filters={filters} onFiltersChange={setFilters} />
       </div>
 
       {/* Transactions Section */}
@@ -248,4 +263,3 @@ export default function DashboardOverviewPage() {
     </Suspense>
   );
 }
-
