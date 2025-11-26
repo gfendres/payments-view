@@ -2,7 +2,6 @@ import { API_CONFIG } from '@payments-view/constants';
 
 import { GnosisPayClient } from './client';
 import type {
-  ApiTransactionsResponse,
   ApiTransaction,
   TransactionQueryParams,
 } from './types';
@@ -45,6 +44,10 @@ function buildQueryString(params: TransactionQueryParams): string {
 
 /**
  * Gnosis Pay transaction API client
+ *
+ * Note: The /api/v1/transactions endpoint returns an array directly,
+ * NOT a paginated response object.
+ * Docs: https://docs.gnosispay.com/api-reference/transactions/list-transactions-without-pagination
  */
 export class GnosisPayTransactionClient {
   private readonly client: GnosisPayClient;
@@ -55,15 +58,16 @@ export class GnosisPayTransactionClient {
 
   /**
    * Get list of transactions
+   * Returns array directly (not paginated response)
    */
   async getTransactions(
     token: string,
     params: TransactionQueryParams = {}
-  ): Promise<ApiResult<ApiTransactionsResponse>> {
+  ): Promise<ApiResult<ApiTransaction[]>> {
     const queryString = buildQueryString(params);
     const endpoint = `${API_CONFIG.GNOSIS_PAY.ENDPOINTS.TRANSACTIONS}${queryString}`;
 
-    return this.client.request<ApiTransactionsResponse>(endpoint, { token });
+    return this.client.request<ApiTransaction[]>(endpoint, { token });
   }
 
   /**

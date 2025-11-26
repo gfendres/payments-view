@@ -1,32 +1,39 @@
-import { type CurrencyCode, CurrencyCode as CurrencyCodeEnum } from '@payments-view/constants';
+import { CurrencyCode } from '@payments-view/constants';
 import { RewardsInfo, Money } from '@payments-view/domain';
 
 import type { ApiRewardsResponse } from '../types';
 
 /**
  * Map API rewards response to domain RewardsInfo entity
+ *
+ * Note: The Gnosis Pay API only returns 3 fields:
+ * - isOg: boolean (OG NFT holder status)
+ * - gnoBalance: number (GNO token balance)
+ * - cashbackRate: number (BASE cashback rate %, add 1% for OG holders)
+ *
+ * Our domain entity expects additional fields that don't exist in the API,
+ * so we provide default values for those.
  */
 export function mapRewardsInfo(apiRewards: ApiRewardsResponse): RewardsInfo {
-  const totalCurrency = apiRewards.totalEarned.currency || CurrencyCodeEnum.EUR;
-  const totalEarned = Money.create(
-    apiRewards.totalEarned.value,
-    totalCurrency as CurrencyCode,
-    apiRewards.totalEarned.decimals
+  // Debug: Log API response
+  console.log('[RewardsMapper] API response:', JSON.stringify(apiRewards));
+  console.log(
+    '[RewardsMapper] isOg:',
+    apiRewards.isOg,
+    'gnoBalance:',
+    apiRewards.gnoBalance,
+    'cashbackRate:',
+    apiRewards.cashbackRate
   );
 
-  const monthCurrency = apiRewards.earnedThisMonth.currency || CurrencyCodeEnum.EUR;
-  const earnedThisMonth = Money.create(
-    apiRewards.earnedThisMonth.value,
-    monthCurrency as CurrencyCode,
-    apiRewards.earnedThisMonth.decimals
-  );
-
+  // Use API-provided cashbackRate instead of calculating from tier
+  // API provides BASE rate; OG bonus (+1%) is added in domain entity
   return RewardsInfo.create({
-    gnoBalance: parseFloat(apiRewards.gnoBalance),
-    isOgHolder: apiRewards.isOgHolder,
-    totalEarned,
-    earnedThisMonth,
-    eligibleTransactionCount: apiRewards.eligibleTransactionCount,
+    gnoBalance: apiRewards.gnoBalance,
+    isOgHolder: apiRewards.isOg, // Note: API uses "isOg", not "isOgHolder"
+    apiCashbackRate: apiRewards.cashbackRate, // BASE rate from API
+    totalEarned: Money.zero(CurrencyCode.EUR),
+    earnedThisMonth: Money.zero(CurrencyCode.EUR),
+    eligibleTransactionCount: 0,
   });
 }
-

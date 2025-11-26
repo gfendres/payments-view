@@ -5,6 +5,8 @@ import { Download, RefreshCw, CreditCard, List, LayoutGrid, FileText, ChevronDow
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@payments-view/ui';
 import { CATEGORIES } from '@payments-view/constants';
 
+import { SegmentedControl } from '@/components/atoms';
+import { useAuth } from '@/features/auth';
 import {
   TransactionList,
   VirtualTransactionList,
@@ -58,6 +60,7 @@ function filterTransactions(
 }
 
 function TransactionsContent() {
+  const { isAuthenticated } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('virtual');
   const [currentPage, setCurrentPage] = useState(1);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -75,7 +78,7 @@ function TransactionsContent() {
     refetch,
   } = usePaginatedTransactions({
     pageSize: PAGE_SIZE,
-    enabled: true,
+    enabled: isAuthenticated,
     ...queryParams,
   });
 
@@ -115,29 +118,18 @@ function TransactionsContent() {
         </div>
         <div className="flex items-center gap-2">
           {/* View Mode Toggle */}
-          <div className="flex rounded-lg border border-border bg-muted p-1">
-            <Button
-              variant={viewMode === 'virtual' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('virtual')}
-              className="h-7 px-2"
-              title="Infinite scroll"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'paginated' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => {
-                setViewMode('paginated');
-                setCurrentPage(1);
-              }}
-              className="h-7 px-2"
-              title="Paginated view"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-          </div>
+          <SegmentedControl
+            size="sm"
+            options={[
+              { value: 'virtual', label: null, icon: <List className="h-4 w-4" /> },
+              { value: 'paginated', label: null, icon: <LayoutGrid className="h-4 w-4" /> },
+            ]}
+            value={viewMode}
+            onChange={(val) => {
+              setViewMode(val);
+              if (val === 'paginated') setCurrentPage(1);
+            }}
+          />
           {/* Export Dropdown */}
           <div className="relative">
             <Button
@@ -151,31 +143,28 @@ function TransactionsContent() {
             </Button>
             {showExportMenu && (
               <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowExportMenu(false)}
-                />
-                <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-border bg-card shadow-lg">
+                <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
+                <div className="border-border bg-card absolute right-0 z-50 mt-2 w-48 rounded-lg border shadow-lg">
                   <button
                     type="button"
                     onClick={handleExportCsv}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted"
+                    className="hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-left text-sm"
                   >
-                    <Download className="h-4 w-4 text-muted-foreground" />
+                    <Download className="text-muted-foreground h-4 w-4" />
                     <div>
                       <div className="font-medium">Export CSV</div>
-                      <div className="text-xs text-muted-foreground">Spreadsheet format</div>
+                      <div className="text-muted-foreground text-xs">Spreadsheet format</div>
                     </div>
                   </button>
                   <button
                     type="button"
                     onClick={handleExportPdf}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted"
+                    className="hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-left text-sm"
                   >
-                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <FileText className="text-muted-foreground h-4 w-4" />
                     <div>
                       <div className="font-medium">Export PDF</div>
-                      <div className="text-xs text-muted-foreground">Printable report</div>
+                      <div className="text-muted-foreground text-xs">Printable report</div>
                     </div>
                   </button>
                 </div>
@@ -194,19 +183,20 @@ function TransactionsContent() {
           <CardTitle>
             {hasActiveFilters ? 'Filtered Transactions' : 'All Transactions'}
             {transactions.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                ({transactions.length}{total > transactions.length ? `+` : ''} transactions)
+              <span className="text-muted-foreground ml-2 text-sm font-normal">
+                ({transactions.length}
+                {total > transactions.length ? `+` : ''} transactions)
               </span>
             )}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+          <Button variant="subtle" size="sm" onClick={() => refetch()} className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </CardHeader>
         <CardContent>
           {error ? (
-            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+            <div className="border-destructive/50 bg-destructive/10 rounded-lg border p-4 text-center">
               <p className="text-destructive">{error}</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">
                 Try Again

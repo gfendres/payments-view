@@ -1,8 +1,9 @@
 export type {
-  ApiAmount,
+  ApiCountry,
+  ApiCurrency,
   ApiMerchant,
+  ApiOnChainTransaction,
   ApiTransaction,
-  ApiTransactionsResponse,
   TransactionQueryParams,
 } from './transaction.types';
 

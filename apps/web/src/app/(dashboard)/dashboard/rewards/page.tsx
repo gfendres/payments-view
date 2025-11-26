@@ -4,8 +4,65 @@ import { Suspense, useMemo } from 'react';
 import { Gift, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Skeleton } from '@payments-view/ui';
 
-import { useRewards, CashbackSummary, TierProgress } from '@/features/rewards';
-import { useTransactions, TransactionList } from '@/features/transactions';
+import { useAuth } from '@/features/auth';
+import { useRewards, CashbackSummary, TierProgress, type CashbackStats } from '@/features/rewards';
+import {
+  useTransactions,
+  TransactionList,
+  type SerializedTransaction,
+} from '@/features/transactions';
+
+/**
+ * Calculate cashback stats from transactions
+ */
+function calculateCashbackStats(
+  transactions: SerializedTransaction[],
+  cashbackRate: number
+): CashbackStats {
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const thisYear = now.getFullYear();
+  const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+  const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+  // Filter eligible transactions
+  const eligible = transactions.filter((tx) => tx.isEligibleForCashback);
+
+  // This month's eligible
+  const eligibleThisMonth = eligible.filter((tx) => {
+    const date = new Date(tx.createdAt);
+    return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+  });
+
+  // Last month's eligible
+  const eligibleLastMonth = eligible.filter((tx) => {
+    const date = new Date(tx.createdAt);
+    return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
+  });
+
+  // Calculate spending amounts (absolute values)
+  const spendingThisMonth = eligibleThisMonth.reduce(
+    (sum, tx) => sum + Math.abs(tx.billingAmount.amount),
+    0
+  );
+  const spendingLastMonth = eligibleLastMonth.reduce(
+    (sum, tx) => sum + Math.abs(tx.billingAmount.amount),
+    0
+  );
+  const totalSpending = eligible.reduce((sum, tx) => sum + Math.abs(tx.billingAmount.amount), 0);
+
+  // Estimate cashback earned (spending * rate / 100)
+  const rate = cashbackRate / 100;
+
+  return {
+    totalEarned: totalSpending * rate,
+    earnedThisMonth: spendingThisMonth * rate,
+    earnedLastMonth: spendingLastMonth * rate,
+    eligibleThisMonth: eligibleThisMonth.length,
+    eligibleLastMonth: eligibleLastMonth.length,
+    totalEligible: eligible.length,
+  };
+}
 
 /**
  * Loading skeleton for rewards page
@@ -47,11 +104,11 @@ function RewardsError({ message, onRetry }: { message: string; onRetry: () => vo
     <div className="p-6">
       <Card className="border-destructive/50">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <div className="mb-4 rounded-full bg-destructive/20 p-4">
-            <Gift className="h-8 w-8 text-destructive" />
+          <div className="bg-destructive/20 mb-4 rounded-full p-4">
+            <Gift className="text-destructive h-8 w-8" />
           </div>
           <h3 className="text-lg font-medium">Failed to load rewards</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{message}</p>
+          <p className="text-muted-foreground mt-1 text-sm">{message}</p>
           <Button variant="outline" onClick={onRetry} className="mt-4">
             <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
@@ -66,10 +123,25 @@ function RewardsError({ message, onRetry }: { message: string; onRetry: () => vo
  * Rewards page content
  */
 function RewardsContent() {
-  const { rewards, isLoading: isLoadingRewards, error, refetch } = useRewards();
-  const { transactions, isLoading: isLoadingTransactions } = useTransactions({ limit: 50 });
+  const { isAuthenticated } = useAuth();
+  const {
+    rewards,
+    isLoading: isLoadingRewards,
+    error,
+    refetch,
+  } = useRewards({ enabled: isAuthenticated });
+  const { transactions, isLoading: isLoadingTransactions } = useTransactions({
+    limit: 50,
+    enabled: isAuthenticated,
+  });
 
-  // Filter eligible transactions
+  // Calculate cashback stats from transactions
+  const cashbackStats = useMemo(() => {
+    if (!rewards) return undefined;
+    return calculateCashbackStats(transactions, rewards.currentRate);
+  }, [transactions, rewards]);
+
+  // Filter eligible transactions for the list
   const eligibleTransactions = useMemo(() => {
     return transactions.filter((tx) => tx.isEligibleForCashback);
   }, [transactions]);
@@ -88,18 +160,16 @@ function RewardsContent() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Rewards</h1>
-          <p className="text-muted-foreground">
-            Track your cashback earnings and tier progress
-          </p>
+          <p className="text-muted-foreground">Track your cashback earnings and tier progress</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh
+        <Button variant="subtle" size="sm" onClick={() => refetch()} className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 
       {/* Cashback Summary */}
-      <CashbackSummary rewards={rewards} />
+      <CashbackSummary rewards={rewards} stats={cashbackStats} />
 
       {/* Tier Progress */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -109,35 +179,35 @@ function RewardsContent() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-primary" />
+              <Gift className="text-primary h-5 w-5" />
               Maximize Your Rewards
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                <div className="bg-primary mt-1 h-2 w-2 rounded-full" />
                 <div>
                   <p className="font-medium">Hold more GNO</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Increase your GNO balance to unlock higher cashback tiers
                   </p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                <div className="bg-primary mt-1 h-2 w-2 rounded-full" />
                 <div>
                   <p className="font-medium">Use your card regularly</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     All card payments are eligible for cashback rewards
                   </p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                <div className="bg-primary mt-1 h-2 w-2 rounded-full" />
                 <div>
                   <p className="font-medium">OG NFT Holder Bonus</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     OG NFT holders receive an additional +1% cashback on all purchases
                   </p>
                 </div>
@@ -149,7 +219,7 @@ function RewardsContent() {
                     <p className="font-medium text-emerald-500">
                       {rewards.tier.gnoNeededForNextTier.toFixed(2)} GNO to next tier
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       Upgrade to earn {rewards.tier.nextTierRate}% cashback
                     </p>
                   </div>
@@ -164,7 +234,7 @@ function RewardsContent() {
       <Card>
         <CardHeader>
           <CardTitle>Eligible Transactions</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Recent transactions that earned cashback rewards
           </p>
         </CardHeader>
@@ -173,7 +243,7 @@ function RewardsContent() {
             <div className="flex flex-col items-center justify-center py-12">
               <div className="mb-4 text-4xl opacity-50">🧾</div>
               <p className="text-lg font-medium">No eligible transactions yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-sm">
                 Use your Gnosis Pay card to earn cashback rewards
               </p>
             </div>

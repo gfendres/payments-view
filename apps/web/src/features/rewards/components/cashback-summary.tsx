@@ -3,48 +3,50 @@
 import { Wallet, Coins, Receipt, TrendingUp, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@payments-view/ui';
 
+import { StatCard } from '@/components/molecules';
 import type { SerializedRewards } from '../hooks';
+
+/**
+ * Calculated cashback stats from transactions
+ */
+export interface CashbackStats {
+  totalEarned: number;
+  earnedThisMonth: number;
+  earnedLastMonth: number;
+  eligibleThisMonth: number;
+  eligibleLastMonth: number;
+  totalEligible: number;
+}
 
 interface CashbackSummaryProps {
   rewards: SerializedRewards;
+  stats?: CashbackStats;
   className?: string;
 }
 
-interface StatCardProps {
-  title: string;
-  value: string;
-  subtitle?: string;
-  icon: React.ReactNode;
-  iconColor?: string;
-}
-
 /**
- * Individual stat card component
+ * Format currency for display
  */
-function StatCard({ title, value, subtitle, icon, iconColor = 'text-primary' }: StatCardProps) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="mt-1 text-2xl font-bold">{value}</p>
-            {subtitle && (
-              <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
-            )}
-          </div>
-          <div className={`rounded-xl bg-muted p-3 ${iconColor}`}>{icon}</div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+function formatCurrency(amount: number): string {
+  return `€${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 /**
  * Cashback Summary component
  * Displays overview of cashback earnings and stats
  */
-export function CashbackSummary({ rewards, className }: CashbackSummaryProps) {
+export function CashbackSummary({ rewards, stats, className }: CashbackSummaryProps) {
+  // Use calculated stats if provided, otherwise use API values
+  const totalEarned = stats?.totalEarned ?? rewards.totalEarned.amount;
+  const earnedThisMonth = stats?.earnedThisMonth ?? rewards.earnedThisMonth.amount;
+  const earnedLastMonth = stats?.earnedLastMonth ?? 0;
+  const eligibleCount = stats?.totalEligible ?? rewards.eligibleTransactionCount;
+  const eligibleThisMonth = stats?.eligibleThisMonth ?? 0;
+  const eligibleLastMonth = stats?.eligibleLastMonth ?? 0;
+
   return (
     <div className={className}>
       <div className="mb-6">
@@ -53,20 +55,20 @@ export function CashbackSummary({ rewards, className }: CashbackSummaryProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Total Earnings */}
+        {/* Total Earnings - Featured */}
         <Card className="sm:col-span-2 lg:col-span-2">
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Cashback Earned</p>
+                <p className="text-muted-foreground text-sm">Total Cashback Earned</p>
                 <p className="mt-1 text-4xl font-bold text-emerald-500">
-                  {rewards.totalEarned.formatted}
+                  {formatCurrency(totalEarned)}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Lifetime earnings from all transactions
                 </p>
               </div>
-              <div className="rounded-xl bg-emerald-500/20 p-4 text-emerald-500">
+              <div className="shrink-0 rounded-xl bg-emerald-500/20 p-4 text-emerald-500">
                 <Coins className="h-8 w-8" />
               </div>
             </div>
@@ -76,10 +78,19 @@ export function CashbackSummary({ rewards, className }: CashbackSummaryProps) {
         {/* This Month */}
         <StatCard
           title="Earned This Month"
-          value={rewards.earnedThisMonth.formatted}
+          value={formatCurrency(earnedThisMonth)}
           subtitle={new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
           icon={<Calendar className="h-5 w-5" />}
-          iconColor="text-blue-500"
+          iconColor="blue"
+          trend={
+            earnedLastMonth > 0 || earnedThisMonth > 0
+              ? {
+                  value: earnedThisMonth,
+                  previousValue: earnedLastMonth,
+                  period: 'last month',
+                }
+              : undefined
+          }
         />
 
         {/* Current Rate */}
@@ -88,57 +99,48 @@ export function CashbackSummary({ rewards, className }: CashbackSummaryProps) {
           value={`${rewards.currentRate}%`}
           subtitle={`${rewards.baseRate}% base${rewards.isOgHolder ? ' + 1% OG' : ''}`}
           icon={<TrendingUp className="h-5 w-5" />}
-          iconColor="text-violet-500"
+          iconColor="violet"
         />
       </div>
 
       {/* Secondary Stats Row */}
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {/* GNO Balance */}
-        <Card>
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-xl bg-amber-500/20 p-3 text-amber-500">
-              <Wallet className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">GNO Balance</p>
-              <p className="text-lg font-bold">
-                {rewards.gnoBalance.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          layout="horizontal"
+          title="GNO Balance"
+          value={rewards.gnoBalance.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+          icon={<Wallet className="h-5 w-5" />}
+          iconColor="amber"
+        />
 
-        {/* Eligible Transactions */}
-        <Card>
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-xl bg-cyan-500/20 p-3 text-cyan-500">
-              <Receipt className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Eligible Transactions</p>
-              <p className="text-lg font-bold">{rewards.eligibleTransactionCount}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          layout="horizontal"
+          title="Eligible Transactions"
+          value={eligibleCount}
+          icon={<Receipt className="h-5 w-5" />}
+          iconColor="cyan"
+          trend={
+            eligibleLastMonth > 0 || eligibleThisMonth > 0
+              ? {
+                  value: eligibleThisMonth,
+                  previousValue: eligibleLastMonth,
+                  period: 'last month',
+                }
+              : undefined
+          }
+        />
 
-        {/* Tier Status */}
-        <Card>
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-xl bg-violet-500/20 p-3 text-violet-500">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Current Tier</p>
-              <p className="text-lg font-bold">{rewards.tierLabel}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          layout="horizontal"
+          title="Current Tier"
+          value={rewards.tierLabel}
+          icon={<TrendingUp className="h-5 w-5" />}
+          iconColor="violet"
+        />
       </div>
     </div>
   );
 }
-

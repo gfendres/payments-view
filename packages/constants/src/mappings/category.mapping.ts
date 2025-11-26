@@ -1,12 +1,28 @@
 import { CategoryId } from '../enums/category-id.enum';
 
 /**
+ * Icon names that map to Lucide icons
+ */
+export type CategoryIconName =
+  | 'shopping-cart'
+  | 'utensils'
+  | 'car'
+  | 'shopping-bag'
+  | 'plane'
+  | 'film'
+  | 'heart-pulse'
+  | 'lightbulb'
+  | 'smartphone'
+  | 'landmark'
+  | 'package';
+
+/**
  * Category configuration with display information
  */
 export interface CategoryConfig {
   id: CategoryId;
   name: string;
-  icon: string;
+  icon: CategoryIconName;
   color: string;
 }
 
@@ -17,67 +33,67 @@ export const CATEGORIES: Record<CategoryId, CategoryConfig> = {
   [CategoryId.GROCERIES]: {
     id: CategoryId.GROCERIES,
     name: 'Groceries',
-    icon: '🛒',
+    icon: 'shopping-cart',
     color: '#22c55e',
   },
   [CategoryId.DINING]: {
     id: CategoryId.DINING,
     name: 'Dining',
-    icon: '🍽️',
+    icon: 'utensils',
     color: '#f97316',
   },
   [CategoryId.TRANSPORT]: {
     id: CategoryId.TRANSPORT,
     name: 'Transport',
-    icon: '🚗',
+    icon: 'car',
     color: '#3b82f6',
   },
   [CategoryId.SHOPPING]: {
     id: CategoryId.SHOPPING,
     name: 'Shopping',
-    icon: '🛍️',
+    icon: 'shopping-bag',
     color: '#a855f7',
   },
   [CategoryId.TRAVEL]: {
     id: CategoryId.TRAVEL,
     name: 'Travel',
-    icon: '✈️',
+    icon: 'plane',
     color: '#06b6d4',
   },
   [CategoryId.ENTERTAINMENT]: {
     id: CategoryId.ENTERTAINMENT,
     name: 'Entertainment',
-    icon: '🎬',
+    icon: 'film',
     color: '#ec4899',
   },
   [CategoryId.HEALTH]: {
     id: CategoryId.HEALTH,
     name: 'Health',
-    icon: '💊',
+    icon: 'heart-pulse',
     color: '#14b8a6',
   },
   [CategoryId.UTILITIES]: {
     id: CategoryId.UTILITIES,
     name: 'Utilities',
-    icon: '💡',
+    icon: 'lightbulb',
     color: '#64748b',
   },
   [CategoryId.DIGITAL]: {
     id: CategoryId.DIGITAL,
     name: 'Digital',
-    icon: '📲',
+    icon: 'smartphone',
     color: '#8b5cf6',
   },
   [CategoryId.ATM]: {
     id: CategoryId.ATM,
     name: 'ATM',
-    icon: '🏧',
+    icon: 'landmark',
     color: '#eab308',
   },
   [CategoryId.OTHER]: {
     id: CategoryId.OTHER,
     name: 'Other',
-    icon: '📦',
+    icon: 'package',
     color: '#94a3b8',
   },
 };

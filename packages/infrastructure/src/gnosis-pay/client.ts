@@ -247,6 +247,16 @@ export class GnosisPayClient {
 
     try {
       const data = (await response.json()) as T;
+
+      // Debug: Log actual API response structure in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[API Response] First item sample:',
+          Array.isArray(data) && data.length > 0
+            ? JSON.stringify(data[0], null, 2).substring(0, 1000)
+            : JSON.stringify(data, null, 2).substring(0, 1000)
+        );
+      }
+
       return { response: { success: true, data }, shouldRetry: false };
     } catch (parseError) {
       // Response was successful but body is not valid JSON

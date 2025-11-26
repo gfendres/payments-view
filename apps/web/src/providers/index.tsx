@@ -67,6 +67,8 @@ export function Providers({ children }: ProvidersProps) {
           headers() {
             if (typeof window !== 'undefined') {
               const token = sessionStorage.getItem('gnosis_auth_token');
+              // Debug logging
+              console.log('[tRPC Headers] Token from sessionStorage:', token ? `${token.substring(0, 20)}...` : 'null');
               if (token) {
                 return { Authorization: `Bearer ${token}` };
               }

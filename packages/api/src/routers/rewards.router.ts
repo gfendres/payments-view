@@ -5,6 +5,13 @@ import type { RewardsInfo } from '@payments-view/domain/rewards';
 import { router, protectedProcedure, handleDomainError } from '../trpc';
 
 /**
+ * Round rate to 2 decimal places
+ */
+function roundRate(rate: number): number {
+  return Math.round(rate * 100) / 100;
+}
+
+/**
  * Serialize rewards info entity for API response
  */
 function serializeRewardsInfo(rewards: RewardsInfo) {
@@ -14,8 +21,8 @@ function serializeRewardsInfo(rewards: RewardsInfo) {
     gnoBalance: rewards.gnoBalance,
     isOgHolder: rewards.isOgHolder,
     tierLabel: rewards.tierLabel,
-    currentRate: rewards.currentRate,
-    baseRate: rewards.baseRate,
+    currentRate: roundRate(rewards.currentRate),
+    baseRate: roundRate(rewards.baseRate),
     totalEarned: {
       amount: rewards.totalEarned.toNumber(),
       currency: rewards.totalEarned.currency,
@@ -33,9 +40,9 @@ function serializeRewardsInfo(rewards: RewardsInfo) {
       minGno: tierInfo.minGnoForCurrentTier,
       maxGno: tierInfo.maxGnoForCurrentTier,
       isMaxTier: tierInfo.isMaxTier,
-      progressToNextTier: tierInfo.progressToNextTier,
-      gnoNeededForNextTier: tierInfo.gnoNeededForNextTier,
-      nextTierRate: tierInfo.nextTierRate,
+      progressToNextTier: roundRate(tierInfo.progressToNextTier),
+      gnoNeededForNextTier: roundRate(tierInfo.gnoNeededForNextTier),
+      nextTierRate: roundRate(tierInfo.nextTierRate),
       ogBonusRate: tierInfo.ogBonusRate,
     },
   };

@@ -1,11 +1,13 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@payments-view/ui';
+import { useAuth } from '@/features/auth';
 import { SpendingChart } from '@/features/transactions';
 import { useTransactions } from '@/features/transactions';
 
 export default function AnalyticsPage() {
-  const { transactions, isLoading } = useTransactions({ limit: 100 });
+  const { isAuthenticated } = useAuth();
+  const { transactions, isLoading } = useTransactions({ limit: 100, enabled: isAuthenticated });
 
   return (
     <div className="p-6">

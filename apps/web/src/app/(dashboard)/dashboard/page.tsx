@@ -1,9 +1,12 @@
 'use client';
 
 import { useMemo, Suspense } from 'react';
+import { RefreshCw, CreditCard, Calendar, Coins } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@payments-view/ui';
 import { CATEGORIES } from '@payments-view/constants';
 
+import { StatCard } from '@/components/molecules';
+import { useAuth } from '@/features/auth';
 import {
   TransactionList,
   FilterPanel,
@@ -48,6 +51,7 @@ function filterTransactions(
  * Dashboard content component
  */
 function DashboardContent() {
+  const { isAuthenticated } = useAuth();
   const { filters, setFilters, hasActiveFilters, queryParams } = useTransactionFilters();
 
   const {
@@ -58,7 +62,7 @@ function DashboardContent() {
     refetch,
   } = useTransactions({
     limit: 50,
-    enabled: true,
+    enabled: isAuthenticated,
     ...queryParams,
   });
 
@@ -69,63 +73,102 @@ function DashboardContent() {
   );
 
   // Calculate stats from filtered transactions
-  const thisMonthCount = transactions.filter((t) => {
-    const date = new Date(t.createdAt);
+  const stats = useMemo(() => {
     const now = new Date();
-    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-  }).length;
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
 
-  const cashbackEligibleCount = transactions.filter((t) => t.isEligibleForCashback).length;
+    // Previous month
+    const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+    const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+    // This month's transactions
+    const thisMonthTx = transactions.filter((t) => {
+      const date = new Date(t.createdAt);
+      return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+    });
+
+    // Previous month's transactions
+    const prevMonthTx = transactions.filter((t) => {
+      const date = new Date(t.createdAt);
+      return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
+    });
+
+    // Cashback eligible counts
+    const thisMonthEligible = thisMonthTx.filter((t) => t.isEligibleForCashback);
+    const prevMonthEligible = prevMonthTx.filter((t) => t.isEligibleForCashback);
+
+    // Calculate cashback earned (estimate based on 3.84% rate - will be updated with actual rate)
+    const CASHBACK_RATE = 0.0384; // Default rate, ideally fetched from rewards API
+    const earnedThisMonth = thisMonthEligible.reduce(
+      (sum, tx) => sum + Math.abs(tx.billingAmount.amount) * CASHBACK_RATE,
+      0
+    );
+    const earnedLastMonth = prevMonthEligible.reduce(
+      (sum, tx) => sum + Math.abs(tx.billingAmount.amount) * CASHBACK_RATE,
+      0
+    );
+
+    return {
+      thisMonthCount: thisMonthTx.length,
+      prevMonthCount: prevMonthTx.length,
+      cashbackEligibleCount: thisMonthEligible.length,
+      prevCashbackEligibleCount: prevMonthEligible.length,
+      earnedThisMonth,
+      earnedLastMonth,
+      totalTransactions: transactions.length,
+    };
+  }, [transactions]);
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold">Overview</h1>
-        <p className="text-muted-foreground">
-          Track your spending and cashback rewards
-        </p>
+        <p className="text-muted-foreground">Track your spending and cashback rewards</p>
       </div>
 
       {/* Stats and Chart Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left column - Stats */}
         <div className="space-y-4 lg:col-span-1">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {hasActiveFilters ? 'Filtered Results' : 'Total Transactions'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{transactions.length}</p>
-              {hasActiveFilters && rawTransactions.length !== transactions.length && (
-                <p className="text-xs text-muted-foreground">of {rawTransactions.length} total</p>
-              )}
-            </CardContent>
-          </Card>
+          <StatCard
+            title={hasActiveFilters ? 'Filtered Results' : 'Total Transactions'}
+            value={stats.totalTransactions}
+            icon={<CreditCard className="h-5 w-5" />}
+            iconColor="blue"
+            subtitle={
+              hasActiveFilters && rawTransactions.length !== stats.totalTransactions
+                ? `of ${rawTransactions.length} total`
+                : undefined
+            }
+          />
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                This Month
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{thisMonthCount}</p>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="This Month"
+            value={stats.thisMonthCount}
+            icon={<Calendar className="h-5 w-5" />}
+            iconColor="violet"
+            trend={{
+              value: stats.thisMonthCount,
+              previousValue: stats.prevMonthCount,
+              period: 'last month',
+            }}
+          />
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Cashback Eligible
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-emerald-500">{cashbackEligibleCount}</p>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Earned This Month"
+            value={`€${stats.earnedThisMonth.toFixed(2)}`}
+            icon={<Coins className="h-5 w-5" />}
+            iconColor="emerald"
+            valueColor="success"
+            subtitle={new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+            trend={{
+              value: stats.earnedThisMonth,
+              previousValue: stats.earnedLastMonth,
+              period: 'last month',
+            }}
+          />
         </div>
 
         {/* Right column - Spending Chart */}
@@ -150,13 +193,14 @@ function DashboardContent() {
           <CardTitle>
             {hasActiveFilters ? 'Filtered Transactions' : 'Recent Transactions'}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => refetch()}>
-            Refresh
+          <Button variant="subtle" size="sm" onClick={() => refetch()} className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </CardHeader>
         <CardContent>
           {error ? (
-            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+            <div className="border-destructive/50 bg-destructive/10 rounded-lg border p-4 text-center">
               <p className="text-destructive">{error}</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">
                 Try Again
@@ -171,12 +215,10 @@ function DashboardContent() {
                 </div>
               )}
               {!isLoading && transactions.length === 0 && rawTransactions.length > 0 && (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/30 py-12">
+                <div className="border-border bg-card/30 flex flex-col items-center justify-center rounded-xl border border-dashed py-12">
                   <div className="mb-4 text-4xl opacity-50">🔍</div>
-                  <h3 className="text-lg font-medium text-foreground">No matching transactions</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Try adjusting your filters
-                  </p>
+                  <h3 className="text-foreground text-lg font-medium">No matching transactions</h3>
+                  <p className="text-muted-foreground mt-1 text-sm">Try adjusting your filters</p>
                 </div>
               )}
             </>

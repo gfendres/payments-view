@@ -69,13 +69,21 @@ export class GnosisPayAuthClient {
    * Submit SIWE challenge to get JWT
    */
   async submitChallenge(request: ChallengeRequest): Promise<ApiResult<ChallengeResponse>> {
-    return this.client.request<ChallengeResponse>(
+    const result = await this.client.request<ChallengeResponse>(
       API_CONFIG.GNOSIS_PAY.ENDPOINTS.AUTH_CHALLENGE,
       {
         method: 'POST',
         body: request,
       }
     );
+
+    // Debug logging to see actual API response
+    if (result.success) {
+      console.log('[GnosisPayAuthClient] Challenge response data:', JSON.stringify(result.data));
+      console.log('[GnosisPayAuthClient] Token field:', result.data.token ? `${result.data.token.substring(0, 20)}...` : 'MISSING');
+    }
+
+    return result;
   }
 }
 

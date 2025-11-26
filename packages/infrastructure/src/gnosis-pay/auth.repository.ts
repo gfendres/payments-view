@@ -59,7 +59,7 @@ export class GnosisPayAuthRepository implements IAuthRepository {
     const expiresAt = new Date(Date.now() + AUTH_CONFIG.JWT_TTL_MS);
 
     return Result.ok({
-      token: result.data.jwt,
+      token: result.data.token,
       expiresAt,
     });
   }

@@ -23,9 +23,10 @@ export type {
   ApiResult,
   // Transaction types
   ApiTransaction,
-  ApiTransactionsResponse,
-  ApiAmount,
+  ApiCountry,
+  ApiCurrency,
   ApiMerchant,
+  ApiOnChainTransaction,
   TransactionQueryParams as ApiTransactionQueryParams,
   // Rewards types
   ApiRewardsResponse,

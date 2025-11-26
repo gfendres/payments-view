@@ -1,3 +1,3 @@
 export { TierProgress } from './tier-progress';
-export { CashbackSummary } from './cashback-summary';
+export { CashbackSummary, type CashbackStats } from './cashback-summary';
 

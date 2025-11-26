@@ -3,9 +3,9 @@
 import { useMemo, useState, useCallback } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { BarChart3 } from 'lucide-react';
-import { CATEGORIES, CategoryId } from '@payments-view/constants';
-import { Button } from '@payments-view/ui';
+import { CATEGORIES, CategoryId, type CategoryIconName } from '@payments-view/constants';
 
+import { SegmentedControl } from '@/components/atoms';
 import type { SerializedTransaction } from './transaction-row';
 
 /**
@@ -29,7 +29,7 @@ interface SpendingChartProps {
 interface CategorySpending {
   id: CategoryId;
   name: string;
-  icon: string;
+  icon: CategoryIconName;
   color: string;
   amount: number;
   count: number;
@@ -139,12 +139,9 @@ function CustomTooltip({
   if (!data) return null;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
+    <div className="border-border bg-card rounded-lg border p-3 shadow-lg">
       <div className="flex items-center gap-2">
-        <div
-          className="h-3 w-3 rounded-full"
-          style={{ backgroundColor: data.color }}
-        />
+        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: data.color }} />
         <span className="font-medium">{data.name}</span>
       </div>
       <div className="mt-2 space-y-1 text-sm">
@@ -179,58 +176,26 @@ function CustomLegend({ categories }: { categories: CategorySpending[] }) {
       {topCategories.map((category) => (
         <div key={category.id} className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
-            <div
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: category.color }}
-            />
+            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
             <span className="text-muted-foreground">{category.name}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-medium">
               €{category.amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               ({category.percentage.toFixed(0)}%)
             </span>
           </div>
         </div>
       ))}
       {othersCount > 0 && (
-        <div className="text-xs text-muted-foreground">
-          +{othersCount} more categories
-        </div>
+        <div className="text-muted-foreground text-xs">+{othersCount} more categories</div>
       )}
     </div>
   );
 }
 
-/**
- * Time period selector component
- */
-function TimePeriodSelector({
-  value,
-  onChange,
-}: {
-  value: TimePeriod;
-  onChange: (period: TimePeriod) => void;
-}) {
-  return (
-    <div className="flex gap-1 rounded-lg bg-muted p-1">
-      {TIME_PERIODS.map((period) => (
-        <Button
-          key={period.value}
-          type="button"
-          variant={value === period.value ? 'default' : 'ghost'}
-          size="sm"
-          className="h-7 px-3 text-xs"
-          onClick={() => onChange(period.value)}
-        >
-          {period.label}
-        </Button>
-      ))}
-    </div>
-  );
-}
 
 /**
  * Spending by category chart component
@@ -261,12 +226,17 @@ export function SpendingChart({ transactions, className }: SpendingChartProps) {
     return (
       <div className={`flex flex-col ${className ?? ''}`}>
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">Spending by Category</h3>
-          <TimePeriodSelector value={timePeriod} onChange={handlePeriodChange} />
+          <h3 className="text-muted-foreground text-sm font-medium">Spending by Category</h3>
+          <SegmentedControl
+            size="sm"
+            options={TIME_PERIODS}
+            value={timePeriod}
+            onChange={handlePeriodChange}
+          />
         </div>
         <div className="flex flex-1 flex-col items-center justify-center py-12">
-          <BarChart3 className="mb-3 h-10 w-10 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">No spending data for this period</p>
+          <BarChart3 className="text-muted-foreground/50 mb-3 h-10 w-10" />
+          <p className="text-muted-foreground text-sm">No spending data for this period</p>
         </div>
       </div>
     );
@@ -275,18 +245,21 @@ export function SpendingChart({ transactions, className }: SpendingChartProps) {
   return (
     <div className={className}>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">Spending by Category</h3>
-        <TimePeriodSelector value={timePeriod} onChange={handlePeriodChange} />
+        <h3 className="text-muted-foreground text-sm font-medium">Spending by Category</h3>
+        <SegmentedControl
+          size="sm"
+          options={TIME_PERIODS}
+          value={timePeriod}
+          onChange={handlePeriodChange}
+        />
       </div>
 
       <div className="mb-4 text-center">
-        <p className="text-sm text-muted-foreground">Total Spending</p>
+        <p className="text-muted-foreground text-sm">Total Spending</p>
         <p className="text-3xl font-bold">
           €{totalSpending.toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </p>
-        <p className="text-xs text-muted-foreground">
-          {filteredTransactions.length} transactions
-        </p>
+        <p className="text-muted-foreground text-xs">{filteredTransactions.length} transactions</p>
       </div>
 
       <div className="h-64">

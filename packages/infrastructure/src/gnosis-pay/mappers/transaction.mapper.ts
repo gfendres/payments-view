@@ -2,33 +2,85 @@ import {
   TransactionKind,
   TransactionStatus,
   TransactionType,
-  type CurrencyCode,
+  CurrencyCode,
+  type CurrencyCode as CurrencyCodeType,
   isTransactionKind,
 } from '@payments-view/constants';
 import { Transaction, Merchant, Money } from '@payments-view/domain/transaction';
 
-import type { ApiTransaction, ApiAmount, ApiMerchant } from '../types';
+import type { ApiTransaction, ApiCurrency } from '../types';
 
 /**
- * Map API amount to Money value object
+ * Map numeric ISO 4217 currency codes to alpha codes
+ * Only includes currencies defined in our CurrencyCode enum
  */
-function mapAmount(apiAmount: ApiAmount): Money {
+const NUMERIC_TO_ALPHA_CURRENCY: Record<string, CurrencyCodeType> = {
+  '978': CurrencyCode.EUR,  // Euro
+  '840': CurrencyCode.USD,  // US Dollar
+  '826': CurrencyCode.GBP,  // British Pound
+  '756': CurrencyCode.CHF,  // Swiss Franc
+  '208': CurrencyCode.DKK,  // Danish Krone
+  '578': CurrencyCode.NOK,  // Norwegian Krone
+  '752': CurrencyCode.SEK,  // Swedish Krona
+  '985': CurrencyCode.PLN,  // Polish Zloty
+  '203': CurrencyCode.CZK,  // Czech Koruna
+  '348': CurrencyCode.HUF,  // Hungarian Forint
+};
+
+/**
+ * Convert currency code (numeric or alpha) to CurrencyCode enum
+ * API might return either "978" or "EUR"
+ */
+function normalizeCurrencyCode(code: string): CurrencyCodeType {
+  // Try numeric lookup first
+  const fromNumeric = NUMERIC_TO_ALPHA_CURRENCY[code];
+  if (fromNumeric) {
+    return fromNumeric;
+  }
+
+  // Check if it's already a valid alpha code
+  if (Object.values(CurrencyCode).includes(code as CurrencyCodeType)) {
+    return code as CurrencyCodeType;
+  }
+
+  // Fallback to EUR
+  console.warn(`[TransactionMapper] Unknown currency code: ${code}, defaulting to EUR`);
+  return CurrencyCode.EUR;
+}
+
+/**
+ * Map API amount (string BigInt) + currency object to Money value object
+ *
+ * Note: Gnosis Pay API returns amounts as separate fields:
+ * - billingAmount: "12345" (string BigInt)
+ * - billingCurrency: { symbol: "€", code: "978" or "EUR", decimals: 2, name: "Euro" }
+ */
+function mapAmount(amountStr: string, currency: ApiCurrency): Money {
+  const currencyCode = normalizeCurrencyCode(currency.code);
   return Money.create(
-    apiAmount.value,
-    apiAmount.currency as CurrencyCode,
-    apiAmount.decimals
+    amountStr,
+    currencyCode,
+    currency.decimals
   );
 }
 
 /**
  * Map API merchant to Merchant entity
+ *
+ * Note: API has mcc at root level, not inside merchant
+ * Note: merchant.country is an object { name, alpha2, ... }, we extract alpha2
  */
-function mapMerchant(apiMerchant: ApiMerchant): Merchant {
+function mapMerchant(apiTransaction: ApiTransaction): Merchant {
+  const { merchant, mcc } = apiTransaction;
+
+  // Extract country code from country object (use alpha2 for display)
+  const countryCode = merchant.country?.alpha2;
+
   return Merchant.create({
-    name: apiMerchant.name,
-    city: apiMerchant.city,
-    country: apiMerchant.country,
-    mcc: apiMerchant.mcc,
+    name: merchant.name,
+    city: merchant.city,
+    country: countryCode,
+    mcc: mcc,
   });
 }
 
@@ -64,14 +116,15 @@ function mapTransactionStatus(status: string): TransactionStatus {
 
 /**
  * Map API type to domain enum
+ * Note: API uses 'transactionType' not 'type'
  */
-function mapTransactionType(type: string): TransactionType {
+function mapTransactionType(transactionType: string): TransactionType {
   const typeMap: Record<string, TransactionType> = {
     '00': TransactionType.PURCHASE,
     '01': TransactionType.ATM,
   };
 
-  return typeMap[type] ?? TransactionType.PURCHASE;
+  return typeMap[transactionType] ?? TransactionType.PURCHASE;
 }
 
 /**
@@ -83,23 +136,29 @@ function extractCardLast4(cardToken: string): string {
 
 /**
  * Map a single API transaction to domain Transaction entity
+ *
+ * Field mapping from Gnosis Pay API:
+ * - threadId → id (API has no separate id field)
+ * - transactionType → type
+ * - impactsCashback → isEligibleForCashback
+ * - billingAmount (string) + billingCurrency (object) → billingAmount (Money)
  */
 export function mapTransaction(apiTransaction: ApiTransaction): Transaction {
   return Transaction.create({
-    id: apiTransaction.id,
+    id: apiTransaction.threadId, // Use threadId as id
     threadId: apiTransaction.threadId,
     kind: mapTransactionKind(apiTransaction.kind),
     status: mapTransactionStatus(apiTransaction.status),
-    type: mapTransactionType(apiTransaction.type),
-    billingAmount: mapAmount(apiTransaction.billingAmount),
-    transactionAmount: mapAmount(apiTransaction.transactionAmount),
-    merchant: mapMerchant(apiTransaction.merchant),
+    type: mapTransactionType(apiTransaction.transactionType),
+    billingAmount: mapAmount(apiTransaction.billingAmount, apiTransaction.billingCurrency),
+    transactionAmount: mapAmount(apiTransaction.transactionAmount, apiTransaction.transactionCurrency),
+    merchant: mapMerchant(apiTransaction),
     cardTokenLast4: extractCardLast4(apiTransaction.cardToken),
     isPending: apiTransaction.isPending,
-    isEligibleForCashback: apiTransaction.isEligibleForCashback,
+    isEligibleForCashback: apiTransaction.impactsCashback ?? false,
     createdAt: new Date(apiTransaction.createdAt),
     clearedAt: apiTransaction.clearedAt ? new Date(apiTransaction.clearedAt) : undefined,
-    onChainTxHash: apiTransaction.onChainTxHash,
+    onChainTxHash: apiTransaction.transactions?.[0]?.hash,
   });
 }
 
@@ -109,4 +168,3 @@ export function mapTransaction(apiTransaction: ApiTransaction): Transaction {
 export function mapTransactions(apiTransactions: ApiTransaction[]): Transaction[] {
   return apiTransactions.map(mapTransaction);
 }
-

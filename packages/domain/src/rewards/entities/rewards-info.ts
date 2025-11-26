@@ -1,6 +1,6 @@
 import { CashbackTierInfo } from '../value-objects/cashback-tier';
 import { Money } from '../../transaction/value-objects/money';
-import { CurrencyCode } from '@payments-view/constants';
+import { CurrencyCode, OG_BONUS_RATE } from '@payments-view/constants';
 
 /**
  * RewardsInfo entity props
@@ -8,6 +8,8 @@ import { CurrencyCode } from '@payments-view/constants';
 export interface RewardsInfoProps {
   gnoBalance: number;
   isOgHolder: boolean;
+  /** Base cashback rate from API (without OG bonus) */
+  apiCashbackRate?: number;
   totalEarned: Money;
   earnedThisMonth: Money;
   eligibleTransactionCount: number;
@@ -18,12 +20,16 @@ export interface RewardsInfoProps {
  */
 export class RewardsInfo {
   private readonly _tierInfo: CashbackTierInfo;
+  private readonly _apiCashbackRate: number | undefined;
+  private readonly _isOgHolder: boolean;
   private readonly _totalEarned: Money;
   private readonly _earnedThisMonth: Money;
   private readonly _eligibleTransactionCount: number;
 
   private constructor(props: RewardsInfoProps) {
     this._tierInfo = CashbackTierInfo.fromBalance(props.gnoBalance, props.isOgHolder);
+    this._apiCashbackRate = props.apiCashbackRate;
+    this._isOgHolder = props.isOgHolder;
     this._totalEarned = props.totalEarned;
     this._earnedThisMonth = props.earnedThisMonth;
     this._eligibleTransactionCount = props.eligibleTransactionCount;
@@ -58,14 +64,29 @@ export class RewardsInfo {
   }
 
   get isOgHolder(): boolean {
-    return this._tierInfo.isOgHolder;
+    return this._isOgHolder;
   }
 
+  /**
+   * Get the total cashback rate (including OG bonus if applicable)
+   * Uses API-provided rate if available, otherwise falls back to tier calculation
+   */
   get currentRate(): number {
+    if (this._apiCashbackRate !== undefined) {
+      // API provides BASE rate, add OG bonus if applicable
+      return this._apiCashbackRate + (this._isOgHolder ? OG_BONUS_RATE : 0);
+    }
     return this._tierInfo.totalRate;
   }
 
+  /**
+   * Get the base cashback rate (without OG bonus)
+   * Uses API-provided rate if available
+   */
   get baseRate(): number {
+    if (this._apiCashbackRate !== undefined) {
+      return this._apiCashbackRate;
+    }
     return this._tierInfo.baseRate;
   }
 

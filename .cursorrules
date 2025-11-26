@@ -265,6 +265,8 @@ packages/
 │   └── use-cases/
 ├── infrastructure/src/
 │   ├── gnosis-pay/
+│   │   ├── schemas/        # Zod schemas for API validation (source of truth!)
+│   │   ├── types/          # TypeScript types
 │   │   ├── client.ts
 │   │   ├── mappers/
 │   │   └── repositories/
@@ -532,6 +534,115 @@ export const transactionRouter = router({
 });
 ```
 
+## 🌐 External API Integration (CRITICAL)
+
+When integrating with external APIs (Gnosis Pay, etc.), type mismatches between our code and actual API responses cause runtime crashes. Follow these rules strictly:
+
+### Before Writing ANY API Integration
+
+1. **Read the official API documentation first**
+   - Find the exact endpoint documentation
+   - Note the exact field names (e.g., `token` vs `jwt`, `signerAddress` vs `sub`)
+   - Check for nullable/optional fields
+   - Look for nested object structures
+
+2. **Check existing schemas in `packages/infrastructure/src/gnosis-pay/schemas/`**
+
+### Mandatory Steps for API Types
+
+```typescript
+// ❌ BAD - Guessing field names
+interface ApiResponse {
+  jwt: string;        // Assumed field name
+  sub: string;        // Standard JWT claim - but API might use different field!
+}
+
+// ✅ GOOD - Verified against official docs
+/**
+ * Challenge response from /api/v1/auth/challenge
+ * Docs: https://docs.gnosispay.com/api-reference/authentication/verify-siwe-signature
+ * Verified: 2024-11-26
+ */
+interface ChallengeResponse {
+  token: string;  // API returns 'token', not 'jwt'
+}
+
+/**
+ * JWT payload from Gnosis Pay
+ * Note: Uses 'signerAddress' instead of standard 'sub' claim
+ */
+interface JwtPayload {
+  userId: string;
+  signerAddress: string;  // NOT 'sub'!
+  chainId: number;
+  exp: number;
+  iat: number;
+}
+```
+
+### Create Zod Schemas for Runtime Validation
+
+```typescript
+// packages/infrastructure/src/gnosis-pay/schemas/auth.schema.ts
+import { z } from 'zod';
+
+/**
+ * Always add doc link and verification date
+ * Docs: https://docs.gnosispay.com/api-reference/...
+ * Verified: YYYY-MM-DD
+ */
+export const ChallengeResponseSchema = z.object({
+  token: z.string(),
+}).passthrough(); // Allow unknown fields
+
+// Use runtime validation in clients
+const result = ChallengeResponseSchema.safeParse(apiResponse);
+if (!result.success) {
+  console.error('[API Schema] Validation failed:', result.error.issues);
+}
+```
+
+### API Integration Checklist
+
+```
+□ Read official API documentation
+□ Document the exact endpoint URL in comments
+□ Use EXACT field names from docs (not assumptions)
+□ Create Zod schema for runtime validation
+□ Add .passthrough() to allow unknown fields
+□ Handle nullable fields with .nullable().optional()
+□ Add doc URL and verification date in comments
+□ Test with real API responses
+□ Log actual response structure in development
+```
+
+### Common Gotchas
+
+| What We Assumed | What API Actually Returns |
+|-----------------|---------------------------|
+| `jwt` | `token` |
+| `sub` (standard JWT) | `signerAddress` |
+| `isEligibleForCashback` | `impactsCashback` |
+| `merchant.country: string` | `merchant.country: { name, alpha2, ... }` |
+| `billingAmount: { value, currency }` | `billingAmount: string` + `billingCurrency: object` |
+
+### File Organization for API Types
+
+```
+packages/infrastructure/src/gnosis-pay/
+├── schemas/           # Zod schemas (source of truth)
+│   ├── auth.schema.ts
+│   ├── transaction.schema.ts
+│   └── index.ts
+├── types/             # TypeScript types (derived from schemas)
+│   └── index.ts
+├── mappers/           # API response → Domain entity mappers
+│   └── transaction.mapper.ts
+└── client.ts          # HTTP client with dev logging
+```
+
+---
+
 ## Things to AVOID
 
 1. **Any type**: Never use `any`, use `unknown` and narrow types
@@ -549,6 +660,8 @@ export const transactionRouter = router({
 13. **Ignoring tests**: Run `bun test` after changes
 14. **Forgetting to update docs**: Keep documentation in sync
 15. **Uncommitted work**: Commit after completing each task
+16. **Guessing API field names**: Always verify against official documentation
+17. **Skipping Zod validation**: Always validate external API responses at runtime
 
 ---
 
@@ -611,6 +724,7 @@ If yes to any, update the relevant doc!
 | Value objects | `@payments-view/domain/<domain>/value-objects` |
 | Use cases | `@payments-view/application/use-cases` |
 | API clients | `@payments-view/infrastructure/<service>` |
+| **API Schemas (Zod)** | `@payments-view/infrastructure/<service>/schemas` |
 | tRPC routers | `@payments-view/api/routers` |
 | UI primitives | `@payments-view/ui/primitives` |
 | Feature hooks | `@/features/<feature>/hooks` |

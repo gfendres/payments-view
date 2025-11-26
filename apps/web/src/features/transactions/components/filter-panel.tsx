@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { CategoryId, CATEGORIES, TransactionStatus } from '@payments-view/constants';
 import { Button, Input } from '@payments-view/ui';
 
+import { SegmentedControl } from '@/components/atoms';
 import { CategorySelector } from './category-selector';
 import { DateRangePicker, type DateRange } from './date-range-picker';
 import { AmountRangeInput, type AmountRange } from './amount-range-input';
@@ -167,7 +168,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
       {/* Search and expand */}
       <div className="flex gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             type="text"
             placeholder="Search transactions..."
@@ -180,7 +181,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
+              className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0"
               onClick={() => {
                 setSearchValue('');
                 onFiltersChange({ ...filters, search: '' });
@@ -198,7 +199,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
           <SlidersHorizontal className="mr-2 h-4 w-4" />
           Filters
           {hasActiveFilters && (
-            <span className="ml-2 rounded-full bg-primary-foreground px-2 py-0.5 text-xs text-primary">
+            <span className="bg-primary-foreground text-primary ml-2 rounded-full px-2 py-0.5 text-xs">
               {activeFilters.length}
             </span>
           )}
@@ -207,43 +208,37 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
 
       {/* Expanded filters */}
       {isExpanded && (
-        <div className="grid grid-cols-1 gap-4 rounded-xl border border-border bg-card/50 p-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Category</label>
+        <div className="border-border bg-card/50 grid grid-cols-1 gap-6 rounded-xl border p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-3">
+            <label className="text-muted-foreground text-sm font-medium">Category</label>
             <CategorySelector
               selectedCategories={filters.categories}
               onChange={handleCategoriesChange}
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Date Range</label>
+          <div className="space-y-3">
+            <label className="text-muted-foreground text-sm font-medium">Date Range</label>
             <DateRangePicker value={filters.dateRange} onChange={handleDateRangeChange} />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Amount</label>
-            <AmountRangeInput
-              value={filters.amountRange}
-              onChange={handleAmountRangeChange}
-            />
+          <div className="space-y-3">
+            <label className="text-muted-foreground text-sm font-medium">Amount</label>
+            <AmountRangeInput value={filters.amountRange} onChange={handleAmountRangeChange} />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Status</label>
-            <div className="flex gap-2">
-              {STATUS_OPTIONS.map((option) => (
-                <Button
-                  key={option.label}
-                  type="button"
-                  variant={filters.status === option.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleStatusChange(option.value)}
-                >
-                  {option.label}
-                </Button>
-              ))}
-            </div>
+          <div className="space-y-3">
+            <label className="text-muted-foreground text-sm font-medium">Status</label>
+            <SegmentedControl
+              options={STATUS_OPTIONS.map((opt) => ({
+                value: opt.value ?? 'all',
+                label: opt.label,
+              }))}
+              value={filters.status ?? 'all'}
+              onChange={(val) =>
+                handleStatusChange(val === 'all' ? undefined : (val as TransactionStatus))
+              }
+            />
           </div>
         </div>
       )}

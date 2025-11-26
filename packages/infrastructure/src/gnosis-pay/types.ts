@@ -19,9 +19,10 @@ export interface ChallengeRequest {
 
 /**
  * Challenge response from /api/v1/auth/challenge
+ * Note: API returns 'token' not 'jwt' as per docs
  */
 export interface ChallengeResponse {
-  jwt: string;
+  token: string;
 }
 
 /**

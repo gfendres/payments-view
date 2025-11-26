@@ -2,10 +2,12 @@ import { Session } from '@payments-view/domain/identity';
 import { EthereumAddress } from '@payments-view/domain/transaction';
 
 /**
- * JWT payload structure (simplified - in production use proper JWT library)
+ * JWT payload structure from Gnosis Pay API
  */
 interface JwtPayload {
-  sub: string; // wallet address
+  userId: string; // Gnosis Pay user ID
+  signerAddress: string; // wallet address (Gnosis Pay uses this instead of sub)
+  chainId: number; // chain ID (100 for Gnosis Chain)
   exp: number; // expiration timestamp
   iat: number; // issued at timestamp
 }
@@ -66,8 +68,8 @@ export const createSessionFromToken = (token: string): Session | null => {
     return null;
   }
 
-  // Create ethereum address
-  const addressResult = EthereumAddress.create(payload.sub);
+  // Create ethereum address from signerAddress field
+  const addressResult = EthereumAddress.create(payload.signerAddress);
   if (addressResult.isFailure) {
     return null;
   }

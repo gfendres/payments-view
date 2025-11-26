@@ -5,6 +5,8 @@ import { Check, ChevronDown } from 'lucide-react';
 import { CATEGORIES, CategoryId } from '@payments-view/constants';
 import { Button } from '@payments-view/ui';
 
+import { CategoryIcon } from '@/components/atoms/category-icon';
+
 interface CategorySelectorProps {
   selectedCategories: CategoryId[];
   onChange: (categories: CategoryId[]) => void;
@@ -46,7 +48,7 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
       >
         <span className="flex items-center gap-2">
           {selectedCategories.length === 1 && selectedCategories[0] && (
-            <span>{CATEGORIES[selectedCategories[0]].icon}</span>
+            <CategoryIcon icon={CATEGORIES[selectedCategories[0]].icon} size={16} />
           )}
           {getSelectedLabel()}
         </span>
@@ -59,7 +61,7 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
           {/* Dropdown */}
-          <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-border bg-card p-2 shadow-lg">
+          <div className="border-border bg-card absolute top-full left-0 z-50 mt-1 w-64 rounded-xl border p-2 shadow-lg">
             <div className="max-h-64 overflow-y-auto">
               {categories.map((category) => {
                 const isSelected = selectedCategories.includes(category.id);
@@ -73,10 +75,10 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
                     onClick={() => toggleCategory(category.id)}
                   >
                     <span
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-lg"
-                      style={{ backgroundColor: `${category.color}20` }}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg"
+                      style={{ backgroundColor: `${category.color}20`, color: category.color }}
                     >
-                      {category.icon}
+                      <CategoryIcon icon={category.icon} size={18} />
                     </span>
                     <span className="flex-1 font-medium">{category.name}</span>
                     {isSelected && <Check className="h-4 w-4" />}
@@ -86,7 +88,7 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
             </div>
 
             {selectedCategories.length > 0 && (
-              <div className="mt-2 border-t border-border pt-2">
+              <div className="border-border mt-2 border-t pt-2">
                 <Button
                   type="button"
                   variant="ghost"

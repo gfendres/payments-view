@@ -165,6 +165,160 @@ See [Project Structure](#project-structure) section below for complete directory
 
 ---
 
+## 🌐 External API Integration
+
+### The Problem: Type Mismatches
+
+When integrating with external APIs, TypeScript types are just assumptions about what the API returns. If the API returns different field names or structures than expected, you get runtime errors like:
+
+```
+Cannot read properties of undefined (reading 'toLowerCase')
+```
+
+**Real examples we encountered:**
+
+| What We Assumed | What Gnosis Pay API Actually Returns |
+|-----------------|--------------------------------------|
+| `{ jwt: "..." }` | `{ token: "..." }` |
+| JWT claim `sub` | Custom field `signerAddress` |
+| `isEligibleForCashback` | `impactsCashback` |
+| `merchant.country: string` | `merchant.country: { name, alpha2, alpha3, numeric }` |
+
+### Solution: Zod Runtime Validation
+
+All external API responses MUST be validated with Zod schemas before use:
+
+```
+packages/infrastructure/src/gnosis-pay/
+├── schemas/                    # ← Source of truth for API types
+│   ├── auth.schema.ts
+│   ├── transaction.schema.ts
+│   ├── rewards.schema.ts
+│   └── index.ts
+├── types/                      # TypeScript types (derived or legacy)
+├── mappers/                    # API → Domain transformations
+├── client.ts                   # HTTP client with dev logging
+└── repositories/               # Repository implementations
+```
+
+### Schema Requirements
+
+```typescript
+// packages/infrastructure/src/gnosis-pay/schemas/auth.schema.ts
+import { z } from 'zod';
+
+/**
+ * Gnosis Pay Challenge Response
+ *
+ * API Endpoint: POST /api/v1/auth/challenge
+ * Docs: https://docs.gnosispay.com/api-reference/authentication/verify-siwe-signature
+ * Last Verified: 2024-11-26
+ *
+ * IMPORTANT: Field is 'token', NOT 'jwt' as commonly assumed!
+ */
+export const ChallengeResponseSchema = z.object({
+  token: z.string(),
+}).passthrough(); // Allow unknown fields
+
+/**
+ * Gnosis Pay JWT Payload
+ *
+ * IMPORTANT: Uses 'signerAddress' instead of standard JWT 'sub' claim!
+ * Last Verified: 2024-11-26
+ */
+export const JwtPayloadSchema = z.object({
+  userId: z.string(),
+  signerAddress: z.string(),  // NOT 'sub'!
+  chainId: z.number(),
+  exp: z.number(),
+  iat: z.number(),
+}).passthrough();
+
+// Export inferred types
+export type ChallengeResponse = z.infer<typeof ChallengeResponseSchema>;
+export type JwtPayload = z.infer<typeof JwtPayloadSchema>;
+```
+
+### Validation Helper Functions
+
+```typescript
+/**
+ * Parse and validate API response with detailed error logging
+ */
+export function parseApiResponse<T>(
+  schema: z.ZodSchema<T>,
+  data: unknown,
+  context: string
+): T | null {
+  const result = schema.safeParse(data);
+
+  if (!result.success) {
+    console.error(`[API Schema] ${context} validation failed:`, {
+      errors: result.error.issues,
+      receivedData: JSON.stringify(data, null, 2).substring(0, 1000),
+    });
+    return null;
+  }
+
+  return result.data;
+}
+```
+
+### Development Logging
+
+The API client logs actual responses in development mode to help identify mismatches:
+
+```typescript
+// In client.ts handleResponse()
+if (process.env.NODE_ENV === 'development') {
+  console.log('[API Response] Sample:',
+    JSON.stringify(data, null, 2).substring(0, 1000)
+  );
+}
+```
+
+### API Integration Checklist
+
+Before integrating ANY external API endpoint:
+
+```
+□ 1. Read official API documentation
+□ 2. Note exact field names (don't assume standard names!)
+□ 3. Check for nullable/optional fields
+□ 4. Document the endpoint URL in schema comments
+□ 5. Add verification date to schema comments
+□ 6. Create Zod schema with .passthrough()
+□ 7. Add parseApiX() helper function
+□ 8. Test with real API response
+□ 9. Update mapper if API structure differs from domain
+```
+
+### Common Mistakes to Avoid
+
+```typescript
+// ❌ BAD - Assuming standard JWT claims
+interface JwtPayload {
+  sub: string;  // Standard claim - but API might use different field!
+  exp: number;
+}
+
+// ❌ BAD - Guessing field names without checking docs
+interface ApiResponse {
+  jwt: string;  // Assumed - actually returns 'token'!
+}
+
+// ✅ GOOD - Verified against docs with comments
+/**
+ * Docs: https://docs.gnosispay.com/api-reference/...
+ * Verified: 2024-11-26
+ */
+const ApiResponseSchema = z.object({
+  token: z.string(),  // API returns 'token', verified in docs
+}).passthrough();
+```
+
+---
+
 ## 📦 Centralized Constants & Enums
 
 ### Transaction Enums

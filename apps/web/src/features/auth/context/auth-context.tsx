@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
+import { useQueryClient } from '@tanstack/react-query';
 import { AUTH_CONFIG } from '@payments-view/constants';
 
 import { trpc } from '@/lib/trpc';
@@ -34,6 +35,12 @@ interface AuthContextState {
 const AUTH_TOKEN_KEY = 'gnosis_auth_token';
 const AUTH_EXPIRY_KEY = 'gnosis_auth_expiry';
 const AUTH_ADDRESS_KEY = 'gnosis_auth_address';
+
+/**
+ * Delay before clearing auth when wallet appears disconnected (ms)
+ * This prevents race conditions during page navigation when wagmi hasn't reconnected yet
+ */
+const WALLET_DISCONNECT_GRACE_PERIOD_MS = 2000;
 
 /**
  * Auth context
@@ -96,9 +103,10 @@ interface AuthProviderProps {
  * Auth provider component with token refresh
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { address, isConnected, isReconnecting } = useAccount();
+  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { disconnect } = useDisconnect();
+  const queryClient = useQueryClient();
 
   const [token, setToken] = useState<string | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -109,6 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSigningRef = useRef(false);
+  const disconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // tRPC mutations
   const generateSiweMessage = trpc.auth.generateSiweMessage.useMutation();
@@ -117,6 +126,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Load initial state from storage on hydration
   useEffect(() => {
     const stored = loadFromStorage();
+    console.log('[Auth] Hydration - loaded from storage:', {
+      hasToken: !!stored.token,
+      hasExpiry: !!stored.expiresAt,
+      walletAddress: stored.walletAddress,
+    });
     if (stored.token && stored.expiresAt) {
       setToken(stored.token);
       setWalletAddress(stored.walletAddress);
@@ -183,25 +197,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [expiresAt, setupRefreshTimer]);
 
   // Clear auth if wallet disconnects or address changes
-  // Skip if we're in the middle of signing, reconnecting, or haven't hydrated yet
+  // Skip if we're in the middle of signing, reconnecting, connecting, or haven't hydrated yet
   useEffect(() => {
-    // Don't clear during initial hydration or while reconnecting
-    if (!hasHydrated || isReconnecting || isSigningRef.current) {
+    // Clear any pending disconnect timeout
+    if (disconnectTimeoutRef.current) {
+      clearTimeout(disconnectTimeoutRef.current);
+      disconnectTimeoutRef.current = null;
+    }
+
+    // Don't clear during initial hydration, while reconnecting, connecting, or signing
+    if (!hasHydrated || isReconnecting || isConnecting || isSigningRef.current) {
       return;
     }
 
     if (!isConnected && token) {
-      // Only clear if we had a token (wallet actually disconnected)
-      clearAuth();
+      // Wallet appears disconnected but we have a token
+      // Use a grace period to avoid race conditions during page navigation
+      // where wagmi hasn't reconnected yet
+      disconnectTimeoutRef.current = setTimeout(() => {
+        // Double-check we still have a token and wallet is still disconnected
+        const stored = loadFromStorage();
+        if (stored.token) {
+          clearAuth();
+        }
+      }, WALLET_DISCONNECT_GRACE_PERIOD_MS);
     } else if (
       address &&
       walletAddress &&
       address.toLowerCase() !== walletAddress.toLowerCase()
     ) {
-      // Address changed, clear auth
+      // Address changed, clear auth immediately
       clearAuth();
     }
-  }, [isConnected, isReconnecting, hasHydrated, address, walletAddress, token, clearAuth]);
+
+    return () => {
+      if (disconnectTimeoutRef.current) {
+        clearTimeout(disconnectTimeoutRef.current);
+        disconnectTimeoutRef.current = null;
+      }
+    };
+  }, [isConnected, isConnecting, isReconnecting, hasHydrated, address, walletAddress, token, clearAuth]);
 
   /**
    * Sign in with SIWE
@@ -235,11 +270,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Save state
       const expiry = new Date(result.expiresAt);
+      console.log('[Auth] Sign-in successful:', {
+        token: result.token.substring(0, 20) + '...',
+        expiresAt: result.expiresAt,
+        walletAddress: result.walletAddress,
+      });
       setToken(result.token);
       setWalletAddress(result.walletAddress);
       setExpiresAt(expiry);
       saveToStorage(result.token, result.expiresAt, result.walletAddress);
       setupRefreshTimer(expiry);
+
+      console.log('[Auth] Token saved to sessionStorage, invalidating queries...');
+      // Invalidate all queries to force refetch with new auth token
+      await queryClient.invalidateQueries();
+      console.log('[Auth] Queries invalidated');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
       setError(errorMessage);
@@ -254,6 +299,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signMessageAsync,
     authenticate,
     setupRefreshTimer,
+    queryClient,
   ]);
 
   /**
@@ -262,9 +308,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = useCallback(() => {
     clearAuth();
     disconnect();
-  }, [clearAuth, disconnect]);
+    // Clear all cached queries
+    queryClient.clear();
+  }, [clearAuth, disconnect, queryClient]);
 
   const isAuthenticated = !!token && !!expiresAt && expiresAt > new Date();
+
+  // Debug logging for auth state changes
+  useEffect(() => {
+    console.log('[Auth] State changed:', {
+      isAuthenticated,
+      hasToken: !!token,
+      hasExpiry: !!expiresAt,
+      isConnected,
+      hasHydrated,
+    });
+  }, [isAuthenticated, token, expiresAt, isConnected, hasHydrated]);
 
   const value: AuthContextState = {
     isAuthenticated,

@@ -1,7 +1,15 @@
 'use client';
 
-import { TransactionKind, TransactionStatus, CATEGORIES, CategoryId } from '@payments-view/constants';
+import { Coins } from 'lucide-react';
+import {
+  TransactionKind,
+  TransactionStatus,
+  CATEGORIES,
+  CategoryId,
+} from '@payments-view/constants';
 import { Badge } from '@payments-view/ui';
+
+import { CategoryIcon } from '@/components/atoms/category-icon';
 
 /**
  * Serialized transaction from API
@@ -79,9 +87,9 @@ function getCategoryByName(categoryName: string) {
 function getStatusVariant(
   status: TransactionStatus,
   isPending: boolean
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-  if (isPending) return 'outline';
-  if (status === TransactionStatus.APPROVED) return 'default';
+): 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'pending' {
+  if (isPending) return 'pending';
+  if (status === TransactionStatus.APPROVED) return 'success';
   if (status === TransactionStatus.REVERSAL || status === TransactionStatus.PARTIAL_REVERSAL) {
     return 'secondary';
   }
@@ -112,29 +120,27 @@ export function TransactionRow({ transaction, onClick }: TransactionRowProps) {
     <button
       type="button"
       onClick={() => onClick?.(transaction)}
-      className="group flex w-full items-center gap-4 rounded-xl bg-card/50 p-4 text-left transition-all hover:bg-card hover:shadow-md"
+      className="group bg-card/50 hover:bg-card flex w-full items-center gap-4 rounded-xl p-4 text-left transition-all hover:shadow-md"
     >
       {/* Category Icon */}
       <div
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl"
-        style={{ backgroundColor: `${category.color}20` }}
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+        style={{ backgroundColor: `${category.color}20`, color: category.color }}
       >
-        {category.icon}
+        <CategoryIcon icon={category.icon} size={24} />
       </div>
 
       {/* Transaction Details */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate font-medium text-foreground">
-            {transaction.merchant.name}
-          </span>
+          <span className="text-foreground truncate font-medium">{transaction.merchant.name}</span>
           {transaction.isEligibleForCashback && (
-            <span className="text-xs text-emerald-500" title="Eligible for cashback">
-              💰
+            <span title="Eligible for cashback">
+              <Coins className="h-4 w-4 text-emerald-500" />
             </span>
           )}
         </div>
-        <div className="mt-0.5 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground mt-0.5 flex items-center gap-2 text-sm">
           <span>{category.name}</span>
           {transaction.merchant.city && (
             <>
@@ -156,10 +162,13 @@ export function TransactionRow({ transaction, onClick }: TransactionRowProps) {
           {transaction.billingAmount.formatted}
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             {formatDate(transaction.createdAt)} · {formatTime(transaction.createdAt)}
           </span>
-          <Badge variant={getStatusVariant(transaction.status, transaction.isPending)} className="text-xs">
+          <Badge
+            variant={getStatusVariant(transaction.status, transaction.isPending)}
+            className="text-xs"
+          >
             {getStatusText(transaction.status, transaction.isPending)}
           </Badge>
         </div>
