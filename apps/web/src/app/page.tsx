@@ -2,13 +2,15 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BarChart3, Coins, Tags, FileDown, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import { BarChart3, Coins, Tags, FileDown, Wallet, ArrowRight } from 'lucide-react';
+import { Button } from '@payments-view/ui';
 
-import { WalletButton, useAuthContext } from '@/features/auth';
+import { WalletButton, useAuth } from '@/features/auth';
 
 export default function HomePage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
@@ -68,9 +70,24 @@ export default function HomePage() {
           rewards — all in one beautiful dashboard.
         </p>
 
-        {/* Connect button */}
+        {/* Connect button or Go to Dashboard */}
         <div className="mb-12">
-          <WalletButton variant="hero" />
+          {isAuthenticated ? (
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-sm text-muted-foreground">You&apos;re connected!</p>
+              <Link href="/dashboard">
+                <Button
+                  size="lg"
+                  className="h-14 px-8 text-base font-semibold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
+                >
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <WalletButton variant="hero" />
+          )}
         </div>
 
         {/* Features */}
