@@ -239,11 +239,11 @@ Tasks are organized by implementation phases. Each task includes:
 - [x] Create `TransactionRow` molecule
 - [x] Create `TransactionList` organism
 - [x] Create transaction list page
-- [ ] Implement virtual scrolling
+- [x] Implement virtual scrolling
 - [x] Add loading skeleton
 - [x] Add error state
 - [x] Add empty state
-- [ ] Implement pagination UI
+- [x] Implement pagination UI
 
 **Acceptance Criteria**:
 

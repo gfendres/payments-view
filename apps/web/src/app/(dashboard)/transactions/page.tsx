@@ -1,18 +1,24 @@
 'use client';
 
-import { useMemo, Suspense } from 'react';
-import { Download, RefreshCw, CreditCard } from 'lucide-react';
+import { useMemo, Suspense, useState } from 'react';
+import { Download, RefreshCw, CreditCard, List, LayoutGrid } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@payments-view/ui';
 import { CATEGORIES } from '@payments-view/constants';
 
 import {
   TransactionList,
+  VirtualTransactionList,
+  Pagination,
   FilterPanel,
-  useTransactions,
+  usePaginatedTransactions,
   useTransactionFilters,
   useExportTransactions,
   type SerializedTransaction,
 } from '@/features/transactions';
+
+type ViewMode = 'virtual' | 'paginated';
+
+const PAGE_SIZE = 20;
 
 /**
  * Filter transactions client-side based on search, categories, and amount
@@ -52,17 +58,22 @@ function filterTransactions(
 }
 
 function TransactionsContent() {
+  const [viewMode, setViewMode] = useState<ViewMode>('virtual');
+  const [currentPage, setCurrentPage] = useState(1);
   const { filters, setFilters, hasActiveFilters, queryParams } = useTransactionFilters();
   const { exportToCsv, isExporting } = useExportTransactions();
 
   const {
     transactions: rawTransactions,
+    total,
     isLoading,
+    isFetchingMore,
     error,
     hasMore,
+    loadMore,
     refetch,
-  } = useTransactions({
-    limit: 50,
+  } = usePaginatedTransactions({
+    pageSize: PAGE_SIZE,
     enabled: true,
     ...queryParams,
   });
@@ -72,8 +83,20 @@ function TransactionsContent() {
     [rawTransactions, filters]
   );
 
+  // Calculate pagination for paginated view
+  const totalPages = Math.ceil(transactions.length / PAGE_SIZE);
+  const paginatedTransactions = useMemo(() => {
+    if (viewMode !== 'paginated') return transactions;
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return transactions.slice(start, start + PAGE_SIZE);
+  }, [transactions, currentPage, viewMode]);
+
   const handleExport = () => {
     exportToCsv(transactions);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -83,14 +106,40 @@ function TransactionsContent() {
           <h1 className="text-2xl font-bold">Transactions</h1>
           <p className="text-muted-foreground">View and manage your card transactions</p>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleExport}
-          disabled={isExporting || transactions.length === 0}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex rounded-lg border border-border bg-muted p-1">
+            <Button
+              variant={viewMode === 'virtual' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('virtual')}
+              className="h-7 px-2"
+              title="Infinite scroll"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'paginated' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => {
+                setViewMode('paginated');
+                setCurrentPage(1);
+              }}
+              className="h-7 px-2"
+              title="Paginated view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={isExporting || transactions.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -103,7 +152,7 @@ function TransactionsContent() {
             {hasActiveFilters ? 'Filtered Transactions' : 'All Transactions'}
             {transactions.length > 0 && (
               <span className="ml-2 text-sm font-normal text-muted-foreground">
-                ({transactions.length} transactions)
+                ({transactions.length}{total > transactions.length ? `+` : ''} transactions)
               </span>
             )}
           </CardTitle>
@@ -120,12 +169,28 @@ function TransactionsContent() {
                 Try Again
               </Button>
             </div>
+          ) : viewMode === 'virtual' ? (
+            <VirtualTransactionList
+              transactions={transactions}
+              isLoading={isLoading}
+              isFetchingMore={isFetchingMore}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
+              height={600}
+            />
           ) : (
             <>
-              <TransactionList transactions={transactions} isLoading={isLoading} />
-              {hasMore && !isLoading && transactions.length > 0 && (
-                <div className="mt-4 text-center">
-                  <Button variant="outline">Load More</Button>
+              <TransactionList transactions={paginatedTransactions} isLoading={isLoading} />
+              {transactions.length > PAGE_SIZE && (
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={transactions.length}
+                    pageSize={PAGE_SIZE}
+                    onPageChange={handlePageChange}
+                    isLoading={isLoading}
+                  />
                 </div>
               )}
             </>

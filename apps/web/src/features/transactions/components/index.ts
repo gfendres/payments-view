@@ -2,6 +2,8 @@ export { TransactionRow } from './transaction-row';
 export type { SerializedTransaction } from './transaction-row';
 
 export { TransactionList } from './transaction-list';
+export { VirtualTransactionList } from './virtual-transaction-list';
+export { Pagination } from './pagination';
 
 export { FilterChip, ActiveFilters } from './filter-chip';
 export { CategorySelector } from './category-selector';
