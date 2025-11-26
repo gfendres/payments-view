@@ -17,6 +17,7 @@ import {
 import { Button } from '@payments-view/ui';
 
 import { WalletButton } from '@/features/auth';
+import { OnboardingDialog } from '@/features/onboarding';
 import { useTheme } from '@/providers';
 
 interface DashboardLayoutProps {
@@ -156,6 +157,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
+
+      {/* Onboarding dialog for new users */}
+      <OnboardingDialog />
     </div>
   );
 }
