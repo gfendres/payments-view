@@ -96,7 +96,7 @@ interface AuthProviderProps {
  * Auth provider component with token refresh
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, isReconnecting } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { disconnect } = useDisconnect();
 
@@ -105,6 +105,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSigningRef = useRef(false);
@@ -113,7 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const generateSiweMessage = trpc.auth.generateSiweMessage.useMutation();
   const authenticate = trpc.auth.authenticate.useMutation();
 
-  // Load initial state
+  // Load initial state from storage on hydration
   useEffect(() => {
     const stored = loadFromStorage();
     if (stored.token && stored.expiresAt) {
@@ -121,6 +122,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setWalletAddress(stored.walletAddress);
       setExpiresAt(stored.expiresAt);
     }
+    // Mark as hydrated after loading storage
+    setHasHydrated(true);
   }, []);
 
   /**
@@ -180,9 +183,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [expiresAt, setupRefreshTimer]);
 
   // Clear auth if wallet disconnects or address changes
-  // Skip if we're in the middle of signing to avoid race conditions
+  // Skip if we're in the middle of signing, reconnecting, or haven't hydrated yet
   useEffect(() => {
-    if (isSigningRef.current) {
+    // Don't clear during initial hydration or while reconnecting
+    if (!hasHydrated || isReconnecting || isSigningRef.current) {
       return;
     }
 
@@ -197,7 +201,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Address changed, clear auth
       clearAuth();
     }
-  }, [isConnected, address, walletAddress, token, clearAuth]);
+  }, [isConnected, isReconnecting, hasHydrated, address, walletAddress, token, clearAuth]);
 
   /**
    * Sign in with SIWE
