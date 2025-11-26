@@ -72,6 +72,8 @@ export function TierProgress({ rewards, className }: TierProgressProps) {
   const { tier } = rewards;
 
   const tierDetails = useMemo(() => {
+    // Add defensive check for CASHBACK_TIER_CONFIG
+    if (!CASHBACK_TIER_CONFIG) return [];
     const allTiers = Object.values(CASHBACK_TIER_CONFIG);
     return allTiers.map((t) => ({
       tier: t.tier,

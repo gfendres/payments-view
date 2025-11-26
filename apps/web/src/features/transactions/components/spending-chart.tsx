@@ -100,8 +100,8 @@ function aggregateByCategory(transactions: SerializedTransaction[]): CategorySpe
     total += amount;
   }
 
-  // Map to CategorySpending array
-  const categories = Object.values(CATEGORIES);
+  // Map to CategorySpending array - add defensive check
+  const categories = CATEGORIES ? Object.values(CATEGORIES) : [];
   const result: CategorySpending[] = [];
 
   for (const category of categories) {

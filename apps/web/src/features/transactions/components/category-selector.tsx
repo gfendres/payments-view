@@ -16,7 +16,8 @@ interface CategorySelectorProps {
 export function CategorySelector({ selectedCategories, onChange }: CategorySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const categories = Object.values(CATEGORIES);
+  // Add defensive check for CATEGORIES
+  const categories = CATEGORIES ? Object.values(CATEGORIES) : [];
 
   const toggleCategory = (categoryId: CategoryId) => {
     if (selectedCategories.includes(categoryId)) {
