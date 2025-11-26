@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Wallet } from 'lucide-react';
 import { Button } from '@payments-view/ui';
@@ -10,13 +12,27 @@ import { useAuth } from '../hooks/use-auth';
 interface WalletButtonProps {
   /** Variant for different contexts */
   variant?: 'default' | 'hero';
+  /** Redirect to this path after successful authentication */
+  redirectTo?: string;
 }
 
 /**
  * Wallet connection button with SIWE authentication
  */
-export function WalletButton({ variant = 'default' }: WalletButtonProps) {
+export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }: WalletButtonProps) {
+  const router = useRouter();
   const { isAuthenticated, isLoading, isConnected, signIn, signOut } = useAuth();
+
+  // Redirect when authenticated
+  useEffect(() => {
+    if (isAuthenticated && redirectTo) {
+      router.push(redirectTo);
+    }
+  }, [isAuthenticated, redirectTo, router]);
+
+  const handleSignIn = useCallback(async () => {
+    await signIn();
+  }, [signIn]);
 
   const isHero = variant === 'hero';
 
@@ -79,7 +95,7 @@ export function WalletButton({ variant = 'default' }: WalletButtonProps) {
               if (!isAuthenticated) {
                 return (
                   <Button
-                    onClick={signIn}
+                    onClick={handleSignIn}
                     disabled={isLoading || !isConnected}
                     variant="default"
                     size="lg"

@@ -10,14 +10,14 @@ import { WalletButton, useAuth } from '@/features/auth';
 
 export default function HomePage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
 
-  // Redirect to dashboard if already authenticated
+  // Redirect to dashboard immediately when authenticated
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      router.push('/dashboard');
+    if (isAuthenticated) {
+      router.replace('/dashboard');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, router]);
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-6">
