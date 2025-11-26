@@ -139,7 +139,7 @@ function DashboardContent() {
           <p className="text-muted-foreground">Track your spending and cashback rewards</p>
         </div>
 
-        <div className="space-y-3 rounded-2xl border border-border bg-card/50 p-4 shadow-sm">
+        <div className="space-y-3 rounded-2xl bg-card/40 p-4 shadow-sm">
           <FilterPanel filters={filters} onFiltersChange={setFilters} />
         </div>
       </div>

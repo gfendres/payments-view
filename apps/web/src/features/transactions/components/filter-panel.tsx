@@ -208,7 +208,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
 
       {/* Expanded filters */}
       {isExpanded && (
-        <div className="border-border bg-card/50 grid grid-cols-1 gap-6 rounded-xl border p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="bg-card/40 grid grid-cols-1 gap-6 rounded-xl p-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-3">
             <label className="text-muted-foreground text-sm font-medium">Category</label>
             <CategorySelector
@@ -252,4 +252,3 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
     </div>
   );
 }
-
