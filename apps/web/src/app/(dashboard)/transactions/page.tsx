@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, Suspense, useState } from 'react';
-import { Download, RefreshCw, CreditCard, List, LayoutGrid } from 'lucide-react';
+import { Download, RefreshCw, CreditCard, List, LayoutGrid, FileText, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@payments-view/ui';
 import { CATEGORIES } from '@payments-view/constants';
 
@@ -60,8 +60,9 @@ function filterTransactions(
 function TransactionsContent() {
   const [viewMode, setViewMode] = useState<ViewMode>('virtual');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const { filters, setFilters, hasActiveFilters, queryParams } = useTransactionFilters();
-  const { exportToCsv, isExporting } = useExportTransactions();
+  const { exportToCsv, exportToPdf, isExporting } = useExportTransactions();
 
   const {
     transactions: rawTransactions,
@@ -91,8 +92,14 @@ function TransactionsContent() {
     return transactions.slice(start, start + PAGE_SIZE);
   }, [transactions, currentPage, viewMode]);
 
-  const handleExport = () => {
+  const handleExportCsv = () => {
     exportToCsv(transactions);
+    setShowExportMenu(false);
+  };
+
+  const handleExportPdf = () => {
+    exportToPdf(transactions);
+    setShowExportMenu(false);
   };
 
   const handlePageChange = (page: number) => {
@@ -131,14 +138,50 @@ function TransactionsContent() {
               <LayoutGrid className="h-4 w-4" />
             </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            disabled={isExporting || transactions.length === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
+          {/* Export Dropdown */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={isExporting || transactions.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+            {showExportMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowExportMenu(false)}
+                />
+                <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-border bg-card shadow-lg">
+                  <button
+                    type="button"
+                    onClick={handleExportCsv}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted"
+                  >
+                    <Download className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="font-medium">Export CSV</div>
+                      <div className="text-xs text-muted-foreground">Spreadsheet format</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportPdf}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted"
+                  >
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="font-medium">Export PDF</div>
+                      <div className="text-xs text-muted-foreground">Printable report</div>
+                    </div>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

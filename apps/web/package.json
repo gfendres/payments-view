@@ -27,6 +27,8 @@
     "@trpc/react-query": "^11.0.0-rc.648",
     "@trpc/server": "^11.0.0-rc.648",
     "@walletconnect/ethereum-provider": "2.23.0",
+    "jspdf": "3.0.4",
+    "jspdf-autotable": "5.0.2",
     "lucide-react": "0.554.0",
     "next": "^15.0.4",
     "react": "^19.0.0",
@@ -39,6 +41,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
+    "@types/jspdf": "2.0.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
