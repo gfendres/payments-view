@@ -112,6 +112,7 @@ git commit -m "feat(transactions): complete transaction list feature
 - [ ] Using enums from constants package
 - [ ] File is under 500 lines
 - [ ] Functions are under 30 lines
+- [ ] Logic decoupled from UI (complex logic in hooks)
 - [ ] Task marked complete in `docs/tasks.md`
 - [ ] Changes committed with proper message
 
@@ -340,6 +341,71 @@ export function useTransactions(options?: UseTransactionsOptions) {
   };
 }
 ```
+
+### 5. Decouple Logic from UI
+
+**Always separate business logic from UI components.** Complex data processing, calculations, and state management should live in custom hooks, while components should only handle rendering.
+
+```typescript
+// ❌ BAD - Logic mixed with UI
+export function SpendingChart({ transactions }: Props) {
+  const [period, setPeriod] = useState('month');
+
+  // Business logic mixed in component
+  const filtered = useMemo(() => {
+    const threshold = getDateThreshold(period);
+    return transactions.filter(tx => new Date(tx.createdAt) >= threshold);
+  }, [transactions, period]);
+
+  const aggregated = useMemo(() => {
+    const map = new Map();
+    for (const tx of filtered) {
+      // ... 50 lines of aggregation logic
+    }
+    return result;
+  }, [filtered]);
+
+  return <Chart data={aggregated} />;
+}
+
+// ✅ GOOD - Logic in hook, UI in component
+// hooks/use-spending-chart.ts
+export function useSpendingChart({ transactions }: Options) {
+  const [period, setPeriod] = useState('month');
+
+  const filtered = useMemo(
+    () => filterByTimePeriod(transactions, period),
+    [transactions, period]
+  );
+
+  const aggregated = useMemo(
+    () => aggregateByCategory(filtered),
+    [filtered]
+  );
+
+  return { period, setPeriod, aggregated, filtered };
+}
+
+// components/spending-chart.tsx
+export function SpendingChart({ transactions }: Props) {
+  const { period, setPeriod, aggregated } = useSpendingChart({ transactions });
+
+  return <Chart data={aggregated} />;
+}
+```
+
+**Benefits:**
+- Hooks are testable without rendering components
+- Components stay focused on presentation
+- Logic can be reused across multiple components
+- Easier to understand and maintain
+- Better separation of concerns
+
+**When to extract to a hook:**
+- Component has > 50 lines of useMemo/useCallback logic
+- Same logic needed in multiple components
+- Complex state transformations or calculations
+- Data fetching with loading/error states
 
 ## Component Patterns
 
@@ -662,6 +728,7 @@ packages/infrastructure/src/gnosis-pay/
 15. **Uncommitted work**: Commit after completing each task
 16. **Guessing API field names**: Always verify against official documentation
 17. **Skipping Zod validation**: Always validate external API responses at runtime
+18. **Mixing logic with UI**: Extract business logic to custom hooks, keep components focused on rendering
 
 ---
 
@@ -774,6 +841,7 @@ grep -r "CONSTANT_NAME" packages/constants/
 □ Using enums (not string literals)
 □ Files under 500 lines
 □ Functions under 30 lines
+□ Logic decoupled from UI (hooks for business logic)
 □ Updated docs/tasks.md
 □ Updated relevant documentation
 □ Meaningful commit message
