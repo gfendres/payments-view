@@ -107,6 +107,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [error, setError] = useState<string | null>(null);
 
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSigningRef = useRef(false);
 
   // tRPC mutations
   const generateSiweMessage = trpc.auth.generateSiweMessage.useMutation();
@@ -179,13 +180,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [expiresAt, setupRefreshTimer]);
 
   // Clear auth if wallet disconnects or address changes
+  // Skip if we're in the middle of signing to avoid race conditions
   useEffect(() => {
-    if (!isConnected) {
+    if (isSigningRef.current) {
+      return;
+    }
+
+    if (!isConnected && token) {
+      // Only clear if we had a token (wallet actually disconnected)
       clearAuth();
-    } else if (address && walletAddress && address.toLowerCase() !== walletAddress.toLowerCase()) {
+    } else if (
+      address &&
+      walletAddress &&
+      address.toLowerCase() !== walletAddress.toLowerCase()
+    ) {
+      // Address changed, clear auth
       clearAuth();
     }
-  }, [isConnected, address, walletAddress, clearAuth]);
+  }, [isConnected, address, walletAddress, token, clearAuth]);
 
   /**
    * Sign in with SIWE
@@ -198,6 +210,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     setIsLoading(true);
     setError(null);
+    isSigningRef.current = true;
 
     try {
       // Generate SIWE message
@@ -227,6 +240,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
       setError(errorMessage);
     } finally {
+      isSigningRef.current = false;
       setIsLoading(false);
     }
   }, [
