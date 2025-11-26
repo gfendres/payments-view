@@ -358,13 +358,13 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create rewards page
-- [ ] Create `CashbackSummary` organism
-- [ ] Create tier progress bar
-- [ ] Display current rate
-- [ ] Display GNO balance
-- [ ] Display total earnings
-- [ ] Show eligible transactions
+- [x] Create rewards page
+- [x] Create `CashbackSummary` organism
+- [x] Create tier progress bar
+- [x] Display current rate
+- [x] Display GNO balance
+- [x] Display total earnings
+- [x] Show eligible transactions
 
 **Acceptance Criteria**:
 
@@ -381,12 +381,12 @@ Tasks are organized by implementation phases. Each task includes:
 
 **Tasks**:
 
-- [ ] Create `TierProgress` molecule
-- [ ] Create progress bar component
-- [ ] Show current GNO balance
-- [ ] Show GNO needed for next tier
-- [ ] Calculate potential additional cashback
-- [ ] Add tooltip with tier benefits
+- [x] Create `TierProgress` molecule
+- [x] Create progress bar component
+- [x] Show current GNO balance
+- [x] Show GNO needed for next tier
+- [x] Calculate potential additional cashback
+- [x] Add tooltip with tier benefits
 
 **Acceptance Criteria**:
 

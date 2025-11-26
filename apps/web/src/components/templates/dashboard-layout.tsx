@@ -12,6 +12,7 @@ import {
   X,
   Moon,
   Sun,
+  Gift,
 } from 'lucide-react';
 import { Button } from '@payments-view/ui';
 
@@ -31,6 +32,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/transactions', label: 'Transactions', icon: CreditCard },
+  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
   { href: '/dashboard/analytics', label: 'Analytics', icon: TrendingUp },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { httpBatchLink } from '@trpc/client';
+import { TooltipProvider } from '@payments-view/ui';
 
 import { wagmiConfig } from '@/lib/wagmi';
 import { trpc } from '@/lib/trpc';
@@ -80,15 +81,17 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <ThemeProvider defaultTheme="dark">
       <ToastProvider>
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
-          <QueryClientProvider client={queryClient}>
-            <WagmiProvider config={wagmiConfig}>
-              <RainbowKitProvider theme={customTheme} modalSize="compact">
-                <AuthProvider>{children}</AuthProvider>
-              </RainbowKitProvider>
-            </WagmiProvider>
-          </QueryClientProvider>
-        </trpc.Provider>
+        <TooltipProvider delayDuration={300}>
+          <trpc.Provider client={trpcClient} queryClient={queryClient}>
+            <QueryClientProvider client={queryClient}>
+              <WagmiProvider config={wagmiConfig}>
+                <RainbowKitProvider theme={customTheme} modalSize="compact">
+                  <AuthProvider>{children}</AuthProvider>
+                </RainbowKitProvider>
+              </WagmiProvider>
+            </QueryClientProvider>
+          </trpc.Provider>
+        </TooltipProvider>
       </ToastProvider>
     </ThemeProvider>
   );
