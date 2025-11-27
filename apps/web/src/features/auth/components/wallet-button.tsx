@@ -121,17 +121,17 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
 
               // Connected but not authenticated - show sign in
               if (!isAuthenticated) {
+                const signInButtonClass = isHero
+                  ? 'h-14 px-8 text-base font-semibold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30'
+                  : 'h-11 w-full justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 text-primary shadow-none hover:bg-primary/15';
+
                 return (
                   <Button
                     onClick={handleSignIn}
                     disabled={isLoading || !isConnected}
                     variant="default"
-                    size="lg"
-                    className={
-                      isHero
-                        ? 'h-14 px-8 text-base font-semibold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30'
-                        : undefined
-                    }
+                    size={isHero ? 'lg' : 'default'}
+                    className={signInButtonClass}
                   >
                     {isLoading ? (
                       <>
@@ -140,8 +140,8 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
                       </>
                     ) : (
                       <>
-                        {isHero && <Wallet className="mr-2 h-5 w-5" />}
-                        Sign in with Ethereum
+                        <Wallet className="h-4 w-4" />
+                        <span>Sign in with Ethereum</span>
                       </>
                     )}
                   </Button>
@@ -150,32 +150,32 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
 
               // Authenticated - show account info
               return (
-                <div className="relative" ref={menuRef}>
+                <div className="relative w-full" ref={menuRef}>
                   <button
                     onClick={() => setMenuOpen((prev) => !prev)}
-                    className="flex min-w-0 items-center gap-2 rounded-2xl bg-secondary px-3 py-2 text-sm font-semibold transition-colors hover:bg-secondary/80"
+                    className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/15"
                     type="button"
                     title={chain.name}
                   >
-                    {chain.hasIcon && chain.iconUrl && (
-                      <Image
-                        src={chain.iconUrl}
-                        alt={chain.name ?? 'Chain icon'}
-                        width={18}
-                        height={18}
-                        className="rounded-full"
-                      />
-                    )}
                     <div className="flex min-w-0 items-center gap-2">
+                      {chain.hasIcon && chain.iconUrl && (
+                        <Image
+                          src={chain.iconUrl}
+                          alt={chain.name ?? 'Chain icon'}
+                          width={18}
+                          height={18}
+                          className="rounded-full"
+                        />
+                      )}
                       <span className="truncate text-foreground">{chain.name}</span>
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {account.address.slice(0, 5)}
-                      </span>
                     </div>
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {account.address.slice(0, 5)}
+                    </span>
                   </button>
 
                   {menuOpen ? (
-                    <div className="absolute left-0 mt-2 w-64 rounded-2xl border border-border bg-card p-3 shadow-xl">
+                    <div className="absolute left-0 mt-2 w-full min-w-[16rem] rounded-2xl border border-border bg-card p-3 shadow-xl">
                       <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2">
                         <span className="font-mono text-sm text-foreground truncate">
                           {formatAddress(account.address)}

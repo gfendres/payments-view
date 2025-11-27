@@ -113,10 +113,13 @@ function DashboardContent() {
 
     // Calculate cashback earned (estimate based on 3.84% rate - will be updated with actual rate)
     const CASHBACK_RATE = 0.0384; // Default rate, ideally fetched from rewards API
-    const earnedThisMonth = thisMonthEligible.reduce(
-      (sum, tx) => sum + Math.abs(tx.billingAmount.amount) * CASHBACK_RATE,
+    const monthlyEligibleSpend = thisMonthEligible.reduce(
+      (sum, tx) => sum + Math.abs(tx.billingAmount.amount),
       0
     );
+    const earnedThisMonth = monthlyEligibleSpend * CASHBACK_RATE;
+    const projectedYearlyCashback = earnedThisMonth * 12;
+
     const earnedLastMonth = prevMonthEligible.reduce(
       (sum, tx) => sum + Math.abs(tx.billingAmount.amount) * CASHBACK_RATE,
       0
@@ -128,6 +131,7 @@ function DashboardContent() {
       cashbackEligibleCount: thisMonthEligible.length,
       prevCashbackEligibleCount: prevMonthEligible.length,
       earnedThisMonth,
+      projectedYearlyCashback,
       earnedLastMonth,
       totalTransactions: transactions.length,
     };
@@ -181,7 +185,7 @@ function DashboardContent() {
             icon={<Coins className="h-5 w-5" />}
             iconColor="emerald"
             valueColor="success"
-            subtitle={new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+            subtitle={`Projected: €${stats.projectedYearlyCashback.toFixed(2)} / year`}
             trend={{
               value: stats.earnedThisMonth,
               previousValue: stats.earnedLastMonth,

@@ -141,6 +141,19 @@ function RewardsContent() {
     return calculateCashbackStats(transactions, rewards.currentRate);
   }, [transactions, rewards]);
 
+  // Estimate GNO accrual from cashback (assuming optional env price, defaults to 1 EUR/GNO)
+  const gnoPriceEnv = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_GNO_PRICE_EUR : undefined;
+  const gnoPrice = gnoPriceEnv ? Number.parseFloat(gnoPriceEnv) || 1 : 1;
+  const monthlyGnoEarned =
+    cashbackStats && cashbackStats.earnedThisMonth > 0 && gnoPrice > 0
+      ? cashbackStats.earnedThisMonth / gnoPrice
+      : 0;
+  const yearlyGnoEarned = monthlyGnoEarned * 12;
+  const monthsToNextTier =
+    rewards?.tier.gnoNeededForNextTier && monthlyGnoEarned > 0
+      ? rewards.tier.gnoNeededForNextTier / monthlyGnoEarned
+      : null;
+
   // Filter eligible transactions for the list
   const eligibleTransactions = useMemo(() => {
     return transactions.filter((tx) => tx.isEligibleForCashback);
@@ -175,57 +188,48 @@ function RewardsContent() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <TierProgress rewards={rewards} />
 
-        {/* Tips Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gift className="text-primary h-5 w-5" />
-              Maximize Your Rewards
+            <CardTitle className="flex items-center justify-between gap-2">
+              <span>Cashback in GNO</span>
+              <div className="text-muted-foreground text-xs">
+                using {gnoPrice.toFixed(2)} {rewards.totalEarned.currency}/GNO
+              </div>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <div className="bg-primary mt-1 h-2 w-2 rounded-full" />
-                <div>
-                  <p className="font-medium">Hold more GNO</p>
-                  <p className="text-muted-foreground text-sm">
-                    Increase your GNO balance to unlock higher cashback tiers
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm">Est. GNO per month</p>
+                <p className="text-lg font-semibold">{monthlyGnoEarned.toFixed(4)} GNO</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm text-right">Per year</p>
+                <p className="text-right text-lg font-semibold">
+                  {yearlyGnoEarned.toFixed(4)} GNO
+                </p>
+              </div>
+            </div>
+            {!rewards.tier.isMaxTier && (
+              <div className="rounded-xl bg-muted/40 p-3">
+                <p className="text-sm font-medium">
+                  {rewards.tier.gnoNeededForNextTier.toFixed(2)} GNO to next tier
+                </p>
+                {monthsToNextTier && monthsToNextTier < 240 ? (
+                  <p className="text-muted-foreground text-xs">
+                    At current cashback pace, ~{monthsToNextTier.toFixed(1)} months to reach it.
                   </p>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="bg-primary mt-1 h-2 w-2 rounded-full" />
-                <div>
-                  <p className="font-medium">Use your card regularly</p>
-                  <p className="text-muted-foreground text-sm">
-                    All card payments are eligible for cashback rewards
+                ) : (
+                  <p className="text-muted-foreground text-xs">
+                    Add purchases or top up GNO to reach the next tier faster.
                   </p>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="bg-primary mt-1 h-2 w-2 rounded-full" />
-                <div>
-                  <p className="font-medium">OG NFT Holder Bonus</p>
-                  <p className="text-muted-foreground text-sm">
-                    OG NFT holders receive an additional +1% cashback on all purchases
-                  </p>
-                </div>
-              </li>
-              {!rewards.tier.isMaxTier && (
-                <li className="flex items-start gap-3">
-                  <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
-                  <div>
-                    <p className="font-medium text-emerald-500">
-                      {rewards.tier.gnoNeededForNextTier.toFixed(2)} GNO to next tier
-                    </p>
-                    <p className="text-muted-foreground text-sm">
-                      Upgrade to earn {rewards.tier.nextTierRate}% cashback
-                    </p>
-                  </div>
-                </li>
-              )}
-            </ul>
+                )}
+              </div>
+            )}
+            <div className="text-muted-foreground text-xs">
+              Assumes cashback is paid in GNO at the stated price. Increase spend or hold more GNO
+              to accelerate tier upgrades.
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -269,4 +273,3 @@ export default function RewardsPage() {
     </Suspense>
   );
 }
-

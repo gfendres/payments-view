@@ -46,6 +46,7 @@ export function CashbackSummary({ rewards, stats, className }: CashbackSummaryPr
   const eligibleCount = stats?.totalEligible ?? rewards.eligibleTransactionCount;
   const eligibleThisMonth = stats?.eligibleThisMonth ?? 0;
   const eligibleLastMonth = stats?.eligibleLastMonth ?? 0;
+  const projectedYearlyCashback = earnedThisMonth * 12;
 
   return (
     <div className={className}>
@@ -79,7 +80,7 @@ export function CashbackSummary({ rewards, stats, className }: CashbackSummaryPr
         <StatCard
           title="Earned This Month"
           value={formatCurrency(earnedThisMonth)}
-          subtitle={new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+          subtitle={`Projected: ${formatCurrency(projectedYearlyCashback)} / year`}
           icon={<Calendar className="h-5 w-5" />}
           iconColor="blue"
           trend={
