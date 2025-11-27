@@ -1,9 +1,8 @@
 {
-  "buildCommand": "bun run build",
-  "outputDirectory": ".next",
+  "buildCommand": "cd apps/web && bun run build",
+  "outputDirectory": "apps/web/.next",
   "installCommand": "bun install",
   "framework": "nextjs",
-  "rootDirectory": "apps/web",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- apps/web packages",
   "rewrites": [
     {
