@@ -12,6 +12,19 @@ export const API_CONFIG = {
       REWARDS: '/api/v1/rewards',
     },
   },
+  COINGECKO: {
+    BASE_URL: 'https://api.coingecko.com',
+    VERSION: 'v3',
+    ENDPOINTS: {
+      SIMPLE_PRICE: '/api/v3/simple/price',
+    },
+    /**
+     * CoinGecko token IDs
+     */
+    TOKEN_IDS: {
+      GNOSIS: 'gnosis',
+    },
+  },
 } as const;
 
 /**

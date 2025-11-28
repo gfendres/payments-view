@@ -5,12 +5,20 @@ import { Gift, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Skeleton } from '@payments-view/ui';
 
 import { useAuth } from '@/features/auth';
-import { useRewards, CashbackSummary, TierProgress, type CashbackStats } from '@/features/rewards';
+import {
+  useRewards,
+  CashbackSummary,
+  TierProgress,
+  CashbackGno,
+  type CashbackStats,
+} from '@/features/rewards';
 import {
   useTransactions,
   TransactionList,
   type SerializedTransaction,
 } from '@/features/transactions';
+import { useTokenPrice } from '@/features/pricing';
+import { CurrencyCode } from '@payments-view/constants';
 
 /**
  * Calculate cashback stats from transactions
@@ -135,18 +143,24 @@ function RewardsContent() {
     enabled: isAuthenticated,
   });
 
+  // Get GNO price from CoinGecko
+  const { price: gnoPrice, isLoading: isLoadingPrice, currency: priceCurrency } = useTokenPrice({
+    currency: CurrencyCode.EUR, // Use EUR to match rewards currency
+    enabled: isAuthenticated,
+  });
+
   // Calculate cashback stats from transactions
   const cashbackStats = useMemo(() => {
     if (!rewards) return undefined;
     return calculateCashbackStats(transactions, rewards.currentRate);
   }, [transactions, rewards]);
 
-  // Estimate GNO accrual from cashback (assuming optional env price, defaults to 1 EUR/GNO)
-  const gnoPriceEnv = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_GNO_PRICE_EUR : undefined;
-  const gnoPrice = gnoPriceEnv ? Number.parseFloat(gnoPriceEnv) || 1 : 1;
+  // Estimate GNO accrual from cashback using CoinGecko price
+  // Default to 1 EUR/GNO if price is not available yet (fallback for loading/error states)
+  const effectiveGnoPrice = gnoPrice ?? 1;
   const monthlyGnoEarned =
-    cashbackStats && cashbackStats.earnedThisMonth > 0 && gnoPrice > 0
-      ? cashbackStats.earnedThisMonth / gnoPrice
+    cashbackStats && cashbackStats.earnedThisMonth > 0 && effectiveGnoPrice > 0
+      ? cashbackStats.earnedThisMonth / effectiveGnoPrice
       : 0;
   const yearlyGnoEarned = monthlyGnoEarned * 12;
   const monthsToNextTier =
@@ -188,50 +202,16 @@ function RewardsContent() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <TierProgress rewards={rewards} />
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between gap-2">
-              <span>Cashback in GNO</span>
-              <div className="text-muted-foreground text-xs">
-                using {gnoPrice.toFixed(2)} {rewards.totalEarned.currency}/GNO
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-sm">Est. GNO per month</p>
-                <p className="text-lg font-semibold">{monthlyGnoEarned.toFixed(4)} GNO</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm text-right">Per year</p>
-                <p className="text-right text-lg font-semibold">
-                  {yearlyGnoEarned.toFixed(4)} GNO
-                </p>
-              </div>
-            </div>
-            {!rewards.tier.isMaxTier && (
-              <div className="rounded-xl bg-muted/40 p-3">
-                <p className="text-sm font-medium">
-                  {rewards.tier.gnoNeededForNextTier.toFixed(2)} GNO to next tier
-                </p>
-                {monthsToNextTier && monthsToNextTier < 240 ? (
-                  <p className="text-muted-foreground text-xs">
-                    At current cashback pace, ~{monthsToNextTier.toFixed(1)} months to reach it.
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground text-xs">
-                    Add purchases or top up GNO to reach the next tier faster.
-                  </p>
-                )}
-              </div>
-            )}
-            <div className="text-muted-foreground text-xs">
-              Assumes cashback is paid in GNO at the stated price. Increase spend or hold more GNO
-              to accelerate tier upgrades.
-            </div>
-          </CardContent>
-        </Card>
+        <CashbackGno
+          monthlyGnoEarned={monthlyGnoEarned}
+          yearlyGnoEarned={yearlyGnoEarned}
+          effectiveGnoPrice={effectiveGnoPrice}
+          priceCurrency={priceCurrency}
+          isLoadingPrice={isLoadingPrice}
+          gnoNeededForNextTier={rewards.tier.gnoNeededForNextTier}
+          monthsToNextTier={monthsToNextTier}
+          isMaxTier={rewards.tier.isMaxTier}
+        />
       </div>
 
       {/* Eligible Transactions */}

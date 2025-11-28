@@ -2,6 +2,7 @@ import { router } from '../trpc';
 import { authRouter } from './auth.router';
 import { transactionRouter } from './transaction.router';
 import { rewardsRouter } from './rewards.router';
+import { pricingRouter } from './pricing.router';
 
 /**
  * Main app router combining all routers
@@ -10,6 +11,7 @@ export const appRouter = router({
   auth: authRouter,
   transaction: transactionRouter,
   rewards: rewardsRouter,
+  pricing: pricingRouter,
 });
 
 /**
@@ -20,3 +22,4 @@ export type AppRouter = typeof appRouter;
 export { authRouter } from './auth.router';
 export { transactionRouter } from './transaction.router';
 export { rewardsRouter } from './rewards.router';
+export { pricingRouter } from './pricing.router';
