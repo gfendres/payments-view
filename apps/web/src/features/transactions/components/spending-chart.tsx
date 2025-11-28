@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-import { SegmentedControl } from '@/components/atoms';
+import { SegmentedControl } from '@payments-view/ui';
 
 import type { SerializedTransaction } from './transaction-row';
 import {

@@ -1,2 +1,2 @@
 export * from './templates';
-export { ErrorBoundary } from './error-boundary';
+export { ErrorBoundary } from '@payments-view/ui';

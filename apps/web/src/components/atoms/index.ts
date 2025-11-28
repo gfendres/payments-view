@@ -1,3 +1,2 @@
 export { CategoryIcon } from './category-icon';
-export { SegmentedControl } from './segmented-control';
-
+export { SegmentedControl } from '@payments-view/ui';

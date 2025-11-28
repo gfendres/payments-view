@@ -2,10 +2,9 @@
 
 import { useMemo, Suspense, useState } from 'react';
 import { RefreshCw, CreditCard, Calendar, Coins, Download, FileText, ChevronDown } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@payments-view/ui';
+import { Card, CardContent, CardHeader, CardTitle, Button, StatCard } from '@payments-view/ui';
 import { CATEGORIES } from '@payments-view/constants';
 
-import { StatCard } from '@/components/molecules';
 import { useAuth } from '@/features/auth';
 import {
   TransactionList,

@@ -5,18 +5,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { httpBatchLink } from '@trpc/client';
-import { TooltipProvider } from '@payments-view/ui';
+import { TooltipProvider, ToastProvider } from '@payments-view/ui';
 
 import { wagmiConfig } from '@/lib/wagmi';
 import { trpc } from '@/lib/trpc';
 import { AuthProvider } from '@/features/auth';
 import { ThemeProvider } from './theme-provider';
-import { ToastProvider } from './toast-provider';
 
 import '@rainbow-me/rainbowkit/styles.css';
 
 export { ThemeProvider, useTheme } from './theme-provider';
-export { ToastProvider, useToast } from './toast-provider';
+export { ToastProvider, useToast } from '@payments-view/ui';
 
 interface ProvidersProps {
   children: ReactNode;

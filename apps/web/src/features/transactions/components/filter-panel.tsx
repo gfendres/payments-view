@@ -3,9 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { CategoryId, CATEGORIES, TransactionStatus } from '@payments-view/constants';
-import { Button, Input } from '@payments-view/ui';
-
-import { SegmentedControl } from '@/components/atoms';
+import { Button, Input, SegmentedControl } from '@payments-view/ui';
 import { CategorySelector } from './category-selector';
 import { DateRangePicker, type DateRange } from './date-range-picker';
 import { AmountRangeInput, type AmountRange } from './amount-range-input';

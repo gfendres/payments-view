@@ -1,6 +1,8 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+
+import { cn } from '../../lib/utils';
 
 interface SegmentedControlOption<T extends string> {
   value: T;
@@ -17,15 +19,14 @@ interface SegmentedControlProps<T extends string> {
 }
 
 /**
- * Reusable segmented control component
- * Used for toggling between options like view modes, filters, time periods, etc.
+ * Reusable segmented control component for toggling between options.
  */
 export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
   size = 'md',
-  className = '',
+  className,
 }: SegmentedControlProps<T>) {
   const sizeClasses = {
     sm: 'px-3 py-1.5 text-xs',
@@ -33,19 +34,23 @@ export function SegmentedControl<T extends string>({
   };
 
   return (
-    <div className={`inline-flex rounded-xl bg-muted p-1 ${className}`}>
+    <div className={cn('inline-flex rounded-xl bg-muted p-1', className)}>
       {options.map((option) => {
         const isSelected = value === option.value;
         return (
           <button
             key={option.value}
             type="button"
-            className={`flex items-center justify-center gap-2 rounded-lg font-medium transition-all ${sizeClasses[size]} ${
+            className={cn(
+              'flex items-center justify-center gap-2 rounded-lg font-medium transition-all',
+              sizeClasses[size],
               isSelected
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => onChange(option.value)}
+            )}
+            onClick={() => {
+              onChange(option.value);
+            }}
           >
             {option.icon}
             {option.label && <span>{option.label}</span>}
@@ -55,4 +60,3 @@ export function SegmentedControl<T extends string>({
     </div>
   );
 }
-

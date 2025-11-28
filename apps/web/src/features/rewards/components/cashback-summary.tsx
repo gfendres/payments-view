@@ -1,9 +1,7 @@
 'use client';
 
 import { Wallet, Coins, Receipt, TrendingUp, Calendar } from 'lucide-react';
-import { Card, CardContent } from '@payments-view/ui';
-
-import { StatCard } from '@/components/molecules';
+import { Card, CardContent, StatCard } from '@payments-view/ui';
 import type { SerializedRewards } from '../hooks';
 
 /**

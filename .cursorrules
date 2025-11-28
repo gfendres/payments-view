@@ -277,8 +277,9 @@ packages/
 │   ├── middleware/
 │   └── context.ts
 └── ui/src/
-    ├── primitives/      # Shadcn components
-    └── theme/
+    ├── primitives/      # Shadcn atoms (Button, Card, Input, Tooltip, Dialog, etc.)
+    ├── components/      # Reusable atoms/molecules/feedback (SegmentedControl, StatCard, ToastProvider, ErrorBoundary)
+    └── theme/           # Tokens/radius/colors (source of truth)
 
 apps/web/
 ├── app/                 # Next.js App Router
@@ -286,10 +287,10 @@ apps/web/
 │   ├── (dashboard)/
 │   └── api/trpc/
 ├── components/
-│   ├── atoms/
-│   ├── molecules/
-│   ├── organisms/
-│   └── templates/
+│   ├── atoms/           # App-specific atoms only (brand or app-only)
+│   ├── molecules/       # App-level composites; prefer packages/ui for reusable pieces
+│   ├── organisms/       # (Use features/ instead when domain-specific)
+│   └── templates/       # Layouts/shells (DashboardLayout, etc.)
 ├── features/            # Feature modules
 │   ├── auth/
 │   │   ├── hooks/
@@ -416,6 +417,14 @@ export function SpendingChart({ transactions }: Props) {
 3. **Organisms**: TransactionList, SpendingChart, FilterPanel
 4. **Templates**: DashboardLayout, AuthLayout
 
+### UI Placement Rules
+
+- Use `@payments-view/ui` for primitives and shared atoms/molecules/feedback (Button, Card, SegmentedControl, StatCard, ToastProvider, ErrorBoundary).
+- Only create atoms/molecules in `apps/web/src/components` when they are app-specific/brand-only; generic ones belong in `packages/ui/src/components` and must be re-exported there.
+- Domain-specific UI stays under `apps/web/src/features/<domain>/components`; keep pages thin and compose feature components.
+- Layout chrome lives in `apps/web/src/components/templates` (sidebar/topbar/shell); avoid routing/auth logic inside design-system components.
+- When adding reusable UI, update `packages/ui/src/index.ts` exports and import directly from `@payments-view/ui`.
+
 ### Component Structure
 
 ```tsx
@@ -463,6 +472,10 @@ export function TransactionList({ className, limit }: TransactionListProps) {
 ```
 
 ## Styling Rules
+
+### Design Tokens
+
+- Source of truth for colors/radius/spacing is `packages/ui/src/theme`; avoid duplicating tokens in app-level CSS—if tokens change, update the UI package and consume it.
 
 ### Tailwind Classes
 
@@ -806,6 +819,7 @@ If yes to any, update the relevant doc!
 ```bash
 # Search for existing components
 grep -r "ComponentName" apps/web/components/
+rg "ComponentName" packages/ui/src/components
 
 # Search for existing hooks
 grep -r "useHookName" apps/web/features/
@@ -826,6 +840,7 @@ grep -r "CONSTANT_NAME" packages/constants/
 2. Is there a similar pattern I can extend?
 3. Can I reuse code from another feature?
 4. Is this the right architectural layer for this code?
+5. Should this UI live in `packages/ui` instead of the app/feature?
 
 ---
 
