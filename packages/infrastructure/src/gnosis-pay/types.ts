@@ -25,22 +25,7 @@ export interface ChallengeResponse {
   token: string;
 }
 
-/**
- * API error response
- */
-export interface ApiErrorResponse {
-  error: string;
-  message?: string;
-  statusCode?: number;
-}
-
-/**
- * Generic API result wrapper
- */
-export type ApiResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: ApiErrorResponse };
+export type { ApiErrorResponse, ApiResult } from '../http/types';
 
 // Re-export transaction and rewards types
 export * from './types/index';
-

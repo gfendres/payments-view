@@ -3,7 +3,7 @@ import { API_CONFIG } from '@payments-view/constants';
 import { CoinGeckoClient } from './client';
 import { parseCoinGeckoPriceResponse } from './schemas';
 import type { CoinGeckoPriceResponse } from './schemas';
-import type { ApiResult } from '../gnosis-pay/types';
+import type { ApiResult } from '../http/types';
 
 /**
  * CoinGecko price client
