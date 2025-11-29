@@ -126,11 +126,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Load initial state from storage on hydration
   useEffect(() => {
     const stored = loadFromStorage();
-    console.log('[Auth] Hydration - loaded from storage:', {
-      hasToken: !!stored.token,
-      hasExpiry: !!stored.expiresAt,
-      walletAddress: stored.walletAddress,
-    });
     if (stored.token && stored.expiresAt) {
       setToken(stored.token);
       setWalletAddress(stored.walletAddress);
@@ -270,21 +265,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Save state
       const expiry = new Date(result.expiresAt);
-      console.log('[Auth] Sign-in successful:', {
-        token: result.token.substring(0, 20) + '...',
-        expiresAt: result.expiresAt,
-        walletAddress: result.walletAddress,
-      });
       setToken(result.token);
       setWalletAddress(result.walletAddress);
       setExpiresAt(expiry);
       saveToStorage(result.token, result.expiresAt, result.walletAddress);
       setupRefreshTimer(expiry);
 
-      console.log('[Auth] Token saved to sessionStorage, invalidating queries...');
       // Invalidate all queries to force refetch with new auth token
       await queryClient.invalidateQueries();
-      console.log('[Auth] Queries invalidated');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
       setError(errorMessage);
@@ -314,17 +302,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const isAuthenticated = !!token && !!expiresAt && expiresAt > new Date();
 
-  // Debug logging for auth state changes
-  useEffect(() => {
-    console.log('[Auth] State changed:', {
-      isAuthenticated,
-      hasToken: !!token,
-      hasExpiry: !!expiresAt,
-      isConnected,
-      hasHydrated,
-    });
-  }, [isAuthenticated, token, expiresAt, isConnected, hasHydrated]);
-
   const value: AuthContextState = {
     isAuthenticated,
     isLoading,
@@ -349,4 +326,3 @@ export function useAuthContext(): AuthContextState {
   }
   return context;
 }
-

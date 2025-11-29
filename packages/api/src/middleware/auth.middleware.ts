@@ -1,5 +1,8 @@
+import { createHmac, timingSafeEqual } from 'crypto';
+
 import { Session } from '@payments-view/domain/identity';
 import { EthereumAddress } from '@payments-view/domain/transaction';
+import { AUTH_CONFIG } from '@payments-view/constants';
 
 /**
  * JWT payload structure from Gnosis Pay API
@@ -11,6 +14,67 @@ interface JwtPayload {
   exp: number; // expiration timestamp
   iat: number; // issued at timestamp
 }
+
+/**
+ * Get signing secret for JWT verification
+ */
+const getSigningSecret = (): string | undefined => {
+  return process.env[AUTH_CONFIG.JWT_SIGNING_SECRET_ENV_KEY];
+};
+
+const parsePayload = (payloadSegment: string): JwtPayload | null => {
+  try {
+    const decoded = Buffer.from(payloadSegment, 'base64url').toString('utf-8');
+    const parsed = JSON.parse(decoded) as JwtPayload;
+    if (!parsed.signerAddress || !parsed.exp || !parsed.iat) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const isSignatureValid = (
+  secret: string,
+  header: string,
+  payload: string,
+  signature: string
+): boolean => {
+  const unsigned = `${header}.${payload}`;
+  const expected = createHmac('sha256', secret).update(unsigned).digest('base64url');
+  const expectedBuffer = Buffer.from(expected);
+  const signatureBuffer = Buffer.from(signature, 'base64url');
+
+  return (
+    expectedBuffer.length === signatureBuffer.length &&
+    timingSafeEqual(expectedBuffer, signatureBuffer)
+  );
+};
+
+const validateSignature = (
+  header: string,
+  payload: string,
+  signature: string,
+  parsed: JwtPayload
+): JwtPayload | null => {
+  const secret = getSigningSecret();
+  const isValidSignature = secret ? isSignatureValid(secret, header, payload, signature) : false;
+
+  if (secret && !isValidSignature) {
+    // In development, allow payload parsing even if signature can't be verified (e.g., external tokens)
+    if (process.env.NODE_ENV === 'production') {
+      return null;
+    }
+    return parsed;
+  }
+
+  if (!secret && process.env.NODE_ENV === 'production') {
+    return null; // require verification in production
+  }
+
+  return parsed;
+};
 
 /**
  * Extract token from Authorization header
@@ -29,24 +93,20 @@ export const extractToken = (authHeader?: string): string | null => {
 };
 
 /**
- * Decode JWT payload (simplified - does not verify signature)
- * In production, use a proper JWT library to verify the signature
+ * Decode JWT payload and verify signature when a secret is provided.
+ * In production we require signature verification to succeed.
  */
 export const decodeJwt = (token: string): JwtPayload | null => {
   try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
+    const [header, payload, signature] = token.split('.');
+    if (!header || !payload || !signature) {
       return null;
     }
 
-    const payload = parts[1];
-    if (!payload) {
-      return null;
-    }
+    const parsed = parsePayload(payload);
+    if (!parsed) return null;
 
-    // Base64url decode
-    const decoded = Buffer.from(payload, 'base64url').toString('utf-8');
-    return JSON.parse(decoded) as JwtPayload;
+    return validateSignature(header, payload, signature, parsed);
   } catch {
     return null;
   }
@@ -102,4 +162,3 @@ export const parseAuthHeader = (authHeader?: string): Session | null => {
 
   return createSessionFromToken(token);
 };
-

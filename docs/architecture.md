@@ -24,6 +24,11 @@
 | **I**nterface Segregation | Small, focused interfaces per use case |
 | **D**ependency Inversion | Depend on abstractions, inject dependencies |
 
+### API/Auth Notes
+
+- tRPC context provides repositories; routers should remain thin and avoid instantiating infrastructure directly.
+- JWTs are verified server-side with the `AUTH_JWT_SECRET` HMAC secret; production requires a valid signature and expiration.
+
 ---
 
 ## 🏛️ Domain Driven Design Architecture

@@ -43,6 +43,7 @@ export class AuthenticateUseCase {
     const authResult = await this.authRepository.authenticate({
       message: input.message,
       signature: input.signature,
+      walletAddress: addressResult.value.value,
     });
 
     if (authResult.isFailure) {
@@ -60,4 +61,3 @@ export class AuthenticateUseCase {
     return Result.ok({ session });
   }
 }
-

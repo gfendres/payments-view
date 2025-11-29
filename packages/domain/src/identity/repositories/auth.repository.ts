@@ -15,6 +15,7 @@ export interface NonceResult {
 export interface AuthChallengeInput {
   message: string;
   signature: string;
+  walletAddress?: string;
 }
 
 /**
@@ -44,4 +45,3 @@ export interface IAuthRepository {
    */
   refreshToken?(session: Session): Promise<Result<AuthResult, DomainError>>;
 }
-

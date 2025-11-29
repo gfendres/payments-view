@@ -6,6 +6,8 @@ import {
   TransactionStatus,
   CATEGORIES,
   CategoryId,
+  TransactionType,
+  CurrencyCode,
 } from '@payments-view/constants';
 import { Badge } from '@payments-view/ui';
 
@@ -19,15 +21,15 @@ export interface SerializedTransaction {
   threadId: string;
   kind: TransactionKind;
   status: TransactionStatus;
-  type: string;
+  type: TransactionType;
   billingAmount: {
     amount: number;
-    currency: string;
+    currency: CurrencyCode;
     formatted: string;
   };
   transactionAmount: {
     amount: number;
-    currency: string;
+    currency: CurrencyCode;
     formatted: string;
   };
   merchant: {
@@ -35,6 +37,8 @@ export interface SerializedTransaction {
     city?: string;
     country?: string;
     category: string;
+    categoryId: CategoryId;
+    mcc: string;
   };
   cardTokenLast4: string;
   isPending: boolean;
@@ -75,10 +79,15 @@ function formatTime(dateString: string): string {
 /**
  * Get category config by name
  */
-function getCategoryByName(categoryName: string) {
+function getCategory(categoryId: CategoryId, categoryName: string) {
+  const category = CATEGORIES[categoryId];
+  if (category) {
+    return category;
+  }
+
   const entries = Object.entries(CATEGORIES);
-  const found = entries.find(([, config]) => config.name === categoryName);
-  return found ? found[1] : CATEGORIES[CategoryId.OTHER];
+  const fallback = entries.find(([, config]) => config.name === categoryName);
+  return fallback ? fallback[1] : CATEGORIES[CategoryId.OTHER];
 }
 
 /**
@@ -111,7 +120,7 @@ function getStatusText(status: TransactionStatus, isPending: boolean): string {
  * Transaction row component
  */
 export function TransactionRow({ transaction, onClick }: TransactionRowProps) {
-  const category = getCategoryByName(transaction.merchant.category);
+  const category = getCategory(transaction.merchant.categoryId, transaction.merchant.category);
   const isRefund = transaction.kind === TransactionKind.REFUND;
   const isReversal = transaction.kind === TransactionKind.REVERSAL;
   const isPositive = isRefund || isReversal;
@@ -176,4 +185,3 @@ export function TransactionRow({ transaction, onClick }: TransactionRowProps) {
     </button>
   );
 }
-

@@ -1,5 +1,4 @@
 import { GetRewardsUseCase } from '@payments-view/application/use-cases';
-import { GnosisPayRewardsRepository } from '@payments-view/infrastructure/gnosis-pay';
 import type { RewardsInfo } from '@payments-view/domain/rewards';
 
 import { router, protectedProcedure, handleDomainError } from '../trpc';
@@ -56,8 +55,7 @@ export const rewardsRouter = router({
    * Get user's rewards information
    */
   get: protectedProcedure.query(async ({ ctx }) => {
-    const repository = new GnosisPayRewardsRepository();
-    const useCase = new GetRewardsUseCase(repository);
+    const useCase = new GetRewardsUseCase(ctx.repositories.rewardsRepository);
 
     const result = await useCase.execute({
       token: ctx.session.token,
@@ -72,4 +70,3 @@ export const rewardsRouter = router({
 });
 
 export type RewardsRouter = typeof rewardsRouter;
-

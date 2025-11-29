@@ -59,9 +59,11 @@ export class FilterTransactionsUseCase {
     const searchTerm = criteria.search?.trim();
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((tx) =>
-        tx.merchant.name.toLowerCase().includes(searchLower)
-      );
+      filtered = filtered.filter((tx) => {
+        const matchesMerchant = tx.merchant.name.toLowerCase().includes(searchLower);
+        const matchesCategory = tx.category.name.toLowerCase().includes(searchLower);
+        return matchesMerchant || matchesCategory;
+      });
       appliedFilters.push('search');
     }
 

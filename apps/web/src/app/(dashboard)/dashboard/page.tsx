@@ -3,7 +3,6 @@
 import { useMemo, Suspense, useState } from 'react';
 import { RefreshCw, CreditCard, Calendar, Coins, Download, FileText, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button, StatCard } from '@payments-view/ui';
-import { CATEGORIES } from '@payments-view/constants';
 
 import { useAuth } from '@/features/auth';
 import {
@@ -13,49 +12,8 @@ import {
   useTransactions,
   useTransactionFilters,
   useExportTransactions,
-  type SerializedTransaction,
 } from '@/features/transactions';
-
-/**
- * Filter transactions client-side based on search and categories
- */
-function filterTransactions(
-  transactions: SerializedTransaction[],
-  filters: ReturnType<typeof useTransactionFilters>['filters']
-): SerializedTransaction[] {
-  return transactions.filter((tx) => {
-    const txDate = new Date(tx.createdAt);
-
-    // Date range filter
-    if (filters.dateRange.from && txDate < filters.dateRange.from) {
-      return false;
-    }
-    if (filters.dateRange.to && txDate > filters.dateRange.to) {
-      return false;
-    }
-
-    // Search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      const matchesMerchant = tx.merchant.name.toLowerCase().includes(searchLower);
-      const matchesCategory = tx.merchant.category.toLowerCase().includes(searchLower);
-      if (!matchesMerchant && !matchesCategory) return false;
-    }
-
-    // Category filter
-    if (filters.categories.length > 0) {
-      const categoryNames = filters.categories.map((id) => CATEGORIES[id].name);
-      if (!categoryNames.includes(tx.merchant.category)) return false;
-    }
-
-    // Status filter
-    if (filters.status && tx.status !== filters.status) {
-      return false;
-    }
-
-    return true;
-  });
-}
+import { applyTransactionFilters } from '@/features/transactions/lib/transaction-use-cases';
 
 /**
  * Dashboard content component
@@ -79,8 +37,8 @@ function DashboardContent() {
   });
 
   // Apply client-side filters
-  const transactions = useMemo(
-    () => filterTransactions(rawTransactions, filters),
+  const { transactions } = useMemo(
+    () => applyTransactionFilters(rawTransactions, filters),
     [rawTransactions, filters]
   );
 

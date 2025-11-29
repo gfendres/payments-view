@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { GetNonceUseCase, AuthenticateUseCase } from '@payments-view/application/use-cases';
-import { GnosisPayAuthRepository } from '@payments-view/infrastructure/gnosis-pay';
 import { SiweService } from '@payments-view/domain/identity';
 
 import { router, publicProcedure, handleDomainError } from '../trpc';
@@ -29,9 +28,8 @@ export const authRouter = router({
   /**
    * Get nonce for SIWE authentication
    */
-  getNonce: publicProcedure.query(async () => {
-    const authRepository = new GnosisPayAuthRepository();
-    const useCase = new GetNonceUseCase(authRepository);
+  getNonce: publicProcedure.query(async ({ ctx }) => {
+    const useCase = new GetNonceUseCase(ctx.repositories.authRepository);
 
     const result = await useCase.execute();
 
@@ -47,10 +45,9 @@ export const authRouter = router({
    */
   generateSiweMessage: publicProcedure
     .input(generateSiweMessageSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       // First, get a nonce
-      const authRepository = new GnosisPayAuthRepository();
-      const getNonceUseCase = new GetNonceUseCase(authRepository);
+      const getNonceUseCase = new GetNonceUseCase(ctx.repositories.authRepository);
 
       const nonceResult = await getNonceUseCase.execute();
 
@@ -75,9 +72,8 @@ export const authRouter = router({
   /**
    * Authenticate with SIWE signature
    */
-  authenticate: publicProcedure.input(authenticateSchema).mutation(async ({ input }) => {
-    const authRepository = new GnosisPayAuthRepository();
-    const useCase = new AuthenticateUseCase(authRepository);
+  authenticate: publicProcedure.input(authenticateSchema).mutation(async ({ ctx, input }) => {
+    const useCase = new AuthenticateUseCase(ctx.repositories.authRepository);
 
     const result = await useCase.execute({
       walletAddress: input.address,
@@ -99,4 +95,3 @@ export const authRouter = router({
 });
 
 export type AuthRouter = typeof authRouter;
-

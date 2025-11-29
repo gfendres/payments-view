@@ -113,7 +113,7 @@ function ToastList({ toasts, onDismiss }: ToastListProps) {
   );
 }
 
-function useToastActions() {
+function useToastState() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const removeToast = useCallback((id: string) => {
@@ -142,6 +142,10 @@ function useToastActions() {
     [removeToast]
   );
 
+  return { toasts, addToast, removeToast };
+}
+
+function useTypedToastActions(addToast: (toast: Omit<Toast, 'id'>) => void) {
   const enqueueTypedToast = useCallback(
     (type: ToastType, title: string, message?: string) => {
       const payload: Omit<Toast, 'id'> = message
@@ -179,6 +183,13 @@ function useToastActions() {
     },
     [enqueueTypedToast]
   );
+
+  return { success, error, warning, info };
+}
+
+function useToastActions() {
+  const { toasts, addToast, removeToast } = useToastState();
+  const { success, error, warning, info } = useTypedToastActions(addToast);
 
   return { toasts, addToast, removeToast, success, error, warning, info };
 }

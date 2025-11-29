@@ -3,7 +3,6 @@ import {
   ListTransactionsUseCase,
   GetTransactionUseCase,
 } from '@payments-view/application/use-cases';
-import { GnosisPayTransactionRepository } from '@payments-view/infrastructure/gnosis-pay';
 
 import { router, protectedProcedure, handleDomainError } from '../trpc';
 
@@ -55,6 +54,8 @@ function serializeTransaction(tx: Transaction) {
       city: tx.merchant.city,
       country: tx.merchant.country,
       category: tx.merchant.category.name,
+      categoryId: tx.merchant.category.id,
+      mcc: tx.merchant.mcc,
     },
     cardTokenLast4: tx.cardTokenLast4,
     isPending: tx.isPending,
@@ -73,8 +74,7 @@ export const transactionRouter = router({
    * List transactions with pagination and filters
    */
   list: protectedProcedure.input(transactionQuerySchema).query(async ({ ctx, input }) => {
-    const repository = new GnosisPayTransactionRepository();
-    const useCase = new ListTransactionsUseCase(repository);
+    const useCase = new ListTransactionsUseCase(ctx.repositories.transactionRepository);
 
     // Build params object, only including defined values
     const params: TransactionQueryParams = {};
@@ -109,8 +109,7 @@ export const transactionRouter = router({
    * Get a single transaction by ID
    */
   get: protectedProcedure.input(transactionIdSchema).query(async ({ ctx, input }) => {
-    const repository = new GnosisPayTransactionRepository();
-    const useCase = new GetTransactionUseCase(repository);
+    const useCase = new GetTransactionUseCase(ctx.repositories.transactionRepository);
 
     const result = await useCase.execute({
       token: ctx.session.token,

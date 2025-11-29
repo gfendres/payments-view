@@ -41,5 +41,9 @@ export const AUTH_CONFIG = {
    * Chain ID for Gnosis Chain
    */
   CHAIN_ID: 100,
-} as const;
 
+  /**
+   * Environment variable name used for verifying JWT signatures
+   */
+  JWT_SIGNING_SECRET_ENV_KEY: 'AUTH_JWT_SECRET',
+} as const;

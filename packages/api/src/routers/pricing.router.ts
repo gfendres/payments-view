@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { CurrencyCode, API_CONFIG } from '@payments-view/constants';
 import { GetTokenPriceUseCase } from '@payments-view/application/use-cases';
-import { CoinGeckoTokenPriceRepository } from '@payments-view/infrastructure/coingecko';
 
 import { router, publicProcedure, handleDomainError } from '../trpc';
 
@@ -20,36 +19,30 @@ export const pricingRouter = router({
   /**
    * Get token price
    */
-  getTokenPrice: publicProcedure
-    .input(getTokenPriceSchema)
-    .query(async ({ input }) => {
-      // Optional: Get CoinGecko API key from environment for higher rate limits
-      // Free tier works without it, but Pro API provides better rate limits
-      const apiKey = process.env['COINGECKO_API_KEY'];
-      const repository = new CoinGeckoTokenPriceRepository(undefined, apiKey);
-      const useCase = new GetTokenPriceUseCase(repository);
+  getTokenPrice: publicProcedure.input(getTokenPriceSchema).query(async ({ ctx, input }) => {
+    const useCase = new GetTokenPriceUseCase(ctx.repositories.tokenPriceRepository);
 
-      const result = await useCase.execute({
-        tokenId: input.tokenId,
-        currency: input.currency,
-      });
+    const result = await useCase.execute({
+      tokenId: input.tokenId,
+      currency: input.currency,
+    });
 
-      if (result.isFailure) {
-        throw handleDomainError(result.error);
-      }
+    if (result.isFailure) {
+      throw handleDomainError(result.error);
+    }
 
-      const tokenPrice = result.value;
+    const tokenPrice = result.value;
 
-      // Return serializable format
-      return {
-        tokenId: tokenPrice.tokenId,
-        price: tokenPrice.price,
-        currency: tokenPrice.currency,
-        lastUpdatedAt: tokenPrice.lastUpdatedAt.toISOString(),
-        change24h: tokenPrice.change24h,
-        marketCap: tokenPrice.marketCap,
-      };
-    }),
+    // Return serializable format
+    return {
+      tokenId: tokenPrice.tokenId,
+      price: tokenPrice.price,
+      currency: tokenPrice.currency,
+      lastUpdatedAt: tokenPrice.lastUpdatedAt.toISOString(),
+      change24h: tokenPrice.change24h,
+      marketCap: tokenPrice.marketCap,
+    };
+  }),
 });
 
 export type PricingRouter = typeof pricingRouter;

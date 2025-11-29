@@ -27,6 +27,12 @@ grep -r "ComponentName" apps/web/components
 grep -r "useHookName" apps/web/features
 ```
 
+### Security and Wiring
+
+- Never log auth tokens, JWTs, or secrets in client or server code; use the logger with redaction and keep auth data out of `console`.
+- API routers must consume repositories from the tRPC context (no direct `new` of infrastructure repositories inside routers).
+- Prefer reusing application-layer use cases (filter/export) via shared adapters instead of duplicating logic in pages or hooks.
+
 ### After Completing Each Task
 
 1. **Run linting** - Fix ALL errors before moving on

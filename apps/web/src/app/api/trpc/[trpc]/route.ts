@@ -6,8 +6,6 @@ import { appRouter, createContext } from '@payments-view/api';
  */
 const handler = (req: Request) => {
   const authHeader = req.headers.get('Authorization');
-  // Debug logging
-  console.log(`[tRPC Route] ${req.method} - Auth header: ${authHeader ? `Bearer ${authHeader.substring(7, 27)}...` : 'MISSING'}`);
 
   return fetchRequestHandler({
     endpoint: '/api/trpc',
@@ -27,4 +25,3 @@ const handler = (req: Request) => {
 };
 
 export { handler as GET, handler as POST };
-

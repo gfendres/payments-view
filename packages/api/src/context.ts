@@ -1,4 +1,16 @@
 import type { Session } from '@payments-view/domain/identity';
+import type {
+  IAuthRepository,
+  ITransactionRepository,
+  IRewardsRepository,
+  ITokenPriceRepository,
+} from '@payments-view/domain';
+import {
+  GnosisPayAuthRepository,
+  GnosisPayTransactionRepository,
+  GnosisPayRewardsRepository,
+  CoinGeckoTokenPriceRepository,
+} from '@payments-view/infrastructure';
 
 import { parseAuthHeader } from './middleware';
 
@@ -15,6 +27,16 @@ export interface Context {
    * Request correlation ID for logging
    */
   correlationId: string;
+
+  /**
+   * Request-scoped dependencies
+   */
+  repositories: {
+    authRepository: IAuthRepository;
+    transactionRepository: ITransactionRepository;
+    rewardsRepository: IRewardsRepository;
+    tokenPriceRepository: ITokenPriceRepository;
+  };
 }
 
 /**
@@ -23,6 +45,7 @@ export interface Context {
 export interface CreateContextOptions {
   authHeader?: string;
   correlationId?: string;
+  repositories?: Partial<Context['repositories']>;
 }
 
 /**
@@ -32,16 +55,29 @@ const generateCorrelationId = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
 
+const buildRepositories = (
+  repositories?: CreateContextOptions['repositories']
+): Context['repositories'] => ({
+  authRepository: repositories?.authRepository ?? new GnosisPayAuthRepository(),
+  transactionRepository:
+    repositories?.transactionRepository ?? new GnosisPayTransactionRepository(),
+  rewardsRepository: repositories?.rewardsRepository ?? new GnosisPayRewardsRepository(),
+  tokenPriceRepository:
+    repositories?.tokenPriceRepository ??
+    new CoinGeckoTokenPriceRepository(undefined, process.env['COINGECKO_API_KEY']),
+});
+
 /**
  * Create tRPC context from request
  */
 export const createContext = (options: CreateContextOptions = {}): Context => {
   // Parse session from auth header
   const session = options.authHeader ? parseAuthHeader(options.authHeader) : undefined;
+  const repositories = buildRepositories(options.repositories);
 
   return {
     session: session ?? undefined,
     correlationId: options.correlationId ?? generateCorrelationId(),
+    repositories,
   };
 };
-

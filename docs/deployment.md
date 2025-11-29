@@ -259,4 +259,6 @@ To rollback to a previous deployment:
 
 ---
 
-*Last Updated: November 2024*
+## Last Updated
+
+November 2024
