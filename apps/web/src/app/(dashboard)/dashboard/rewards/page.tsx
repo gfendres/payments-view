@@ -77,7 +77,7 @@ function calculateCashbackStats(
  */
 function RewardsLoadingSkeleton() {
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div>
         <Skeleton className="h-8 w-48" />
         <Skeleton className="mt-2 h-5 w-64" />
@@ -109,7 +109,7 @@ function RewardsLoadingSkeleton() {
  */
 function RewardsError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       <Card className="border-destructive/50">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <div className="bg-destructive/20 mb-4 rounded-full p-4">
@@ -182,14 +182,14 @@ function RewardsContent() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
           <h1 className="text-2xl font-bold">Rewards</h1>
           <p className="text-muted-foreground">Track your cashback earnings and tier progress</p>
         </div>
-        <Button variant="subtle" size="sm" onClick={() => refetch()} className="gap-2">
+        <Button variant="subtle" size="sm" onClick={() => refetch()} className="gap-2 self-start">
           <RefreshCw className="h-4 w-4" />
           <span className="hidden sm:inline">Refresh</span>
         </Button>
@@ -222,7 +222,7 @@ function RewardsContent() {
             Recent transactions that earned cashback rewards
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6">
           {eligibleTransactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="mb-4 text-4xl opacity-50">🧾</div>

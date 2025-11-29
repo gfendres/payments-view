@@ -220,44 +220,78 @@ function TrendLegend({
     <div className="mt-4 space-y-3">
       <div className="text-muted-foreground text-xs font-medium">Monthly Trends (vs Average)</div>
 
-      {/* Header row */}
-      <div className="text-muted-foreground flex items-center justify-between text-xs">
+      {/* Header row (desktop only) */}
+      <div className="text-muted-foreground hidden items-center justify-between text-[11px] sm:flex">
         <span>Category</span>
         <div className="flex items-center gap-4">
-          <span className="w-16 text-right">Avg/mo</span>
-          <span className="w-16 text-right">{currentMonthName}</span>
-          <span className="w-16 text-right">Forecast</span>
-          <span className="w-14 text-right">vs Avg</span>
+          <span className="w-14 text-right">Avg/mo</span>
+          <span className="w-12 text-right">vs Avg</span>
+          <span className="w-14 text-right">{currentMonthName}</span>
+          <span className="w-14 text-right">Forecast</span>
         </div>
       </div>
 
-      {topCategories.map((category) => {
-        const trend = trends.find((t) => t.id === category.id);
-        if (!trend) return null;
+      <div className="space-y-2">
+        {topCategories.map((category) => {
+          const trend = trends.find((t) => t.id === category.id);
+          if (!trend) return null;
 
-        return (
-          <div key={category.id} className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
-              <span className="text-muted-foreground max-w-[100px] truncate">{category.name}</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-muted-foreground w-16 text-right text-xs">
-                €{trend.monthlyAverage.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-              </span>
-              <span className="w-16 text-right text-xs font-medium">
-                €{trend.currentMonth.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-              </span>
-              <span className="text-muted-foreground w-16 text-right text-xs">
-                €{trend.predictedMonth.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-              </span>
-              <div className="flex w-14 justify-end">
-                <TrendIndicator direction={trend.direction} change={trend.changeFromAverage} />
+          const indicator = (
+            <TrendIndicator direction={trend.direction} change={trend.changeFromAverage} />
+          );
+
+          return (
+            <div
+              key={category.id}
+              className="rounded-lg bg-card/30 px-3 py-2 text-sm sm:bg-transparent sm:px-0 sm:py-0"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="text-muted-foreground truncate text-sm sm:text-base">
+                    {category.name}
+                  </span>
+                </div>
+
+                {/* Desktop values */}
+                <div className="hidden items-center gap-3 sm:flex">
+                  <span className="text-muted-foreground w-14 text-right text-xs">
+                    €{trend.monthlyAverage.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </span>
+                  <div className="flex w-12 justify-end">{indicator}</div>
+                  <span className="w-14 text-right text-xs font-medium">
+                    €{trend.currentMonth.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </span>
+                  <span className="text-muted-foreground w-14 text-right text-xs">
+                    €{trend.predictedMonth.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+
+                {/* Mobile primary value + indicator */}
+                <div className="flex items-center gap-2 sm:hidden">
+                  {indicator}
+                  <span className="text-right text-sm font-semibold">
+                    €{trend.currentMonth.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Mobile secondary values */}
+              <div className="mt-1 flex items-center justify-between gap-3 text-[11px] text-muted-foreground sm:hidden">
+                <span>
+                  Avg €{trend.monthlyAverage.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                </span>
+                <span>
+                  Forecast €{trend.predictedMonth.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                </span>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
       <div className="text-muted-foreground border-border mt-2 border-t pt-2 text-xs">
         <span className="italic">Forecast based on {daysIntoMonth} days into the month</span>

@@ -17,7 +17,7 @@ interface VirtualTransactionListProps {
   height?: number;
 }
 
-const ITEM_HEIGHT = 80; // Approximate height of TransactionRow
+const ITEM_HEIGHT = 76; // Approximate height of TransactionRow
 const OVERSCAN = 5; // Number of items to render outside visible area
 
 /**
@@ -27,14 +27,17 @@ function VirtualListSkeleton({ count = 5 }: { count?: number }) {
   return (
     <div className="space-y-2">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 rounded-xl bg-card/50 p-4">
-          <Skeleton className="h-12 w-12 rounded-xl" />
+        <div
+          key={i}
+          className="flex items-center gap-3 rounded-xl bg-card/50 p-2 sm:gap-4 sm:p-4"
+        >
+          <Skeleton className="h-10 w-10 rounded-xl sm:h-12 sm:w-12" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-24" />
           </div>
           <div className="flex flex-col items-end gap-2">
-            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-4 w-20 sm:h-5" />
             <Skeleton className="h-4 w-16" />
           </div>
         </div>
@@ -172,4 +175,3 @@ export function VirtualTransactionList({
     </div>
   );
 }
-

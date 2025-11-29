@@ -227,7 +227,7 @@ function DashboardContent() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6">
           {error ? (
             <div className="border-destructive/50 bg-destructive/10 rounded-lg border p-4 text-center">
               <p className="text-destructive">{error}</p>

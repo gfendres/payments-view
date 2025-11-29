@@ -130,7 +130,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col lg:ml-0">
         {/* Top header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-background px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-background px-4 sm:px-6">
           <Button
             type="button"
             variant="ghost"
@@ -147,7 +147,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto px-4 py-5 sm:p-6">{children}</main>
       </div>
 
       {/* Onboarding dialog for new users */}
