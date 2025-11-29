@@ -15,3 +15,4 @@ export interface ITokenPriceRepository {
     currency: CurrencyCode
   ): Promise<Result<TokenPrice, DomainError>>;
 }
+

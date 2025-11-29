@@ -32,3 +32,4 @@ export class GetTokenPriceUseCase {
     return this.tokenPriceRepository.getTokenPrice(input.tokenId, input.currency);
   }
 }
+

@@ -180,8 +180,8 @@ function HorizontalStatCard({
     <Card className={className}>
       <CardContent className="flex items-center gap-4 pt-6">
         {icon && (
-          <div className={`rounded-xl ${colors.bg} ${iconSize} ${colors.text}`}>
-            <div className={iconContainerSize}>{icon}</div>
+          <div className={`flex items-center justify-center rounded-xl ${colors.bg} ${iconSize} ${colors.text}`}>
+            <div className={`flex items-center justify-center ${iconContainerSize}`}>{icon}</div>
           </div>
         )}
         <div className="min-w-0 flex-1">
@@ -236,8 +236,8 @@ function VerticalStatCard({
             )}
           </div>
           {icon && (
-            <div className={`rounded-xl ${colors.bg} ${iconSize} ${colors.text} shrink-0`}>
-              <div className={iconContainerSize}>{icon}</div>
+            <div className={`flex items-center justify-center rounded-xl ${colors.bg} ${iconSize} ${colors.text} shrink-0`}>
+              <div className={`flex items-center justify-center ${iconContainerSize}`}>{icon}</div>
             </div>
           )}
         </div>

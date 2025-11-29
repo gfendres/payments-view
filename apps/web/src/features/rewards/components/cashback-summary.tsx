@@ -1,6 +1,6 @@
 'use client';
 
-import { Wallet, Coins, Receipt, TrendingUp, Calendar } from 'lucide-react';
+import { Wallet, Coins, BadgeDollarSign, TrendingUp, CalendarClock } from 'lucide-react';
 import { Card, CardContent, StatCard } from '@payments-view/ui';
 import type { SerializedRewards } from '../hooks';
 
@@ -41,9 +41,9 @@ export function CashbackSummary({ rewards, stats, className }: CashbackSummaryPr
   const totalEarned = stats?.totalEarned ?? rewards.totalEarned.amount;
   const earnedThisMonth = stats?.earnedThisMonth ?? rewards.earnedThisMonth.amount;
   const earnedLastMonth = stats?.earnedLastMonth ?? 0;
-  const eligibleCount = stats?.totalEligible ?? rewards.eligibleTransactionCount;
   const eligibleThisMonth = stats?.eligibleThisMonth ?? 0;
   const eligibleLastMonth = stats?.eligibleLastMonth ?? 0;
+  const eligibleDisplayCount = stats ? eligibleThisMonth : rewards.eligibleTransactionCount;
   const projectedYearlyCashback = earnedThisMonth * 12;
 
   return (
@@ -79,8 +79,8 @@ export function CashbackSummary({ rewards, stats, className }: CashbackSummaryPr
           title="Earned This Month"
           value={formatCurrency(earnedThisMonth)}
           subtitle={`Projected: ${formatCurrency(projectedYearlyCashback)} / year`}
-          icon={<Calendar className="h-5 w-5" />}
-          iconColor="blue"
+          icon={<CalendarClock className="h-5 w-5" />}
+          iconColor="violet"
           trend={
             earnedLastMonth > 0 || earnedThisMonth > 0
               ? {
@@ -118,9 +118,9 @@ export function CashbackSummary({ rewards, stats, className }: CashbackSummaryPr
         <StatCard
           layout="horizontal"
           title="Eligible Transactions"
-          value={eligibleCount}
-          icon={<Receipt className="h-5 w-5" />}
-          iconColor="cyan"
+          value={eligibleDisplayCount}
+          icon={<BadgeDollarSign className="h-5 w-5" />}
+          iconColor="primary"
           trend={
             eligibleLastMonth > 0 || eligibleThisMonth > 0
               ? {

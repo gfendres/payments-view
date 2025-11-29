@@ -19,6 +19,9 @@ const getJwtSecret = (): string | undefined => {
   return process.env[envKey];
 };
 
+const isLocalJwtFallbackEnabled = (): boolean =>
+  process.env.NODE_ENV !== 'production' && process.env.ENABLE_LOCAL_JWT_FALLBACK === 'true';
+
 const issueLocalJwt = (walletAddress: string): AuthResult | null => {
   const secret = getJwtSecret();
   if (!secret) {
@@ -74,15 +77,11 @@ export class GnosisPayAuthRepository implements IAuthRepository {
    * Submit SIWE challenge and get JWT
    */
   async authenticate(input: AuthChallengeInput): Promise<Result<AuthResult, ExternalServiceError>> {
-    // Try to issue local JWT if wallet address is provided (fallback for local development)
-    const secretToken = (() => {
-      const addr = input.walletAddress as string | undefined;
-      if (addr) {
-        return issueLocalJwt(addr);
-      } else {
-        return undefined;
-      }
-    })();
+    const localFallbackEnabled = isLocalJwtFallbackEnabled();
+
+    // Try to issue local JWT for explicitly enabled local development
+    const secretToken =
+      localFallbackEnabled && input.walletAddress ? issueLocalJwt(input.walletAddress) : null;
 
     const result = await this.authClient.submitChallenge({
       message: input.message,
@@ -97,8 +96,8 @@ export class GnosisPayAuthRepository implements IAuthRepository {
       });
     }
 
-    // Fallback to local JWT if API call failed but we have a wallet address
-    if (secretToken) {
+    // Optional: allow local JWT only when explicitly enabled and API call fails
+    if (localFallbackEnabled && secretToken) {
       return Result.ok(secretToken);
     }
 

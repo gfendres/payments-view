@@ -59,12 +59,15 @@ const CSV_COLUMNS: CsvColumn[] = [
  * Escape CSV value to handle special characters
  */
 function escapeCsvValue(value: string): string {
+  const needsFormulaEscape = ['=', '+', '-', '@', '\t'].includes(value.charAt(0));
+  const sanitized = needsFormulaEscape ? `'${value}` : value;
+
   // If value contains comma, newline, or double quote, wrap in quotes
-  if (value.includes(',') || value.includes('\n') || value.includes('"')) {
+  if (sanitized.includes(',') || sanitized.includes('\n') || sanitized.includes('"')) {
     // Escape double quotes by doubling them
-    return `"${value.replace(/"/g, '""')}"`;
+    return `"${sanitized.replace(/"/g, '""')}"`;
   }
-  return value;
+  return sanitized;
 }
 
 /**

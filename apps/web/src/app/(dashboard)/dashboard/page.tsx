@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, Suspense, useState } from 'react';
-import { RefreshCw, CreditCard, Calendar, Coins, Download, FileText, ChevronDown } from 'lucide-react';
+import { RefreshCw, ReceiptText, Calendar, Coins, Download, FileText, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button, StatCard } from '@payments-view/ui';
 
 import { useAuth } from '@/features/auth';
@@ -115,8 +115,8 @@ function DashboardContent() {
           <StatCard
             title={hasActiveFilters ? 'Filtered Results' : 'Total Transactions'}
             value={stats.totalTransactions}
-            icon={<CreditCard className="h-5 w-5" />}
-            iconColor="blue"
+            icon={<ReceiptText className="h-5 w-5" />}
+            iconColor="primary"
             subtitle={
               hasActiveFilters && rawTransactions.length !== stats.totalTransactions
                 ? `of ${rawTransactions.length} total`

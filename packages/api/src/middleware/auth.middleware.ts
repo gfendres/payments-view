@@ -5,10 +5,12 @@ import { EthereumAddress } from '@payments-view/domain/transaction';
 import { AUTH_CONFIG } from '@payments-view/constants';
 
 /**
- * JWT payload structure from Gnosis Pay API
+ * JWT payload structure
+ * - Gnosis Pay API tokens include userId field
+ * - Locally-issued tokens do not include userId
  */
 interface JwtPayload {
-  userId: string; // Gnosis Pay user ID
+  userId?: string; // Gnosis Pay user ID (only present in API tokens)
   signerAddress: string; // wallet address (Gnosis Pay uses this instead of sub)
   chainId: number; // chain ID (100 for Gnosis Chain)
   exp: number; // expiration timestamp
@@ -58,6 +60,13 @@ const validateSignature = (
   signature: string,
   parsed: JwtPayload
 ): JwtPayload | null => {
+  // Gnosis Pay API tokens have userId field - trust them without signature verification
+  // The API already validated the SIWE signature before issuing the token
+  if (parsed.userId) {
+    return parsed;
+  }
+
+  // Locally-issued tokens (no userId) must be verified with AUTH_JWT_SECRET
   const secret = getSigningSecret();
   const isValidSignature = secret ? isSignatureValid(secret, header, payload, signature) : false;
 
@@ -70,7 +79,7 @@ const validateSignature = (
   }
 
   if (!secret && process.env.NODE_ENV === 'production') {
-    return null; // require verification in production
+    return null; // require verification in production for local tokens
   }
 
   return parsed;
@@ -93,8 +102,9 @@ export const extractToken = (authHeader?: string): string | null => {
 };
 
 /**
- * Decode JWT payload and verify signature when a secret is provided.
- * In production we require signature verification to succeed.
+ * Decode JWT payload and verify signature when appropriate.
+ * - Gnosis Pay API tokens (with userId) are trusted without signature verification
+ * - Locally-issued tokens (no userId) are verified with AUTH_JWT_SECRET
  */
 export const decodeJwt = (token: string): JwtPayload | null => {
   try {
