@@ -26,6 +26,7 @@
     "@trpc/client": "^11.0.0-rc.648",
     "@trpc/react-query": "^11.0.0-rc.648",
     "@trpc/server": "^11.0.0-rc.648",
+    "@vercel/analytics": "1.5.0",
     "@walletconnect/ethereum-provider": "2.23.0",
     "jspdf": "3.0.4",
     "jspdf-autotable": "5.0.2",
