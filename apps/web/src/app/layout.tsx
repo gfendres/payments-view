@@ -3,6 +3,8 @@ import { Outfit } from 'next/font/google';
 import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/next';
 
+import '@/polyfills/indexeddb';
+
 import { Providers } from '@/providers';
 
 import './globals.css';
