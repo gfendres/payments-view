@@ -4,6 +4,21 @@ import { Session } from '@payments-view/domain/identity';
 import { EthereumAddress } from '@payments-view/domain/transaction';
 import { AUTH_CONFIG } from '@payments-view/constants';
 
+const logAuthDebug = (message: string, details: Record<string, unknown> = {}): void => {
+  if (process.env.LOG_AUTH_DEBUG !== 'true') {
+    return;
+  }
+
+  console.warn(
+    JSON.stringify({
+      level: 'warn',
+      message: `[auth-debug] ${message}`,
+      timestamp: new Date().toISOString(),
+      ...details,
+    })
+  );
+};
+
 /**
  * JWT payload structure
  * - Gnosis Pay API tokens include userId field
@@ -29,10 +44,20 @@ const parsePayload = (payloadSegment: string): JwtPayload | null => {
     const decoded = Buffer.from(payloadSegment, 'base64url').toString('utf-8');
     const parsed = JSON.parse(decoded) as JwtPayload;
     if (!parsed.signerAddress || !parsed.exp || !parsed.iat) {
+      logAuthDebug('payload missing required fields', {
+        hasSigner: Boolean((parsed as JwtPayload).signerAddress),
+        hasExp: Boolean((parsed as JwtPayload).exp),
+        hasIat: Boolean((parsed as JwtPayload).iat),
+        hasUserId: Boolean((parsed as JwtPayload).userId),
+      });
       return null;
     }
     return parsed;
-  } catch {
+  } catch (error) {
+    logAuthDebug('payload parse failed', {
+      payloadLength: payloadSegment.length,
+      error: error instanceof Error ? error.message : 'unknown',
+    });
     return null;
   }
 };
@@ -90,11 +115,13 @@ const validateSignature = (
  */
 export const extractToken = (authHeader?: string): string | null => {
   if (!authHeader) {
+    logAuthDebug('missing Authorization header');
     return null;
   }
 
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    logAuthDebug('invalid Authorization format', { parts: parts.length, scheme: parts[0] });
     return null;
   }
 
@@ -110,6 +137,7 @@ export const decodeJwt = (token: string): JwtPayload | null => {
   try {
     const [header, payload, signature] = token.split('.');
     if (!header || !payload || !signature) {
+      logAuthDebug('token missing parts', { hasHeader: Boolean(header), hasPayload: Boolean(payload), hasSignature: Boolean(signature) });
       return null;
     }
 
@@ -117,7 +145,11 @@ export const decodeJwt = (token: string): JwtPayload | null => {
     if (!parsed) return null;
 
     return validateSignature(header, payload, signature, parsed);
-  } catch {
+  } catch (error) {
+    logAuthDebug('decodeJwt failed', {
+      error: error instanceof Error ? error.message : 'unknown',
+      tokenLength: token.length,
+    });
     return null;
   }
 };
@@ -129,18 +161,21 @@ export const createSessionFromToken = (token: string): Session | null => {
   const payload = decodeJwt(token);
 
   if (!payload) {
+    logAuthDebug('decodeJwt returned null', { tokenLength: token.length });
     return null;
   }
 
   // Check expiration
   const expiresAt = new Date(payload.exp * 1000);
   if (expiresAt <= new Date()) {
+    logAuthDebug('token expired', { exp: expiresAt.toISOString(), now: new Date().toISOString() });
     return null;
   }
 
   // Create ethereum address from signerAddress field
   const addressResult = EthereumAddress.create(payload.signerAddress);
   if (addressResult.isFailure) {
+    logAuthDebug('invalid signer address', { signerAddress: payload.signerAddress });
     return null;
   }
 
@@ -170,5 +205,13 @@ export const parseAuthHeader = (authHeader?: string): Session | null => {
     return null;
   }
 
-  return createSessionFromToken(token);
+  const session = createSessionFromToken(token);
+
+  if (!session) {
+    logAuthDebug('createSessionFromToken returned null', {
+      tokenLength: token.length,
+    });
+  }
+
+  return session;
 };
