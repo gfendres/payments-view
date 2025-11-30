@@ -16,6 +16,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "zod": "^3.23.8",
     "@payments-view/constants": "workspace:*",
     "@payments-view/domain": "workspace:*"
   },
@@ -23,4 +24,3 @@
     "typescript": "^5.7.2"
   }
 }
-
