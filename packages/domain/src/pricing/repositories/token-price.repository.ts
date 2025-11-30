@@ -16,3 +16,4 @@ export interface ITokenPriceRepository {
   ): Promise<Result<TokenPrice, DomainError>>;
 }
 
+

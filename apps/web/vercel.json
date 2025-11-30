@@ -36,7 +36,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://vitals.vercel-insights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://api.gnosispay.com https://api.coingecko.com https://cloud.walletconnect.com https://rpc.walletconnect.com https://vitals.vercel-insights.com https://*.walletconnect.com wss://relay.walletconnect.com wss://*.walletconnect.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vitals.vercel-insights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://api.gnosispay.com https://api.coingecko.com https://cloud.walletconnect.com https://rpc.walletconnect.com https://vitals.vercel-insights.com https://*.walletconnect.com https://pulse.walletconnect.org wss://relay.walletconnect.com wss://*.walletconnect.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self';"
         }
       ]
     }
