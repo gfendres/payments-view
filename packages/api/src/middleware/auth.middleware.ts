@@ -45,10 +45,10 @@ const parsePayload = (payloadSegment: string): JwtPayload | null => {
     const parsed = JSON.parse(decoded) as JwtPayload;
     if (!parsed.signerAddress || !parsed.exp || !parsed.iat) {
       logAuthDebug('payload missing required fields', {
-        hasSigner: Boolean((parsed as JwtPayload).signerAddress),
-        hasExp: Boolean((parsed as JwtPayload).exp),
-        hasIat: Boolean((parsed as JwtPayload).iat),
-        hasUserId: Boolean((parsed as JwtPayload).userId),
+        hasSigner: Boolean(parsed.signerAddress),
+        hasExp: Boolean(parsed.exp),
+        hasIat: Boolean(parsed.iat),
+        hasUserId: Boolean(parsed.userId),
       });
       return null;
     }
