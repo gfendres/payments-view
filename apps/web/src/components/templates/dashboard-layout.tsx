@@ -80,7 +80,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <CreditCard className="h-5 w-5" />
               </div>
-              <span className="font-bold text-foreground">Gnosis Pay</span>
+              <span className="font-bold text-foreground">Finance Dashboard</span>
             </Link>
             <Button
               type="button"

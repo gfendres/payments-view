@@ -107,7 +107,7 @@ function generatePdf(transactions: SerializedTransaction[]): jsPDF {
   // Title
   doc.setFontSize(20);
   doc.setTextColor(16, 185, 129); // Emerald color
-  doc.text('Gnosis Pay Transactions', 14, 22);
+  doc.text('Finance Dashboard - Transactions', 14, 22);
 
   // Subtitle with date range
   doc.setFontSize(10);
@@ -172,7 +172,7 @@ function generatePdf(transactions: SerializedTransaction[]): jsPDF {
       { align: 'center' }
     );
     doc.text(
-      'Gnosis Pay - Transaction Report',
+      'Finance Dashboard - Transaction Report',
       14,
       doc.internal.pageSize.height - 10
     );

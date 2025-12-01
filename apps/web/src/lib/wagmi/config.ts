@@ -12,7 +12,7 @@ const WALLET_CONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT
 // Log warning in development if project ID is not set
 if (!WALLET_CONNECT_PROJECT_ID && typeof window !== 'undefined') {
   console.warn(
-    '[Gnosis Pay] WalletConnect project ID not configured. ' +
+    '[Finance Dashboard] WalletConnect project ID not configured. ' +
     'Get one at https://cloud.walletconnect.com/ and set NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID in .env.local'
   );
 }
@@ -21,7 +21,7 @@ if (!WALLET_CONNECT_PROJECT_ID && typeof window !== 'undefined') {
  * Wagmi configuration with RainbowKit defaults
  */
 export const wagmiConfig = getDefaultConfig({
-  appName: 'Gnosis Pay Portfolio',
+  appName: 'Finance Dashboard',
   projectId: WALLET_CONNECT_PROJECT_ID || 'placeholder-id',
   chains: [gnosis],
   ssr: true,

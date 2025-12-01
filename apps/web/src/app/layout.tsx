@@ -16,7 +16,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'Gnosis Card Portfolio Dashboard',
+  title: 'Finance Dashboard',
   description: 'Track your Gnosis Pay card transactions, spending, and cashback rewards',
 };
 

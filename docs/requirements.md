@@ -1,4 +1,4 @@
-# Gnosis Card Portfolio Dashboard - Product Requirements
+# Finance Dashboard - Product Requirements
 
 ## 📋 Executive Summary
 

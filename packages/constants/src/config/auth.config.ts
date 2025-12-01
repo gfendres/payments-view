@@ -30,7 +30,7 @@ export const AUTH_CONFIG = {
   /**
    * SIWE statement
    */
-  SIWE_STATEMENT: 'Sign in with Ethereum to Gnosis Pay Portfolio Dashboard',
+  SIWE_STATEMENT: 'Sign in with Ethereum to Finance Dashboard',
 
   /**
    * SIWE version

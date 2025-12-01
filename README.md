@@ -1,4 +1,4 @@
-# Gnosis Card Portfolio Dashboard
+# Finance Dashboard
 
 A comprehensive financial dashboard for Gnosis Pay card users that provides transaction management, visual analytics, cashback tracking, and AI-powered insights.
 

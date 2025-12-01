@@ -1,4 +1,4 @@
-# Gnosis Card Portfolio Dashboard - Design System
+# Finance Dashboard - Design System
 
 ## 🎨 Design Principles
 

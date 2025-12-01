@@ -98,9 +98,9 @@ export function OnboardingDialog() {
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeOnboarding()}>
       <DialogContent className="max-w-lg overflow-hidden p-0" aria-describedby={undefined}>
         {/* Accessibility: Visually hidden title for screen readers */}
-        <DialogTitle className="sr-only">Welcome to Gnosis Pay Dashboard</DialogTitle>
+        <DialogTitle className="sr-only">Welcome to Finance Dashboard</DialogTitle>
         <DialogDescription className="sr-only">
-          An onboarding tour to help you get started with your Gnosis Pay dashboard
+          An onboarding tour to help you get started with your Finance Dashboard
         </DialogDescription>
 
         {/* Progress bar */}

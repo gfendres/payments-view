@@ -60,7 +60,7 @@ export default function HomePage() {
 
         {/* Title */}
         <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-          <span className="text-primary">Gnosis Pay</span>{' '}
+          <span className="text-primary">Finance</span>{' '}
           <span className="text-foreground">Dashboard</span>
         </h1>
 
@@ -117,7 +117,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="absolute bottom-6 text-center text-sm text-muted-foreground">
-        <p>Built for the Gnosis ecosystem</p>
+        <p>Your personal finance dashboard</p>
       </footer>
     </main>
   );

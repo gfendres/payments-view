@@ -1,6 +1,6 @@
 # Deployment Guide - Vercel
 
-This guide covers deploying the Gnosis Card Portfolio Dashboard to Vercel.
+This guide covers deploying Finance Dashboard to Vercel.
 
 ## Prerequisites
 

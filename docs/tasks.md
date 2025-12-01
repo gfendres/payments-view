@@ -1,4 +1,4 @@
-# Gnosis Card Portfolio Dashboard - Implementation Tasks
+# Finance Dashboard - Implementation Tasks
 
 ## 📋 Task Organization
 

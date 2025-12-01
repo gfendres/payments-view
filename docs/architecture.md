@@ -1,4 +1,4 @@
-# Gnosis Card Portfolio Dashboard - Technical Architecture
+# Finance Dashboard - Technical Architecture
 
 ## 🛠️ Engineering Principles
 

@@ -21,7 +21,7 @@ export interface OnboardingStep {
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Gnosis Pay',
+    title: 'Welcome to Finance Dashboard',
     description:
       'Your all-in-one dashboard for tracking card transactions, cashback rewards, and spending insights.',
     icon: '👋',
