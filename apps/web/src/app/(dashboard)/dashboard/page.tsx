@@ -5,7 +5,7 @@ import { RefreshCw, ReceiptText, Calendar, Coins, Download, FileText, ChevronDow
 import { Card, CardContent, CardHeader, CardTitle, Button, StatCard } from '@payments-view/ui';
 
 import { useAuth } from '@/features/auth';
-import { calculateDashboardCashbackStats } from '@/features/rewards';
+import { calculateDashboardCashbackStats, useRewards } from '@/features/rewards';
 import {
   TransactionList,
   FilterPanel,
@@ -19,6 +19,9 @@ import { applyTransactionFilters } from '@/features/transactions/lib/transaction
 /**
  * Dashboard content component
  */
+// Default cashback rate when rewards API hasn't loaded yet
+const DEFAULT_CASHBACK_RATE = 3.84;
+
 function DashboardContent() {
   const { isAuthenticated } = useAuth();
   const { filters, setFilters, hasActiveFilters, queryParams } = useTransactionFilters();
@@ -36,6 +39,10 @@ function DashboardContent() {
     enabled: isAuthenticated,
     ...queryParams,
   });
+
+  // Get actual cashback rate from rewards API
+  const { rewards } = useRewards({ enabled: isAuthenticated });
+  const cashbackRate = rewards?.currentRate ?? DEFAULT_CASHBACK_RATE;
 
   // Apply client-side filters
   const { transactions } = useMemo(
@@ -70,8 +77,7 @@ function DashboardContent() {
     const prevMonthEligible = prevMonthTx.filter((t) => t.isEligibleForCashback);
 
     // Calculate cashback earned using 6-month average for yearly projections
-    const CASHBACK_RATE = 3.84; // Default rate in percentage, ideally fetched from rewards API
-    const cashbackStats = calculateDashboardCashbackStats(transactions, CASHBACK_RATE / 100);
+    const cashbackStats = calculateDashboardCashbackStats(transactions, cashbackRate / 100);
 
     return {
       thisMonthCount: thisMonthTx.length,
@@ -84,7 +90,7 @@ function DashboardContent() {
       earnedLastMonth: cashbackStats.earnedLastMonth,
       totalTransactions: transactions.length,
     };
-  }, [transactions]);
+  }, [transactions, cashbackRate]);
 
   return (
     <div className="space-y-6">
@@ -229,7 +235,11 @@ function DashboardContent() {
             </div>
           ) : (
             <>
-              <TransactionList transactions={transactions} isLoading={isLoading} />
+              <TransactionList
+                transactions={transactions}
+                isLoading={isLoading}
+                cashbackRate={cashbackRate}
+              />
               {hasMore && !isLoading && transactions.length > 0 && (
                 <div className="mt-4 text-center">
                   <Button variant="outline">Load More</Button>
