@@ -185,6 +185,7 @@ function RewardsContent() {
             <TransactionList
               transactions={eligibleTransactions}
               isLoading={isLoadingTransactions}
+              cashbackRate={rewards.currentRate}
             />
           )}
         </CardContent>

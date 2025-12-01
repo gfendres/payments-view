@@ -49,6 +49,8 @@ export interface SerializedTransaction {
 interface TransactionRowProps {
   transaction: SerializedTransaction;
   onClick?: (transaction: SerializedTransaction) => void;
+  /** Cashback rate as percentage (e.g., 3.85 for 3.85%). If provided, shows cashback earned for eligible transactions */
+  cashbackRate?: number;
 }
 
 /**
@@ -115,13 +117,36 @@ function getStatusText(status: TransactionStatus, isPending: boolean): string {
 }
 
 /**
+ * Calculate cashback earned for a transaction
+ */
+function calculateCashback(amount: number, rate: number): number {
+  return Math.abs(amount) * (rate / 100);
+}
+
+/**
+ * Format cashback amount
+ */
+function formatCashback(amount: number): string {
+  return `+€${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+/**
  * Transaction row component
  */
-export function TransactionRow({ transaction, onClick }: TransactionRowProps) {
+export function TransactionRow({ transaction, onClick, cashbackRate }: TransactionRowProps) {
   const category = getCategory(transaction.merchant.categoryId, transaction.merchant.category);
   const isRefund = transaction.kind === TransactionKind.REFUND;
   const isReversal = transaction.kind === TransactionKind.REVERSAL;
   const isPositive = isRefund || isReversal;
+
+  // Calculate cashback if rate is provided and transaction is eligible
+  const showCashback = cashbackRate && transaction.isEligibleForCashback && !isPositive;
+  const cashbackEarned = showCashback
+    ? calculateCashback(transaction.billingAmount.amount, cashbackRate)
+    : 0;
 
   return (
     <button
@@ -157,7 +182,7 @@ export function TransactionRow({ transaction, onClick }: TransactionRowProps) {
 
       {/* Amount & Status */}
       <div className="flex shrink-0 flex-col items-end gap-1">
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-col items-end gap-0.5">
           <span
             className={`text-base font-semibold tabular-nums sm:text-lg ${
               isPositive ? 'text-emerald-500' : 'text-foreground'
@@ -166,6 +191,11 @@ export function TransactionRow({ transaction, onClick }: TransactionRowProps) {
             {isPositive ? '+' : '-'}
             {transaction.billingAmount.formatted}
           </span>
+          {showCashback && (
+            <span className="text-[11px] font-medium tabular-nums text-emerald-500 sm:text-xs">
+              {formatCashback(cashbackEarned)} cashback
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="text-muted-foreground text-[11px] leading-tight sm:text-xs">

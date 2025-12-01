@@ -8,6 +8,8 @@ interface TransactionListProps {
   transactions: SerializedTransaction[];
   isLoading?: boolean;
   onTransactionClick?: (transaction: SerializedTransaction) => void;
+  /** Cashback rate as percentage (e.g., 3.85 for 3.85%). Shows cashback earned for eligible transactions */
+  cashbackRate?: number;
 }
 
 /**
@@ -58,6 +60,7 @@ export function TransactionList({
   transactions,
   isLoading,
   onTransactionClick,
+  cashbackRate,
 }: TransactionListProps) {
   if (isLoading) {
     return <TransactionListSkeleton />;
@@ -74,6 +77,7 @@ export function TransactionList({
           key={transaction.id}
           transaction={transaction}
           onClick={onTransactionClick}
+          cashbackRate={cashbackRate}
         />
       ))}
     </div>
