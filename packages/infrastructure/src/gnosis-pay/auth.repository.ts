@@ -20,7 +20,7 @@ const getJwtSecret = (): string | undefined => {
 };
 
 const isLocalJwtFallbackEnabled = (): boolean =>
-  process.env.NODE_ENV !== 'production' && process.env['ENABLE_LOCAL_JWT_FALLBACK'] === 'true';
+  process.env.NODE_ENV !== 'production' && process.env.ENABLE_LOCAL_JWT_FALLBACK === 'true';
 
 const issueLocalJwt = (walletAddress: string): AuthResult | null => {
   const secret = getJwtSecret();
