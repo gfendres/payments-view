@@ -10,67 +10,11 @@ import {
   CashbackSummary,
   TierProgress,
   CashbackGno,
-  type CashbackStats,
+  calculateCashbackStats,
 } from '@/features/rewards';
-import {
-  useTransactions,
-  TransactionList,
-  type SerializedTransaction,
-} from '@/features/transactions';
+import { useTransactions, TransactionList } from '@/features/transactions';
 import { useTokenPrice } from '@/features/pricing';
 import { CurrencyCode } from '@payments-view/constants';
-
-/**
- * Calculate cashback stats from transactions
- */
-function calculateCashbackStats(
-  transactions: SerializedTransaction[],
-  cashbackRate: number
-): CashbackStats {
-  const now = new Date();
-  const thisMonth = now.getMonth();
-  const thisYear = now.getFullYear();
-  const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
-  const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
-
-  // Filter eligible transactions
-  const eligible = transactions.filter((tx) => tx.isEligibleForCashback);
-
-  // This month's eligible
-  const eligibleThisMonth = eligible.filter((tx) => {
-    const date = new Date(tx.createdAt);
-    return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
-  });
-
-  // Last month's eligible
-  const eligibleLastMonth = eligible.filter((tx) => {
-    const date = new Date(tx.createdAt);
-    return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
-  });
-
-  // Calculate spending amounts (absolute values)
-  const spendingThisMonth = eligibleThisMonth.reduce(
-    (sum, tx) => sum + Math.abs(tx.billingAmount.amount),
-    0
-  );
-  const spendingLastMonth = eligibleLastMonth.reduce(
-    (sum, tx) => sum + Math.abs(tx.billingAmount.amount),
-    0
-  );
-  const totalSpending = eligible.reduce((sum, tx) => sum + Math.abs(tx.billingAmount.amount), 0);
-
-  // Estimate cashback earned (spending * rate / 100)
-  const rate = cashbackRate / 100;
-
-  return {
-    totalEarned: totalSpending * rate,
-    earnedThisMonth: spendingThisMonth * rate,
-    earnedLastMonth: spendingLastMonth * rate,
-    eligibleThisMonth: eligibleThisMonth.length,
-    eligibleLastMonth: eligibleLastMonth.length,
-    totalEligible: eligible.length,
-  };
-}
 
 /**
  * Loading skeleton for rewards page

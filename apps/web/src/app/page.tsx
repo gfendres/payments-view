@@ -117,7 +117,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="absolute bottom-6 text-center text-sm text-muted-foreground">
-        <p>Your personal finance dashboard</p>
+        <p>Built for the Gnosis ecosystem</p>
       </footer>
     </main>
   );

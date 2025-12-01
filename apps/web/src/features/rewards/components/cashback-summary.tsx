@@ -2,19 +2,9 @@
 
 import { Wallet, Coins, BadgeDollarSign, TrendingUp, CalendarClock } from 'lucide-react';
 import { Card, CardContent, StatCard } from '@payments-view/ui';
-import type { SerializedRewards } from '../hooks';
 
-/**
- * Calculated cashback stats from transactions
- */
-export interface CashbackStats {
-  totalEarned: number;
-  earnedThisMonth: number;
-  earnedLastMonth: number;
-  eligibleThisMonth: number;
-  eligibleLastMonth: number;
-  totalEligible: number;
-}
+import type { SerializedRewards } from '../hooks';
+import type { CashbackStats } from '../lib';
 
 interface CashbackSummaryProps {
   rewards: SerializedRewards;
@@ -44,7 +34,8 @@ export function CashbackSummary({ rewards, stats, className }: CashbackSummaryPr
   const eligibleThisMonth = stats?.eligibleThisMonth ?? 0;
   const eligibleLastMonth = stats?.eligibleLastMonth ?? 0;
   const eligibleDisplayCount = stats ? eligibleThisMonth : rewards.eligibleTransactionCount;
-  const projectedYearlyCashback = earnedThisMonth * 12;
+  // Use 6-month average projection if available, otherwise fallback to current month * 12
+  const projectedYearlyCashback = stats?.projectedYearlyCashback ?? earnedThisMonth * 12;
 
   return (
     <div className={className}>
