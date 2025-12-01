@@ -5,7 +5,7 @@ import { EthereumAddress } from '@payments-view/domain/transaction';
 import { AUTH_CONFIG } from '@payments-view/constants';
 
 const logAuthDebug = (message: string, details: Record<string, unknown> = {}): void => {
-  if (process.env.LOG_AUTH_DEBUG !== 'true') {
+  if (process.env['LOG_AUTH_DEBUG'] !== 'true') {
     return;
   }
 
