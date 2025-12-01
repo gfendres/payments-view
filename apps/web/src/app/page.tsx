@@ -66,8 +66,8 @@ export default function HomePage() {
 
         {/* Subtitle */}
         <p className="mx-auto mb-10 max-w-lg text-lg text-muted-foreground">
-          Track your card transactions, analyze spending patterns, and maximize your GNO cashback
-          rewards — all in one beautiful dashboard.
+          Track your Gnosis Pay card transactions, analyze spending patterns, and maximize your GNO
+          cashback rewards — all in one beautiful dashboard.
         </p>
 
         {/* Connect button or Go to Dashboard */}

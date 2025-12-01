@@ -93,7 +93,7 @@ function RewardsContent() {
     enabled: isAuthenticated,
   });
 
-  // Calculate cashback stats from transactions
+  // Calculate cashback stats from transactions (uses 6-month rolling average for projections)
   const cashbackStats = useMemo(() => {
     if (!rewards) return undefined;
     return calculateCashbackStats(transactions, rewards.currentRate);
@@ -102,9 +102,11 @@ function RewardsContent() {
   // Estimate GNO accrual from cashback using CoinGecko price
   // Default to 1 EUR/GNO if price is not available yet (fallback for loading/error states)
   const effectiveGnoPrice = gnoPrice ?? 1;
+  // Use the 6-month average for more stable projections
+  const averageMonthlyEarned = cashbackStats?.averageMonthlyEarned ?? 0;
   const monthlyGnoEarned =
-    cashbackStats && cashbackStats.earnedThisMonth > 0 && effectiveGnoPrice > 0
-      ? cashbackStats.earnedThisMonth / effectiveGnoPrice
+    averageMonthlyEarned > 0 && effectiveGnoPrice > 0
+      ? averageMonthlyEarned / effectiveGnoPrice
       : 0;
   const yearlyGnoEarned = monthlyGnoEarned * 12;
   const monthsToNextTier =

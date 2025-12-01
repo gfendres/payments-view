@@ -5,6 +5,7 @@ import { RefreshCw, ReceiptText, Calendar, Coins, Download, FileText, ChevronDow
 import { Card, CardContent, CardHeader, CardTitle, Button, StatCard } from '@payments-view/ui';
 
 import { useAuth } from '@/features/auth';
+import { calculateDashboardCashbackStats } from '@/features/rewards';
 import {
   TransactionList,
   FilterPanel,
@@ -68,28 +69,18 @@ function DashboardContent() {
     const thisMonthEligible = thisMonthTx.filter((t) => t.isEligibleForCashback);
     const prevMonthEligible = prevMonthTx.filter((t) => t.isEligibleForCashback);
 
-    // Calculate cashback earned (estimate based on 3.84% rate - will be updated with actual rate)
-    const CASHBACK_RATE = 0.0384; // Default rate, ideally fetched from rewards API
-    const monthlyEligibleSpend = thisMonthEligible.reduce(
-      (sum, tx) => sum + Math.abs(tx.billingAmount.amount),
-      0
-    );
-    const earnedThisMonth = monthlyEligibleSpend * CASHBACK_RATE;
-    const projectedYearlyCashback = earnedThisMonth * 12;
-
-    const earnedLastMonth = prevMonthEligible.reduce(
-      (sum, tx) => sum + Math.abs(tx.billingAmount.amount) * CASHBACK_RATE,
-      0
-    );
+    // Calculate cashback earned using 6-month average for yearly projections
+    const CASHBACK_RATE = 3.84; // Default rate in percentage, ideally fetched from rewards API
+    const cashbackStats = calculateDashboardCashbackStats(transactions, CASHBACK_RATE / 100);
 
     return {
       thisMonthCount: thisMonthTx.length,
       prevMonthCount: prevMonthTx.length,
       cashbackEligibleCount: thisMonthEligible.length,
       prevCashbackEligibleCount: prevMonthEligible.length,
-      earnedThisMonth,
-      projectedYearlyCashback,
-      earnedLastMonth,
+      earnedThisMonth: cashbackStats.earnedThisMonth,
+      projectedYearlyCashback: cashbackStats.projectedYearlyCashback,
+      earnedLastMonth: cashbackStats.earnedLastMonth,
       totalTransactions: transactions.length,
     };
   }, [transactions]);
