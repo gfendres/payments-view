@@ -134,7 +134,7 @@ function DashboardContent() {
             icon={<Coins className="h-5 w-5" />}
             iconColor="emerald"
             valueColor="success"
-            subtitle={`Avg: €${stats.averageMonthlyEarned.toFixed(2)}/mo · Projected: €${stats.projectedYearlyCashback.toFixed(2)}/yr`}
+            subtitle={`Projected: €${stats.projectedYearlyCashback.toFixed(2)} / year`}
             trend={{
               value: stats.earnedThisMonth,
               previousValue: stats.earnedLastMonth,

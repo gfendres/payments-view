@@ -10,6 +10,7 @@ import {
   CashbackSummary,
   TierProgress,
   CashbackGno,
+  EarningsChart,
   calculateCashbackStats,
 } from '@/features/rewards';
 import { useTransactions, TransactionList } from '@/features/transactions';
@@ -143,6 +144,9 @@ function RewardsContent() {
 
       {/* Cashback Summary */}
       <CashbackSummary rewards={rewards} stats={cashbackStats} />
+
+      {/* Earnings Chart */}
+      <EarningsChart transactions={transactions} cashbackRate={rewards.currentRate} />
 
       {/* Tier Progress */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
