@@ -34,7 +34,8 @@ export function CashbackSummary({ rewards, stats, className }: CashbackSummaryPr
   const eligibleThisMonth = stats?.eligibleThisMonth ?? 0;
   const eligibleLastMonth = stats?.eligibleLastMonth ?? 0;
   const eligibleDisplayCount = stats ? eligibleThisMonth : rewards.eligibleTransactionCount;
-  // Use 6-month average projection if available, otherwise fallback to current month * 12
+  // Use 6-month average for projections if available
+  const averageMonthlyEarned = stats?.averageMonthlyEarned ?? earnedThisMonth;
   const projectedYearlyCashback = stats?.projectedYearlyCashback ?? earnedThisMonth * 12;
 
   return (
@@ -69,7 +70,7 @@ export function CashbackSummary({ rewards, stats, className }: CashbackSummaryPr
         <StatCard
           title="Earned This Month"
           value={formatCurrency(earnedThisMonth)}
-          subtitle={`Projected: ${formatCurrency(projectedYearlyCashback)} / year`}
+          subtitle={`Avg: ${formatCurrency(averageMonthlyEarned)}/mo · Projected: ${formatCurrency(projectedYearlyCashback)}/yr`}
           icon={<CalendarClock className="h-5 w-5" />}
           iconColor="violet"
           trend={

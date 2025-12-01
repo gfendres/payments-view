@@ -173,6 +173,7 @@ export function calculateDashboardCashbackStats(
 ): {
   earnedThisMonth: number;
   earnedLastMonth: number;
+  averageMonthlyEarned: number;
   projectedYearlyCashback: number;
   cashbackEligibleCount: number;
   prevCashbackEligibleCount: number;
@@ -182,6 +183,7 @@ export function calculateDashboardCashbackStats(
   return {
     earnedThisMonth: stats.earnedThisMonth,
     earnedLastMonth: stats.earnedLastMonth,
+    averageMonthlyEarned: stats.averageMonthlyEarned,
     projectedYearlyCashback: stats.projectedYearlyCashback,
     cashbackEligibleCount: stats.eligibleThisMonth,
     prevCashbackEligibleCount: stats.eligibleLastMonth,

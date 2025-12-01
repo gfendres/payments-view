@@ -79,6 +79,7 @@ function DashboardContent() {
       cashbackEligibleCount: thisMonthEligible.length,
       prevCashbackEligibleCount: prevMonthEligible.length,
       earnedThisMonth: cashbackStats.earnedThisMonth,
+      averageMonthlyEarned: cashbackStats.averageMonthlyEarned,
       projectedYearlyCashback: cashbackStats.projectedYearlyCashback,
       earnedLastMonth: cashbackStats.earnedLastMonth,
       totalTransactions: transactions.length,
@@ -133,7 +134,7 @@ function DashboardContent() {
             icon={<Coins className="h-5 w-5" />}
             iconColor="emerald"
             valueColor="success"
-            subtitle={`Projected: €${stats.projectedYearlyCashback.toFixed(2)} / year`}
+            subtitle={`Avg: €${stats.averageMonthlyEarned.toFixed(2)}/mo · Projected: €${stats.projectedYearlyCashback.toFixed(2)}/yr`}
             trend={{
               value: stats.earnedThisMonth,
               previousValue: stats.earnedLastMonth,
