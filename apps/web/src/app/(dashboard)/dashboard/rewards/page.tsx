@@ -13,13 +13,10 @@ import {
   EarningsChart,
   calculateCashbackStats,
 } from '@/features/rewards';
-import { useTransactions, TransactionList } from '@/features/transactions';
+import { useTransactions, useAllTransactions, TransactionList } from '@/features/transactions';
 import { useTokenPrice } from '@/features/pricing';
 import { CurrencyCode } from '@payments-view/constants';
 
-/**
- * Loading skeleton for rewards page
- */
 function RewardsLoadingSkeleton() {
   return (
     <div className="space-y-6">
@@ -27,8 +24,6 @@ function RewardsLoadingSkeleton() {
         <Skeleton className="h-8 w-48" />
         <Skeleton className="mt-2 h-5 w-64" />
       </div>
-
-      {/* Stats grid skeleton */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Skeleton className="h-32 sm:col-span-2 lg:col-span-2" />
         <Skeleton className="h-32" />
@@ -39,19 +34,12 @@ function RewardsLoadingSkeleton() {
         <Skeleton className="h-24" />
         <Skeleton className="h-24" />
       </div>
-
-      {/* Tier progress skeleton */}
       <Skeleton className="h-80" />
-
-      {/* Transactions skeleton */}
       <Skeleton className="h-64" />
     </div>
   );
 }
 
-/**
- * Error state component
- */
 function RewardsError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="space-y-6">
@@ -72,9 +60,6 @@ function RewardsError({ message, onRetry }: { message: string; onRetry: () => vo
   );
 }
 
-/**
- * Rewards page content
- */
 function RewardsContent() {
   const { isAuthenticated } = useAuth();
   const {
@@ -83,27 +68,28 @@ function RewardsContent() {
     error,
     refetch,
   } = useRewards({ enabled: isAuthenticated });
-  const { transactions, isLoading: isLoadingTransactions } = useTransactions({
+
+  const {
+    transactions: allTransactions,
+    isFetching: isFetchingAllTransactions,
+  } = useAllTransactions({ enabled: isAuthenticated });
+
+  const { transactions: recentTransactions, isLoading: isLoadingTransactions } = useTransactions({
     limit: 50,
     enabled: isAuthenticated,
   });
 
-  // Get GNO price from CoinGecko
   const { price: gnoPrice, isLoading: isLoadingPrice, currency: priceCurrency } = useTokenPrice({
-    currency: CurrencyCode.EUR, // Use EUR to match rewards currency
+    currency: CurrencyCode.EUR,
     enabled: isAuthenticated,
   });
 
-  // Calculate cashback stats from transactions (uses 6-month rolling average for projections)
   const cashbackStats = useMemo(() => {
     if (!rewards) return undefined;
-    return calculateCashbackStats(transactions, rewards.currentRate);
-  }, [transactions, rewards]);
+    return calculateCashbackStats(allTransactions, rewards.currentRate);
+  }, [allTransactions, rewards]);
 
-  // Estimate GNO accrual from cashback using CoinGecko price
-  // Default to 1 EUR/GNO if price is not available yet (fallback for loading/error states)
   const effectiveGnoPrice = gnoPrice ?? 1;
-  // Use the 6-month average for more stable projections
   const averageMonthlyEarned = cashbackStats?.averageMonthlyEarned ?? 0;
   const monthlyGnoEarned =
     averageMonthlyEarned > 0 && effectiveGnoPrice > 0
@@ -115,10 +101,9 @@ function RewardsContent() {
       ? rewards.tier.gnoNeededForNextTier / monthlyGnoEarned
       : null;
 
-  // Filter eligible transactions for the list
   const eligibleTransactions = useMemo(() => {
-    return transactions.filter((tx) => tx.isEligibleForCashback);
-  }, [transactions]);
+    return recentTransactions.filter((tx) => tx.isEligibleForCashback);
+  }, [recentTransactions]);
 
   if (error) {
     return <RewardsError message={error} onRetry={() => refetch()} />;
@@ -130,11 +115,17 @@ function RewardsContent() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">Rewards</h1>
-          <p className="text-muted-foreground">Track your cashback earnings and tier progress</p>
+          <p className="text-muted-foreground">
+            Track your cashback earnings and tier progress
+            {isFetchingAllTransactions && (
+              <span className="ml-2 text-xs text-muted-foreground/70">
+                (loading transactions...)
+              </span>
+            )}
+          </p>
         </div>
         <Button variant="subtle" size="sm" onClick={() => refetch()} className="gap-2 self-start">
           <RefreshCw className="h-4 w-4" />
@@ -142,13 +133,10 @@ function RewardsContent() {
         </Button>
       </div>
 
-      {/* Cashback Summary */}
       <CashbackSummary rewards={rewards} stats={cashbackStats} />
 
-      {/* Earnings Chart */}
-      <EarningsChart transactions={transactions} cashbackRate={rewards.currentRate} />
+      <EarningsChart transactions={allTransactions} cashbackRate={rewards.currentRate} />
 
-      {/* Tier Progress */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <TierProgress rewards={rewards} />
 
@@ -164,7 +152,6 @@ function RewardsContent() {
         />
       </div>
 
-      {/* Eligible Transactions */}
       <Card>
         <CardHeader>
           <CardTitle>Eligible Transactions</CardTitle>
@@ -194,9 +181,6 @@ function RewardsContent() {
   );
 }
 
-/**
- * Rewards page
- */
 export default function RewardsPage() {
   return (
     <Suspense fallback={<RewardsLoadingSkeleton />}>
