@@ -292,3 +292,6 @@ export function EarningsChart({ transactions, cashbackRate, className }: Earning
 }
 
 
+
+
+

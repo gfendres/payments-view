@@ -11,7 +11,7 @@ import {
   TierProgress,
   CashbackGno,
   EarningsChart,
-  calculateCashbackStats,
+  useCashbackStats,
 } from '@/features/rewards';
 import { useTransactions, useAllTransactions, TransactionList } from '@/features/transactions';
 import { useTokenPrice } from '@/features/pricing';
@@ -84,10 +84,11 @@ function RewardsContent() {
     enabled: isAuthenticated,
   });
 
-  const cashbackStats = useMemo(() => {
-    if (!rewards) return undefined;
-    return calculateCashbackStats(allTransactions, rewards.currentRate);
-  }, [allTransactions, rewards]);
+  const { stats: cashbackStats } = useCashbackStats({
+    transactions: allTransactions,
+    cashbackRate: rewards?.currentRate ?? 0,
+    enabled: isAuthenticated && !!rewards,
+  });
 
   const effectiveGnoPrice = gnoPrice ?? 1;
   const averageMonthlyEarned = cashbackStats?.averageMonthlyEarned ?? 0;

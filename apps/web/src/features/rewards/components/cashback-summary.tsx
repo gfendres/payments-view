@@ -1,8 +1,9 @@
 'use client';
 
-import { Wallet, Coins, BadgeDollarSign, TrendingUp, CalendarClock } from 'lucide-react';
+import { Wallet, Coins, BadgeDollarSign, TrendingUp } from 'lucide-react';
 import { Card, CardContent, StatCard } from '@payments-view/ui';
 
+import { EarnedThisMonthCard } from './earned-this-month-card';
 import type { SerializedRewards } from '../hooks';
 import type { CashbackStats } from '../lib';
 
@@ -29,13 +30,9 @@ function formatCurrency(amount: number): string {
 export function CashbackSummary({ rewards, stats, className }: CashbackSummaryProps) {
   // Use calculated stats if provided, otherwise use API values
   const totalEarned = stats?.totalEarned ?? rewards.totalEarned.amount;
-  const earnedThisMonth = stats?.earnedThisMonth ?? rewards.earnedThisMonth.amount;
-  const earnedLastMonth = stats?.earnedLastMonth ?? 0;
   const eligibleThisMonth = stats?.eligibleThisMonth ?? 0;
   const eligibleLastMonth = stats?.eligibleLastMonth ?? 0;
   const eligibleDisplayCount = stats ? eligibleThisMonth : rewards.eligibleTransactionCount;
-  // Use 6-month average projection if available, otherwise fallback to current month * 12
-  const projectedYearlyCashback = stats?.projectedYearlyCashback ?? earnedThisMonth * 12;
 
   return (
     <div className={className}>
@@ -66,22 +63,7 @@ export function CashbackSummary({ rewards, stats, className }: CashbackSummaryPr
         </Card>
 
         {/* This Month */}
-        <StatCard
-          title="Earned This Month"
-          value={formatCurrency(earnedThisMonth)}
-          subtitle={`Projected: ${formatCurrency(projectedYearlyCashback)} / year`}
-          icon={<CalendarClock className="h-5 w-5" />}
-          iconColor="violet"
-          trend={
-            earnedLastMonth > 0 || earnedThisMonth > 0
-              ? {
-                  value: earnedThisMonth,
-                  previousValue: earnedLastMonth,
-                  period: 'last month',
-                }
-              : undefined
-          }
-        />
+        <EarnedThisMonthCard stats={stats} />
 
         {/* Current Rate */}
         <StatCard

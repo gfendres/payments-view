@@ -163,30 +163,3 @@ export function calculateCashbackStats(
   };
 }
 
-/**
- * Calculate dashboard stats from transactions
- * Used on the main dashboard page for quick stats overview
- */
-export function calculateDashboardCashbackStats(
-  transactions: SerializedTransaction[],
-  cashbackRate: number
-): {
-  earnedThisMonth: number;
-  earnedLastMonth: number;
-  averageMonthlyEarned: number;
-  projectedYearlyCashback: number;
-  cashbackEligibleCount: number;
-  prevCashbackEligibleCount: number;
-} {
-  const stats = calculateCashbackStats(transactions, cashbackRate * 100); // Convert decimal to percentage
-
-  return {
-    earnedThisMonth: stats.earnedThisMonth,
-    earnedLastMonth: stats.earnedLastMonth,
-    averageMonthlyEarned: stats.averageMonthlyEarned,
-    projectedYearlyCashback: stats.projectedYearlyCashback,
-    cashbackEligibleCount: stats.eligibleThisMonth,
-    prevCashbackEligibleCount: stats.eligibleLastMonth,
-  };
-}
-

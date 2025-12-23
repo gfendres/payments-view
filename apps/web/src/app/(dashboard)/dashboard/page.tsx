@@ -1,16 +1,17 @@
 'use client';
 
 import { useMemo, Suspense, useState } from 'react';
-import { RefreshCw, ReceiptText, Calendar, Coins, Download, FileText, ChevronDown } from 'lucide-react';
+import { RefreshCw, ReceiptText, Calendar, Download, FileText, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Button, StatCard } from '@payments-view/ui';
 
 import { useAuth } from '@/features/auth';
-import { calculateDashboardCashbackStats, useRewards } from '@/features/rewards';
+import { useRewards, useCashbackStats, EarnedThisMonthCard } from '@/features/rewards';
 import {
   TransactionList,
   FilterPanel,
   SpendingChart,
   useTransactions,
+  useAllTransactions,
   useTransactionFilters,
   useExportTransactions,
 } from '@/features/transactions';
@@ -28,6 +29,7 @@ function DashboardContent() {
   const { exportToCsv, exportToPdf, isExporting } = useExportTransactions();
   const [showExportMenu, setShowExportMenu] = useState(false);
 
+  // Fetch limited transactions for display
   const {
     transactions: rawTransactions,
     isLoading,
@@ -40,17 +42,36 @@ function DashboardContent() {
     ...queryParams,
   });
 
+  // Fetch all transactions for accurate stats calculation
+  const {
+    transactions: allTransactions,
+    isFetching: isFetchingAllTransactions,
+  } = useAllTransactions({ enabled: isAuthenticated });
+
   // Get actual cashback rate from rewards API
   const { rewards } = useRewards({ enabled: isAuthenticated });
   const cashbackRate = rewards?.currentRate ?? DEFAULT_CASHBACK_RATE;
 
-  // Apply client-side filters
+  // Apply client-side filters to display transactions
   const { transactions } = useMemo(
     () => applyTransactionFilters(rawTransactions, filters),
     [rawTransactions, filters]
   );
 
-  // Calculate stats from filtered transactions
+  // Apply filters to all transactions for stats calculation
+  const { transactions: filteredAllTransactions } = useMemo(
+    () => applyTransactionFilters(allTransactions, filters),
+    [allTransactions, filters]
+  );
+
+  // Calculate cashback stats from filtered complete dataset
+  const { stats: cashbackStats } = useCashbackStats({
+    transactions: filteredAllTransactions,
+    cashbackRate,
+    enabled: isAuthenticated,
+  });
+
+  // Calculate transaction count stats
   const stats = useMemo(() => {
     const now = new Date();
     const thisMonth = now.getMonth();
@@ -61,36 +82,23 @@ function DashboardContent() {
     const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
 
     // This month's transactions
-    const thisMonthTx = transactions.filter((t) => {
+    const thisMonthTx = filteredAllTransactions.filter((t) => {
       const date = new Date(t.createdAt);
       return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
     });
 
     // Previous month's transactions
-    const prevMonthTx = transactions.filter((t) => {
+    const prevMonthTx = filteredAllTransactions.filter((t) => {
       const date = new Date(t.createdAt);
       return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
     });
 
-    // Cashback eligible counts
-    const thisMonthEligible = thisMonthTx.filter((t) => t.isEligibleForCashback);
-    const prevMonthEligible = prevMonthTx.filter((t) => t.isEligibleForCashback);
-
-    // Calculate cashback earned using 6-month average for yearly projections
-    const cashbackStats = calculateDashboardCashbackStats(transactions, cashbackRate / 100);
-
     return {
       thisMonthCount: thisMonthTx.length,
       prevMonthCount: prevMonthTx.length,
-      cashbackEligibleCount: thisMonthEligible.length,
-      prevCashbackEligibleCount: prevMonthEligible.length,
-      earnedThisMonth: cashbackStats.earnedThisMonth,
-      averageMonthlyEarned: cashbackStats.averageMonthlyEarned,
-      projectedYearlyCashback: cashbackStats.projectedYearlyCashback,
-      earnedLastMonth: cashbackStats.earnedLastMonth,
-      totalTransactions: transactions.length,
+      totalTransactions: filteredAllTransactions.length,
     };
-  }, [transactions, cashbackRate]);
+  }, [filteredAllTransactions]);
 
   return (
     <div className="space-y-6">
@@ -123,29 +131,25 @@ function DashboardContent() {
           />
 
           <StatCard
-            title="This Month"
+            title={hasActiveFilters ? 'In Current Period' : 'This Month'}
             value={stats.thisMonthCount}
             icon={<Calendar className="h-5 w-5" />}
             iconColor="violet"
-            trend={{
-              value: stats.thisMonthCount,
-              previousValue: stats.prevMonthCount,
-              period: 'last month',
-            }}
+            trend={
+              !hasActiveFilters
+                ? {
+                    value: stats.thisMonthCount,
+                    previousValue: stats.prevMonthCount,
+                    period: 'last month',
+                  }
+                : undefined
+            }
           />
 
-          <StatCard
-            title="Earned This Month"
-            value={`€${stats.earnedThisMonth.toFixed(2)}`}
-            icon={<Coins className="h-5 w-5" />}
-            iconColor="emerald"
-            valueColor="success"
-            subtitle={`Projected: €${stats.projectedYearlyCashback.toFixed(2)} / year`}
-            trend={{
-              value: stats.earnedThisMonth,
-              previousValue: stats.earnedLastMonth,
-              period: 'last month',
-            }}
+          <EarnedThisMonthCard
+            stats={cashbackStats}
+            isLoading={isFetchingAllTransactions}
+            isFiltered={hasActiveFilters}
           />
         </div>
 
