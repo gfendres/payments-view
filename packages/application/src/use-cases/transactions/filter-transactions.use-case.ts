@@ -20,6 +20,10 @@ export interface TransactionFilterCriteria {
   minAmount?: number;
   /** Maximum amount filter */
   maxAmount?: number;
+  /** City filter */
+  city?: string;
+  /** Country filter */
+  country?: string;
 }
 
 /**
@@ -104,6 +108,18 @@ export class FilterTransactionsUseCase {
     if (maxAmount !== undefined) {
       filtered = filtered.filter((tx) => tx.billingAmount.toNumber() <= maxAmount);
       appliedFilters.push('maxAmount');
+    }
+
+    // Apply city filter
+    if (criteria.city) {
+      filtered = filtered.filter((tx) => tx.merchant.city === criteria.city);
+      appliedFilters.push('city');
+    }
+
+    // Apply country filter
+    if (criteria.country) {
+      filtered = filtered.filter((tx) => tx.merchant.country === criteria.country);
+      appliedFilters.push('country');
     }
 
     return Result.ok({

@@ -73,6 +73,8 @@ function toFilterCriteria(filters: TransactionFilters): TransactionFilterCriteri
     status: filters.status,
     minAmount: filters.amountRange.min,
     maxAmount: filters.amountRange.max,
+    city: filters.city,
+    country: filters.country,
   };
 }
 

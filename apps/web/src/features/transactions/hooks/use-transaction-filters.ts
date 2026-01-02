@@ -15,6 +15,8 @@ const DEFAULT_FILTERS: TransactionFilters = {
   dateRange: {},
   status: undefined,
   amountRange: {},
+  city: undefined,
+  country: undefined,
 };
 
 /**
@@ -35,6 +37,8 @@ export function useTransactionFilters() {
     const status = searchParams.get('status') as TransactionFilters['status'];
     const minAmount = searchParams.get('minAmount');
     const maxAmount = searchParams.get('maxAmount');
+    const city = searchParams.get('city') ?? undefined;
+    const country = searchParams.get('country') ?? undefined;
 
     return {
       search,
@@ -48,6 +52,8 @@ export function useTransactionFilters() {
         min: minAmount ? parseFloat(minAmount) : undefined,
         max: maxAmount ? parseFloat(maxAmount) : undefined,
       },
+      city,
+      country,
     };
   }, [searchParams]);
 
@@ -86,6 +92,12 @@ export function useTransactionFilters() {
       if (newFilters.amountRange.max !== undefined) {
         params.set('maxAmount', newFilters.amountRange.max.toString());
       }
+      if (newFilters.city) {
+        params.set('city', newFilters.city);
+      }
+      if (newFilters.country) {
+        params.set('country', newFilters.country);
+      }
 
       // Update URL without navigation
       const queryString = params.toString();
@@ -113,7 +125,9 @@ export function useTransactionFilters() {
       filters.dateRange.to !== undefined ||
       filters.status !== undefined ||
       filters.amountRange.min !== undefined ||
-      filters.amountRange.max !== undefined
+      filters.amountRange.max !== undefined ||
+      filters.city !== undefined ||
+      filters.country !== undefined
     );
   }, [filters]);
 

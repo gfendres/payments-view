@@ -139,7 +139,7 @@ function DashboardContent() {
         </div>
 
         <div className="space-y-3 rounded-2xl bg-card/40 p-4 shadow-sm">
-          <FilterPanel filters={filters} onFiltersChange={setFilters} />
+          <FilterPanel filters={filters} onFiltersChange={setFilters} transactions={rawTransactions} />
         </div>
       </div>
 
