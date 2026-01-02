@@ -98,12 +98,14 @@ export function Providers({ children }: ProvidersProps) {
     }
   }, []);
 
-  // Setup Safari deep link interceptor for iOS and Safari
+  // Setup Safari deep link interceptor ONLY for Safari simulator
+  // Real devices (iPhone, Android) don't need interceptor - deep links work natively
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const deviceInfo = getDeviceInfo();
-      // Setup interceptor for iOS or Safari (including macOS Safari simulating iOS)
-      if (deviceInfo.isIOS || deviceInfo.browser === 'safari') {
+      // Only setup interceptor for Safari simulator (macOS Safari simulating iOS)
+      // Real iPhones don't need this - deep linking works natively
+      if (deviceInfo.isSafariSimulator) {
         if (process.env.NODE_ENV === 'development') {
           console.log('[Providers] Setting up Safari deep link interceptor', deviceInfo);
           console.log('[Providers] User agent:', navigator.userAgent);

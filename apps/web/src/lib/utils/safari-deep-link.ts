@@ -344,12 +344,11 @@ export function setupSafariDeepLinkInterceptor(): () => void {
   if (isSafariSimulator()) {
     const interceptWalletButtons = () => {
       // Find all wallet buttons in the modal (RainbowKit uses specific classes/attributes)
+      // Note: :has-text() is not valid CSS, only use standard selectors
       const walletButtons = document.querySelectorAll(
         'button[data-testid*="wallet"], ' +
         'button[aria-label*="Rainbow"], ' +
-        'button[aria-label*="MetaMask"], ' +
-        '[role="button"]:has-text("Rainbow"), ' +
-        '[role="button"]:has-text("MetaMask")'
+        'button[aria-label*="MetaMask"]'
       );
 
       walletButtons.forEach((button) => {
