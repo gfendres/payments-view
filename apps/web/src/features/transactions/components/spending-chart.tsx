@@ -21,7 +21,6 @@ import { SegmentedControl } from '@payments-view/ui';
 import type { SerializedTransaction } from './transaction-row';
 import {
   useSpendingChart,
-  TIME_PERIODS,
   VIEW_MODES,
   TREND_GROUPINGS,
   type CategorySpending,
@@ -383,10 +382,8 @@ export function SpendingChart({
   initialTrendGrouping,
 }: SpendingChartProps) {
   const {
-    timePeriod,
     viewMode,
     trendGrouping,
-    setTimePeriod,
     setViewMode,
     setTrendGrouping,
     filteredTransactions,
