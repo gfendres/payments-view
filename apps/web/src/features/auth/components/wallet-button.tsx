@@ -24,6 +24,7 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
   const { isAuthenticated, isLoading, isConnected, signIn, signOut } = useAuth();
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Redirect when authenticated
@@ -86,7 +87,13 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
               if (!connected) {
                 return (
                   <Button
-                    onClick={openConnectModal}
+                    onClick={() => {
+                      setIsConnecting(true);
+                      openConnectModal();
+                      // Clear loading state after modal opens
+                      setTimeout(() => setIsConnecting(false), 1000);
+                    }}
+                    disabled={isConnecting}
                     variant="default"
                     size="lg"
                     className={
@@ -95,8 +102,17 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
                         : undefined
                     }
                   >
-                    {isHero && <Wallet className="mr-2 h-5 w-5" />}
-                    Connect Wallet
+                    {isConnecting ? (
+                      <>
+                        <LoadingSpinner />
+                        <span className="ml-2">Opening...</span>
+                      </>
+                    ) : (
+                      <>
+                        {isHero && <Wallet className="mr-2 h-5 w-5" />}
+                        Connect Wallet
+                      </>
+                    )}
                   </Button>
                 );
               }
