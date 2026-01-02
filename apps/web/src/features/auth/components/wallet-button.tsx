@@ -9,7 +9,7 @@ import { Button } from '@payments-view/ui';
 
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '@payments-view/ui';
-import { isMobileDevice, getDeviceInfo, isSafariSimulator } from '@/lib/utils/mobile';
+import { getDeviceInfo, isSafariSimulator } from '@/lib/utils/mobile';
 
 interface WalletButtonProps {
   /** Variant for different contexts */
@@ -30,7 +30,6 @@ export function WalletButton({
   const { error: showError } = useToast();
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isOpeningModal, setIsOpeningModal] = useState(false);
   const hasShownSafariWarningRef = useRef(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -93,20 +92,9 @@ export function WalletButton({
           );
         }
 
-        setIsOpeningModal(true);
-
-        // Add small delay on mobile to ensure modal opens properly
-        if (isMobileDevice()) {
-          setTimeout(() => {
-            openConnectModal();
-            setIsOpeningModal(false);
-          }, 100);
-        } else {
-          openConnectModal();
-          setIsOpeningModal(false);
-        }
+        // Open modal directly without delay - delay was causing crashes on mobile
+        openConnectModal();
       } catch (error) {
-        setIsOpeningModal(false);
         const errorMessage =
           error instanceof Error ? error.message : 'Failed to open wallet connection';
         console.error('[WalletButton] Error opening connect modal:', error);
@@ -127,15 +115,14 @@ export function WalletButton({
 
   /**
    * Handle touch events for mobile (fallback if onClick doesn't work)
+   * Disabled to prevent double-triggering that causes crashes on iOS
    */
   const handleTouchStart = useCallback(
-    (openConnectModal: () => void) => (e: React.TouchEvent) => {
-      if (isMobileDevice()) {
-        e.preventDefault();
-        handleConnect(openConnectModal);
-      }
+    () => () => {
+      // Touch events can cause double-triggering and crashes on iOS Safari
+      // Rely on onClick only for better stability
     },
-    [handleConnect]
+    []
   );
 
   const isHero = variant === 'hero';
@@ -164,8 +151,7 @@ export function WalletButton({
                   <Button
                     ref={buttonRef}
                     onClick={() => handleConnect(openConnectModal)}
-                    onTouchStart={handleTouchStart(openConnectModal)}
-                    disabled={isOpeningModal}
+                    onTouchStart={handleTouchStart()}
                     variant="default"
                     size="lg"
                     className={
@@ -175,7 +161,7 @@ export function WalletButton({
                     }
                   >
                     {isHero && <Wallet className="mr-2 h-5 w-5" />}
-                    {isOpeningModal ? 'Opening...' : 'Connect Wallet'}
+                    Connect Wallet
                   </Button>
                 );
               }
