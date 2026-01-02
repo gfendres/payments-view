@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@payments-view/ui';
+import { isSuccessStatus } from '@payments-view/constants';
 
 import type { SerializedTransaction } from '@/features/transactions';
 
@@ -56,8 +57,10 @@ function aggregateEarningsByMonth(
   const rate = cashbackRate / 100;
   const groups = new Map<string, MonthlyData>();
 
-  // Filter for cashback-eligible transactions
-  const eligibleTx = transactions.filter((tx) => tx.isEligibleForCashback);
+  // Filter for cashback-eligible transactions with successful status only
+  const eligibleTx = transactions.filter(
+    (tx) => tx.isEligibleForCashback && isSuccessStatus(tx.status)
+  );
 
   for (const tx of eligibleTx) {
     const date = new Date(tx.createdAt);

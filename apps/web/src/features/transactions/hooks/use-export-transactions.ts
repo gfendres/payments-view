@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { isSuccessStatus } from '@payments-view/constants';
 
 import { buildCsvExport } from '../lib/transaction-use-cases';
 import type { SerializedTransaction } from '../components/transaction-row';
@@ -63,13 +64,17 @@ function downloadFile(content: string, filename: string, mimeType: string): void
 
 /**
  * Calculate summary statistics
+ * Only includes transactions with successful status (APPROVED)
  */
 function calculateSummary(transactions: SerializedTransaction[]) {
   let totalSpending = 0;
   let totalRefunds = 0;
   let eligibleCount = 0;
 
-  for (const tx of transactions) {
+  // Filter to only successful transactions for aggregation
+  const successfulTransactions = transactions.filter((tx) => isSuccessStatus(tx.status));
+
+  for (const tx of successfulTransactions) {
     const amount = Math.abs(tx.billingAmount.amount);
     if (tx.billingAmount.amount < 0 || tx.kind === 'Payment') {
       totalSpending += amount;
@@ -82,7 +87,7 @@ function calculateSummary(transactions: SerializedTransaction[]) {
   }
 
   return {
-    totalTransactions: transactions.length,
+    totalTransactions: transactions.length, // Keep total count of all transactions
     totalSpending,
     totalRefunds,
     netSpending: totalSpending - totalRefunds,

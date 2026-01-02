@@ -1,3 +1,5 @@
+import { isSuccessStatus } from '@payments-view/constants';
+
 import type { SerializedTransaction } from '@/features/transactions';
 
 /**
@@ -49,6 +51,7 @@ function calculateMonthEarnings(
 
   const monthlyEligible = transactions.filter((tx) => {
     if (!tx.isEligibleForCashback) return false;
+    if (!isSuccessStatus(tx.status)) return false;
     const date = new Date(tx.createdAt);
     return date >= monthStart && date <= monthEnd;
   });
@@ -114,8 +117,10 @@ export function calculateCashbackStats(
   const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
   const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
 
-  // Filter eligible transactions
-  const eligible = transactions.filter((tx) => tx.isEligibleForCashback);
+  // Filter eligible transactions with successful status only
+  const eligible = transactions.filter(
+    (tx) => tx.isEligibleForCashback && isSuccessStatus(tx.status)
+  );
 
   // This month's eligible
   const eligibleThisMonth = eligible.filter((tx) => {

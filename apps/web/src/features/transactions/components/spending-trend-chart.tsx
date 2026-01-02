@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
 import { Button } from '@payments-view/ui';
+import { isSuccessStatus } from '@payments-view/constants';
 
 import type { SerializedTransaction } from './transaction-row';
 
@@ -66,9 +67,10 @@ function aggregateByPeriod(
   const getPeriodKey = period === 'weekly' ? getWeekStart : getMonthStart;
   const groups = new Map<string, { amount: number; count: number; date: Date }>();
 
-  // Filter for spending transactions
+  // Filter for spending transactions with successful status only
   const spendingTx = transactions.filter(
-    (tx) => tx.billingAmount.amount < 0 || tx.kind === 'Payment'
+    (tx) =>
+      isSuccessStatus(tx.status) && (tx.billingAmount.amount < 0 || tx.kind === 'Payment')
   );
 
   for (const tx of spendingTx) {

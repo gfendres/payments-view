@@ -1,5 +1,10 @@
 import { useMemo, useState, useCallback } from 'react';
-import { CATEGORIES, CategoryId, type CategoryIconName } from '@payments-view/constants';
+import {
+  CATEGORIES,
+  CategoryId,
+  type CategoryIconName,
+  isSuccessStatus,
+} from '@payments-view/constants';
 
 import type { SerializedTransaction } from '../components/transaction-row';
 
@@ -168,12 +173,13 @@ function filterByTimePeriod(
 
 /**
  * Filter for spending transactions only (exclude refunds/reversals)
+ * Only includes transactions with successful status (APPROVED)
  */
 function filterSpendingTransactions(
   transactions: SerializedTransaction[]
 ): SerializedTransaction[] {
   return transactions.filter(
-    (tx) => tx.billingAmount.amount < 0 || tx.kind === 'Payment'
+    (tx) => isSuccessStatus(tx.status) && (tx.billingAmount.amount < 0 || tx.kind === 'Payment')
   );
 }
 
