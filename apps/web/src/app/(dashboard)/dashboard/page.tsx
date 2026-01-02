@@ -71,34 +71,63 @@ function DashboardContent() {
     enabled: isAuthenticated,
   });
 
+  // Helper: Check if date range filter is active
+  const hasDateRangeFilter = useMemo(() => {
+    return filters.dateRange.from !== undefined || filters.dateRange.to !== undefined;
+  }, [filters.dateRange]);
+
   // Calculate transaction count stats
   const stats = useMemo(() => {
     const now = new Date();
     const thisMonth = now.getMonth();
     const thisYear = now.getFullYear();
 
-    // Previous month
+    // Previous month (for trend calculation when no filters)
     const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
     const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
 
-    // This month's transactions
-    const thisMonthTx = filteredAllTransactions.filter((t) => {
-      const date = new Date(t.createdAt);
-      return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
-    });
+    let periodCount: number;
+    let prevPeriodCount: number | undefined;
 
-    // Previous month's transactions
-    const prevMonthTx = filteredAllTransactions.filter((t) => {
-      const date = new Date(t.createdAt);
-      return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
-    });
+    if (hasDateRangeFilter) {
+      // When date range filter is active: count transactions within the filtered date range
+      const fromDate = filters.dateRange.from
+        ? new Date(filters.dateRange.from)
+        : undefined;
+      const toDate = filters.dateRange.to ? new Date(filters.dateRange.to) : undefined;
+
+      periodCount = filteredAllTransactions.filter((t) => {
+        const txDate = new Date(t.createdAt);
+        if (fromDate && txDate < fromDate) return false;
+        if (toDate && txDate > toDate) return false;
+        return true;
+      }).length;
+
+      // No previous period comparison when date range filter is active
+      prevPeriodCount = undefined;
+    } else {
+      // When no date range filter: count this month's transactions (respects other filters)
+      const thisMonthTx = filteredAllTransactions.filter((t) => {
+        const date = new Date(t.createdAt);
+        return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+      });
+
+      // Previous month's transactions (for trend when no filters)
+      const prevMonthTx = filteredAllTransactions.filter((t) => {
+        const date = new Date(t.createdAt);
+        return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
+      });
+
+      periodCount = thisMonthTx.length;
+      prevPeriodCount = prevMonthTx.length;
+    }
 
     return {
-      thisMonthCount: thisMonthTx.length,
-      prevMonthCount: prevMonthTx.length,
+      periodCount,
+      prevPeriodCount,
       totalTransactions: filteredAllTransactions.length,
     };
-  }, [filteredAllTransactions]);
+  }, [filteredAllTransactions, hasDateRangeFilter, filters.dateRange]);
 
   return (
     <div className="space-y-6">
@@ -130,21 +159,24 @@ function DashboardContent() {
             }
           />
 
-          <StatCard
-            title={hasActiveFilters ? 'In Current Period' : 'This Month'}
-            value={stats.thisMonthCount}
-            icon={<Calendar className="h-5 w-5" />}
-            iconColor="violet"
-            trend={
-              !hasActiveFilters
-                ? {
-                    value: stats.thisMonthCount,
-                    previousValue: stats.prevMonthCount,
-                    period: 'last month',
-                  }
-                : undefined
-            }
-          />
+          {/* Hide "In Selected Range" when date range filter is active (redundant with Filtered Results) */}
+          {!hasDateRangeFilter ? (
+            <StatCard
+              title={hasActiveFilters ? 'This Month (Filtered)' : 'This Month'}
+              value={stats.periodCount}
+              icon={<Calendar className="h-5 w-5" />}
+              iconColor="violet"
+              trend={
+                !hasActiveFilters && stats.prevPeriodCount !== undefined
+                  ? {
+                      value: stats.periodCount,
+                      previousValue: stats.prevPeriodCount,
+                      period: 'last month',
+                    }
+                  : undefined
+              }
+            />
+          ) : null}
 
           <EarnedThisMonthCard
             stats={cashbackStats}
