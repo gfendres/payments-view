@@ -8,6 +8,8 @@ import { Wallet, Copy, Check } from 'lucide-react';
 import { Button } from '@payments-view/ui';
 
 import { useAuth } from '../hooks/use-auth';
+import { useToast } from '@payments-view/ui';
+import { isMobileDevice, getDeviceInfo, isSafariSimulator } from '@/lib/utils/mobile';
 
 interface WalletButtonProps {
   /** Variant for different contexts */
@@ -19,12 +21,19 @@ interface WalletButtonProps {
 /**
  * Wallet connection button with SIWE authentication
  */
-export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }: WalletButtonProps) {
+export function WalletButton({
+  variant = 'default',
+  redirectTo = '/dashboard',
+}: WalletButtonProps) {
   const router = useRouter();
   const { isAuthenticated, isLoading, isConnected, signIn, signOut } = useAuth();
+  const { error: showError } = useToast();
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isOpeningModal, setIsOpeningModal] = useState(false);
+  const hasShownSafariWarningRef = useRef(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Redirect when authenticated
   useEffect(() => {
@@ -37,18 +46,15 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
     await signIn();
   }, [signIn]);
 
-  const handleCopy = useCallback(
-    async (address: string) => {
-      try {
-        await navigator.clipboard.writeText(address);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      } catch {
-        // no-op
-      }
-    },
-    []
-  );
+  const handleCopy = useCallback(async (address: string) => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // no-op
+    }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -61,6 +67,76 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  /**
+   * Handle wallet connection with error handling and mobile support
+   */
+  const handleConnect = useCallback(
+    (openConnectModal: () => void) => {
+      try {
+        if (process.env.NODE_ENV === 'development') {
+          const deviceInfo = getDeviceInfo();
+          console.log('[WalletButton] Opening connect modal:', deviceInfo);
+        }
+
+        // Log Safari simulator warning (only once per session)
+        if (isSafariSimulator() && !hasShownSafariWarningRef.current) {
+          console.warn(
+            '[WalletButton] Safari simulator detected. Deep links are not supported. ' +
+              'Please use the WalletConnect option (blue icon) to scan QR code with your phone.'
+          );
+          hasShownSafariWarningRef.current = true;
+          // Show helpful info message (not error, since QR code still works)
+          showError(
+            'Testing in Safari Simulator?',
+            'Click the "WalletConnect" option (blue wallet icon) and scan the QR code with your phone. Individual wallet buttons (Rainbow, MetaMask) only work on real devices.'
+          );
+        }
+
+        setIsOpeningModal(true);
+
+        // Add small delay on mobile to ensure modal opens properly
+        if (isMobileDevice()) {
+          setTimeout(() => {
+            openConnectModal();
+            setIsOpeningModal(false);
+          }, 100);
+        } else {
+          openConnectModal();
+          setIsOpeningModal(false);
+        }
+      } catch (error) {
+        setIsOpeningModal(false);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to open wallet connection';
+        console.error('[WalletButton] Error opening connect modal:', error);
+
+        // Provide helpful message for Safari simulator
+        if (isSafariSimulator()) {
+          showError(
+            'Connection Error',
+            'Safari simulator does not support deep links. Please use the QR code option in the wallet connection modal.'
+          );
+        } else {
+          showError('Connection Error', errorMessage);
+        }
+      }
+    },
+    [showError]
+  );
+
+  /**
+   * Handle touch events for mobile (fallback if onClick doesn't work)
+   */
+  const handleTouchStart = useCallback(
+    (openConnectModal: () => void) => (e: React.TouchEvent) => {
+      if (isMobileDevice()) {
+        e.preventDefault();
+        handleConnect(openConnectModal);
+      }
+    },
+    [handleConnect]
+  );
 
   const isHero = variant === 'hero';
 
@@ -86,17 +162,20 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
               if (!connected) {
                 return (
                   <Button
-                    onClick={openConnectModal}
+                    ref={buttonRef}
+                    onClick={() => handleConnect(openConnectModal)}
+                    onTouchStart={handleTouchStart(openConnectModal)}
+                    disabled={isOpeningModal}
                     variant="default"
                     size="lg"
                     className={
                       isHero
-                        ? 'h-14 px-8 text-base font-semibold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30'
+                        ? 'shadow-primary/25 hover:shadow-primary/30 h-14 px-8 text-base font-semibold shadow-lg transition-all hover:shadow-xl'
                         : undefined
                     }
                   >
                     {isHero && <Wallet className="mr-2 h-5 w-5" />}
-                    Connect Wallet
+                    {isOpeningModal ? 'Opening...' : 'Connect Wallet'}
                   </Button>
                 );
               }
@@ -108,11 +187,7 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
                     onClick={openChainModal}
                     variant="destructive"
                     size={isHero ? 'lg' : 'default'}
-                    className={
-                      isHero
-                        ? 'h-14 px-8 text-base font-semibold'
-                        : undefined
-                    }
+                    className={isHero ? 'h-14 px-8 text-base font-semibold' : undefined}
                   >
                     Wrong Network
                   </Button>
@@ -153,7 +228,7 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
                 <div className="relative w-full" ref={menuRef}>
                   <button
                     onClick={() => setMenuOpen((prev) => !prev)}
-                    className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/15"
+                    className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 flex h-11 w-full items-center justify-between gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors"
                     type="button"
                     title={chain.name}
                   >
@@ -167,17 +242,17 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
                           className="rounded-full"
                         />
                       )}
-                      <span className="truncate text-foreground">{chain.name}</span>
+                      <span className="text-foreground truncate">{chain.name}</span>
                     </div>
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="text-muted-foreground font-mono text-xs">
                       {account.address.slice(0, 5)}
                     </span>
                   </button>
 
                   {menuOpen ? (
-                    <div className="absolute left-0 mt-2 w-full min-w-[16rem] rounded-2xl border border-border bg-card p-3 shadow-xl">
-                      <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2">
-                        <span className="font-mono text-sm text-foreground truncate">
+                    <div className="border-border bg-card absolute left-0 mt-2 w-full min-w-[16rem] rounded-2xl border p-3 shadow-xl">
+                      <div className="bg-muted/40 flex items-center justify-between gap-2 rounded-xl px-3 py-2">
+                        <span className="text-foreground truncate font-mono text-sm">
                           {formatAddress(account.address)}
                         </span>
                         <button
