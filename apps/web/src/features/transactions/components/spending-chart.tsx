@@ -12,6 +12,7 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
+  ReferenceLine,
 } from 'recharts';
 import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -201,29 +202,76 @@ function CategoryLegend({ categories }: { categories: CategorySpending[] }) {
 }
 
 /**
- * Trend legend with monthly comparison
+ * Trend legend with period-based comparison
  */
 function TrendLegend({
   categories,
   trends,
+  trendData,
+  trendGrouping,
+  periodAverage,
+  overallTrend,
   currentMonthName,
   daysIntoMonth,
 }: {
   categories: CategorySpending[];
   trends: CategoryTrend[];
+  trendData: TrendPeriodData[];
+  trendGrouping: TrendGrouping;
+  periodAverage: number;
+  overallTrend: { value: number; direction: 'up' | 'down' | 'stable' };
   currentMonthName: string;
   daysIntoMonth: number;
 }) {
   const topCategories = categories.slice(0, 6);
+  const groupingLabel =
+    TREND_GROUPINGS.find((group) => group.value === trendGrouping)?.label ?? 'Weekly';
+  const periodLabel =
+    trendGrouping === 'year' ? 'year' : trendGrouping === 'month' ? 'month' : 'week';
+  const overallTrendIndicator = (
+    <TrendIndicator direction={overallTrend.direction} change={overallTrend.value} />
+  );
+
+  // Calculate period average per category
+  const categoryPeriodAverages = new Map<string, number>();
+  for (const category of topCategories) {
+    const categoryAmounts = trendData
+      .map((period) => (period[category.name] as number) || 0)
+      .filter((amount) => amount > 0);
+    const average =
+      categoryAmounts.length > 0
+        ? categoryAmounts.reduce((sum, amount) => sum + amount, 0) / categoryAmounts.length
+        : 0;
+    categoryPeriodAverages.set(category.name, average);
+  }
 
   return (
     <div className="mt-4 space-y-3">
-      <div className="text-muted-foreground text-xs font-medium">Monthly Trends (vs Average)</div>
+      <div className="text-muted-foreground text-xs font-medium">
+        {groupingLabel} Trends (vs Average)
+      </div>
+
+      {/* Overall trend row */}
+      <div className="rounded-lg bg-card/30 px-3 py-2 text-sm sm:bg-transparent sm:px-0 sm:py-0">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-muted-foreground text-sm font-medium">Overall Trend</span>
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground hidden text-xs sm:inline">
+              Avg/{periodLabel}: €{periodAverage.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+            </span>
+            {overallTrendIndicator}
+          </div>
+        </div>
+        <div className="text-muted-foreground mt-1 text-[11px] sm:hidden">
+          Avg/{periodLabel}: €{periodAverage.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+        </div>
+      </div>
 
       {/* Header row (desktop only) */}
       <div className="text-muted-foreground hidden items-center justify-between text-[11px] sm:flex">
         <span>Category</span>
         <div className="flex items-center gap-4">
+          <span className="w-14 text-right">Avg/{periodLabel}</span>
           <span className="w-14 text-right">Avg/mo</span>
           <span className="w-12 text-right">vs Avg</span>
           <span className="w-14 text-right">{currentMonthName}</span>
@@ -259,6 +307,9 @@ function TrendLegend({
                 {/* Desktop values */}
                 <div className="hidden items-center gap-3 sm:flex">
                   <span className="text-muted-foreground w-14 text-right text-xs">
+                    €{categoryPeriodAverages.get(category.name)?.toLocaleString('en-US', { maximumFractionDigits: 0 }) ?? '0'}
+                  </span>
+                  <span className="text-muted-foreground w-14 text-right text-xs">
                     €{trend.monthlyAverage.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                   </span>
                   <div className="flex w-12 justify-end">{indicator}</div>
@@ -282,7 +333,7 @@ function TrendLegend({
               {/* Mobile secondary values */}
               <div className="mt-1 flex items-center justify-between gap-3 text-[11px] text-muted-foreground sm:hidden">
                 <span>
-                  Avg €{trend.monthlyAverage.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  Avg/{periodLabel} €{categoryPeriodAverages.get(category.name)?.toLocaleString('en-US', { maximumFractionDigits: 0 }) ?? '0'}
                 </span>
                 <span>
                   Forecast €{trend.predictedMonth.toLocaleString('en-US', { maximumFractionDigits: 0 })}
@@ -344,6 +395,8 @@ export function SpendingChart({
     trendData,
     categoryTrends,
     topCategories,
+    periodAverage,
+    overallTrend,
     isEmpty,
     currentMonthName,
     daysIntoMonth,
@@ -358,23 +411,13 @@ export function SpendingChart({
   const controls = (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
       <SegmentedControl size="sm" options={VIEW_MODES} value={viewMode} onChange={setViewMode} />
-      {showTimeControls ? (
-        <div className="flex flex-wrap gap-2">
-          <SegmentedControl
-            size="sm"
-            options={TIME_PERIODS}
-            value={timePeriod}
-            onChange={setTimePeriod}
-          />
-          {viewMode === 'trends' ? (
-            <SegmentedControl
-              size="sm"
-              options={TREND_GROUPINGS}
-              value={trendGrouping}
-              onChange={setTrendGrouping}
-            />
-          ) : null}
-        </div>
+      {showTimeControls && viewMode === 'trends' ? (
+        <SegmentedControl
+          size="sm"
+          options={TREND_GROUPINGS}
+          value={trendGrouping}
+          onChange={setTrendGrouping}
+        />
       ) : null}
     </div>
   );
@@ -407,6 +450,8 @@ export function SpendingChart({
           categoryTrends={categoryTrends}
           topCategories={topCategories}
           totalSpending={totalSpending}
+          periodAverage={periodAverage}
+          overallTrend={overallTrend}
           currentMonthName={currentMonthName}
           daysIntoMonth={daysIntoMonth}
         />
@@ -483,6 +528,8 @@ function TrendsView({
   categoryTrends,
   topCategories,
   totalSpending,
+  periodAverage,
+  overallTrend,
   currentMonthName,
   daysIntoMonth,
 }: {
@@ -492,6 +539,8 @@ function TrendsView({
   categoryTrends: CategoryTrend[];
   topCategories: CategorySpending[];
   totalSpending: number;
+  periodAverage: number;
+  overallTrend: { value: number; direction: 'up' | 'down' | 'stable' };
   currentMonthName: string;
   daysIntoMonth: number;
 }) {
@@ -555,6 +604,20 @@ function TrendsView({
                   radius={[0, 0, 0, 0]}
                 />
               ))}
+              {periodAverage > 0 && (
+                <ReferenceLine
+                  y={periodAverage}
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
+                  label={{
+                    value: 'Avg',
+                    position: 'right',
+                    fill: 'hsl(var(--muted-foreground))',
+                    fontSize: 11,
+                  }}
+                />
+              )}
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -563,6 +626,10 @@ function TrendsView({
       <TrendLegend
         categories={categoryData}
         trends={categoryTrends}
+        trendData={trendData}
+        trendGrouping={trendGrouping}
+        periodAverage={periodAverage}
+        overallTrend={overallTrend}
         currentMonthName={currentMonthName}
         daysIntoMonth={daysIntoMonth}
       />

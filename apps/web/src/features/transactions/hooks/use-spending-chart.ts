@@ -373,6 +373,59 @@ function calculateCategoryTrends(
   });
 }
 
+/**
+ * Calculate average spending per period
+ */
+function calculatePeriodAverage(trendData: TrendPeriodData[]): number {
+  if (trendData.length === 0) return 0;
+  const total = trendData.reduce((sum, period) => sum + period.total, 0);
+  return total / trendData.length;
+}
+
+/**
+ * Calculate overall trend comparing recent periods vs historical average
+ */
+function calculateOverallTrend(
+  trendData: TrendPeriodData[]
+): { value: number; direction: 'up' | 'down' | 'stable' } {
+  if (trendData.length < 4) {
+    return { value: 0, direction: 'stable' };
+  }
+
+  const periodAverage = calculatePeriodAverage(trendData);
+  if (periodAverage === 0) {
+    return { value: 0, direction: 'stable' };
+  }
+
+  // Compare last 3 periods vs historical average (all periods except last 3)
+  const recentPeriods = trendData.slice(-3);
+  const historicalPeriods = trendData.slice(0, -3);
+
+  const recentAverage =
+    recentPeriods.reduce((sum, period) => sum + period.total, 0) / recentPeriods.length;
+  const historicalAverage =
+    historicalPeriods.length > 0
+      ? historicalPeriods.reduce((sum, period) => sum + period.total, 0) / historicalPeriods.length
+      : periodAverage;
+
+  if (historicalAverage === 0) {
+    return recentAverage > 0 ? { value: 100, direction: 'up' } : { value: 0, direction: 'stable' };
+  }
+
+  const changePercent = ((recentAverage - historicalAverage) / historicalAverage) * 100;
+  const absChange = Math.abs(changePercent);
+
+  let direction: 'up' | 'down' | 'stable' = 'stable';
+  if (absChange >= 5) {
+    direction = changePercent > 0 ? 'up' : 'down';
+  }
+
+  return {
+    value: absChange,
+    direction,
+  };
+}
+
 // ============================================================================
 // Hook
 // ============================================================================
@@ -402,6 +455,8 @@ export interface UseSpendingChartReturn {
   trendData: TrendPeriodData[];
   categoryTrends: CategoryTrend[];
   topCategories: CategorySpending[];
+  periodAverage: number;
+  overallTrend: { value: number; direction: 'up' | 'down' | 'stable' };
 
   // UI helpers
   isEmpty: boolean;
@@ -472,6 +527,10 @@ export function useSpendingChart({
 
   const topCategories = useMemo(() => categoryData.slice(0, 6), [categoryData]);
 
+  const periodAverage = useMemo(() => calculatePeriodAverage(trendData), [trendData]);
+
+  const overallTrend = useMemo(() => calculateOverallTrend(trendData), [trendData]);
+
   // UI helpers
   const isEmpty = categoryData.length === 0;
   const currentMonthName = new Date().toLocaleDateString('en-US', { month: 'short' });
@@ -495,6 +554,8 @@ export function useSpendingChart({
     trendData,
     categoryTrends,
     topCategories,
+    periodAverage,
+    overallTrend,
 
     // UI helpers
     isEmpty,
