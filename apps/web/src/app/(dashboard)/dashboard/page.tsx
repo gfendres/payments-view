@@ -192,7 +192,7 @@ function DashboardContent() {
           </CardHeader>
           <CardContent>
             <SpendingChart
-              transactions={transactions}
+              transactions={filteredAllTransactions}
               showTimeControls={false}
               initialTimePeriod="all"
             />
