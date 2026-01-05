@@ -14,6 +14,8 @@ interface VirtualTransactionListProps {
   hasMore?: boolean;
   onLoadMore?: () => void;
   onTransactionClick?: (transaction: SerializedTransaction) => void;
+  /** Cashback rate as percentage (e.g., 3.85 for 3.85%). Shows cashback earned for eligible transactions */
+  cashbackRate?: number;
   height?: number;
 }
 
@@ -72,6 +74,7 @@ export function VirtualTransactionList({
   hasMore,
   onLoadMore,
   onTransactionClick,
+  cashbackRate,
   height = 600,
 }: VirtualTransactionListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -167,6 +170,7 @@ export function VirtualTransactionList({
               <TransactionRow
                 transaction={transaction}
                 onClick={onTransactionClick}
+                cashbackRate={cashbackRate}
               />
             </div>
           );

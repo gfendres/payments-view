@@ -7,10 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, Button, StatCard } from '@pay
 import { useAuth } from '@/features/auth';
 import { useRewards, useCashbackStats, EarnedThisMonthCard } from '@/features/rewards';
 import {
-  TransactionList,
+  VirtualTransactionList,
   FilterPanel,
   SpendingChart,
-  useTransactions,
   useAllTransactions,
   useTransactionFilters,
   useExportTransactions,
@@ -25,40 +24,24 @@ const DEFAULT_CASHBACK_RATE = 3.84;
 
 function DashboardContent() {
   const { isAuthenticated } = useAuth();
-  const { filters, setFilters, hasActiveFilters, queryParams } = useTransactionFilters();
+  const { filters, setFilters, hasActiveFilters } = useTransactionFilters();
   const { exportToCsv, exportToPdf, isExporting } = useExportTransactions();
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-  // Fetch limited transactions for display
-  const {
-    transactions: rawTransactions,
-    isLoading,
-    error,
-    hasMore,
-    refetch,
-  } = useTransactions({
-    limit: 50,
-    enabled: isAuthenticated,
-    ...queryParams,
-  });
-
-  // Fetch all transactions for accurate stats calculation
+  // Fetch all transactions for display, stats, and charts
   const {
     transactions: allTransactions,
+    isLoading,
     isFetching: isFetchingAllTransactions,
+    error,
+    refetch,
   } = useAllTransactions({ enabled: isAuthenticated });
 
   // Get actual cashback rate from rewards API
   const { rewards } = useRewards({ enabled: isAuthenticated });
   const cashbackRate = rewards?.currentRate ?? DEFAULT_CASHBACK_RATE;
 
-  // Apply client-side filters to display transactions
-  const { transactions } = useMemo(
-    () => applyTransactionFilters(rawTransactions, filters),
-    [rawTransactions, filters]
-  );
-
-  // Apply filters to all transactions for stats calculation
+  // Apply client-side filters to all transactions
   const { transactions: filteredAllTransactions } = useMemo(
     () => applyTransactionFilters(allTransactions, filters),
     [allTransactions, filters]
@@ -139,7 +122,7 @@ function DashboardContent() {
         </div>
 
         <div className="space-y-3 rounded-2xl bg-card/40 p-4 shadow-sm">
-          <FilterPanel filters={filters} onFiltersChange={setFilters} transactions={rawTransactions} />
+          <FilterPanel filters={filters} onFiltersChange={setFilters} transactions={allTransactions} />
         </div>
       </div>
 
@@ -153,8 +136,8 @@ function DashboardContent() {
             icon={<ReceiptText className="h-5 w-5" />}
             iconColor="primary"
             subtitle={
-              hasActiveFilters && rawTransactions.length !== stats.totalTransactions
-                ? `of ${rawTransactions.length} total`
+              hasActiveFilters && allTransactions.length !== stats.totalTransactions
+                ? `of ${allTransactions.length} total`
                 : undefined
             }
           />
@@ -212,7 +195,7 @@ function DashboardContent() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowExportMenu((prev) => !prev)}
-                disabled={isExporting || transactions.length === 0}
+                disabled={isExporting || filteredAllTransactions.length === 0}
                 className="gap-2"
               >
                 <Download className="h-4 w-4" />
@@ -226,7 +209,7 @@ function DashboardContent() {
                     <button
                       type="button"
                       onClick={() => {
-                        exportToCsv(transactions);
+                        exportToCsv(filteredAllTransactions);
                         setShowExportMenu(false);
                       }}
                       className="hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-left text-sm"
@@ -240,7 +223,7 @@ function DashboardContent() {
                     <button
                       type="button"
                       onClick={() => {
-                        exportToPdf(transactions);
+                        exportToPdf(filteredAllTransactions);
                         setShowExportMenu(false);
                       }}
                       className="hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-left text-sm"
@@ -271,17 +254,16 @@ function DashboardContent() {
             </div>
           ) : (
             <>
-              <TransactionList
-                transactions={transactions}
+              <VirtualTransactionList
+                transactions={filteredAllTransactions}
                 isLoading={isLoading}
+                isFetchingMore={false}
+                hasMore={false}
+                onLoadMore={undefined}
                 cashbackRate={cashbackRate}
+                height={600}
               />
-              {hasMore && !isLoading && transactions.length > 0 && (
-                <div className="mt-4 text-center">
-                  <Button variant="outline">Load More</Button>
-                </div>
-              )}
-              {!isLoading && transactions.length === 0 && rawTransactions.length > 0 && (
+              {!isLoading && filteredAllTransactions.length === 0 && allTransactions.length > 0 && (
                 <div className="border-border bg-card/30 flex flex-col items-center justify-center rounded-xl border border-dashed py-12">
                   <div className="mb-4 text-4xl opacity-50">🔍</div>
                   <h3 className="text-foreground text-lg font-medium">No matching transactions</h3>
