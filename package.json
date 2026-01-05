@@ -44,6 +44,12 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "bun@1.1.38"
+  "packageManager": "bun@1.1.38",
+  "dependencies": {
+    "@coinbase/wallet-sdk": "4.3.7",
+    "@metamask/sdk": "0.34.0",
+    "@metamask/sdk-communication-layer": "0.33.1",
+    "esbuild": "0.27.2",
+    "jspdf": "4.0.0"
+  }
 }
-
