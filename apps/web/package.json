@@ -30,7 +30,7 @@
     "@walletconnect/ethereum-provider": "2.23.0",
     "encoding": "^0.1.13",
     "fake-indexeddb": "^6.0.0",
-    "jspdf": "3.0.4",
+    "jspdf": "4.0.0",
     "jspdf-autotable": "5.0.2",
     "lucide-react": "0.554.0",
     "next": "^15.0.4",
