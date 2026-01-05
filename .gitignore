@@ -41,6 +41,8 @@ next-env.d.ts
 !.vscode/settings.json
 
 # Bun
+# Note: bun.lock (text-based) should be committed
+# Only ignore the old binary lockfile
 bun.lockb
 
 # Turbo
