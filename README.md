@@ -1,6 +1,6 @@
 # Finance Dashboard
 
-A comprehensive financial dashboard for Gnosis Pay card users that provides transaction management, visual analytics, cashback tracking, and AI-powered insights.
+A comprehensive financial dashboard for Gnosis Pay card users that provides transaction management, visual analytics, and cashback tracking with GNO rewards.
 
 ## 📋 Overview
 
@@ -17,7 +17,7 @@ The Gnosis Card Portfolio Dashboard is a modern web application built with Domai
 
 ## 🛠️ Tech Stack
 
-- **Runtime**: [Bun](https://bun.sh) v1.1.38
+- **Runtime**: [Bun](https://bun.sh) v1.3.5
 - **Framework**: [Next.js 15](https://nextjs.org) with App Router
 - **UI**: [React 19](https://react.dev) + [Tailwind CSS v4](https://tailwindcss.com) + [Shadcn/UI](https://ui.shadcn.com)
 - **API**: [tRPC v11](https://trpc.io) for end-to-end typesafe APIs
@@ -41,7 +41,7 @@ graph TB
     API -->|Calls| APP
     APP -->|Orchestrates| DOM
     APP -->|Uses| INF
-    INF -->|Fetches| EXT[External Services<br/>Gnosis Pay API]
+    INF -->|Fetches| EXT[External Services<br/>Gnosis Pay & CoinGecko APIs]
 
     style UI fill:#3b82f6
     style API fill:#8b5cf6
@@ -84,7 +84,7 @@ graph LR
 
 ### Prerequisites
 
-- **Bun** v1.1.38 or later ([Install Bun](https://bun.sh/docs/installation))
+- **Bun** v1.3.5 or later ([Install Bun](https://bun.sh/docs/installation))
 - **Node.js** v20.0.0 or later
 
 ### Installation
@@ -92,12 +92,12 @@ graph LR
 1. Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/your-org/payments-view.git
+git clone https://github.com/guilhermeendres/payments-view.git
 cd payments-view
 bun install
 ```
 
-2. Create `.env.local` in `apps/web`:
+1. Create `.env.local` in `apps/web`:
 
 ```bash
 NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
@@ -105,7 +105,7 @@ NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
 
 Get your WalletConnect Project ID from [WalletConnect Cloud](https://cloud.walletconnect.com/).
 
-3. Start the development server:
+1. Start the development server:
 
 ```bash
 bun dev
@@ -128,8 +128,7 @@ bun test              # Run all tests
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` | ✅ Yes | WalletConnect project ID |
-| `NEXT_PUBLIC_GNO_PRICE_EUR` | ❌ No | GNO price in EUR (defaults to placeholder) |
-| `OPENAI_API_KEY` | ❌ No | OpenAI API key (for future AI features) |
+| `NEXT_PUBLIC_GNO_PRICE_EUR` | ❌ No | GNO price in EUR (fetched from CoinGecko if not set) |
 
 ## 🧪 Testing
 
@@ -145,6 +144,8 @@ Deploy to Vercel - see [deployment.md](./docs/deployment.md) for details. The pr
 
 ## 🤝 Contributing
 
+Contributions are welcome! Please follow these guidelines:
+
 1. Search the codebase for existing code
 2. Follow DDD architecture layers
 3. Write tests for new code
@@ -158,13 +159,15 @@ Deploy to Vercel - see [deployment.md](./docs/deployment.md) for details. The pr
 - Use enums from `@payments-view/constants`
 - Extract business logic to hooks
 
+### Security
+
+For security vulnerabilities, please see our [Security Policy](./SECURITY.md) for responsible disclosure guidelines.
+
 ## 📚 Documentation
 
-- **[Architecture](./docs/architecture.md)** - Technical architecture
-- **[Requirements](./docs/requirements.md)** - Product requirements
-- **[Design](./docs/design.md)** - Design system
-- **[Deployment](./docs/deployment.md)** - Deployment guide
-- **[Tasks](./docs/tasks.md)** - Implementation tasks
+- **[Architecture](./docs/architecture.md)** - Technical architecture and DDD patterns
+- **[Design](./docs/design.md)** - Design system and UI guidelines
+- **[Deployment](./docs/deployment.md)** - Deployment guide for Vercel
 
 ## 🔗 Resources
 
@@ -176,4 +179,3 @@ Deploy to Vercel - see [deployment.md](./docs/deployment.md) for details. The pr
 ---
 
 **Built with ❤️ using Bun, Next.js, and Domain Driven Design**
-

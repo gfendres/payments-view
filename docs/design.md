@@ -579,4 +579,4 @@ export function StatCard({
 
 ---
 
-*Last Updated: November 2024*
+*Last Updated: January 2026*

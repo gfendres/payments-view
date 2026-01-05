@@ -178,7 +178,7 @@ To use a custom domain:
 **Solution**:
 
 - Vercel should auto-detect Bun if `packageManager` is set in `package.json`
-- Verify `"packageManager": "bun@1.1.38"` in root `package.json`
+- Verify `"packageManager": "bun@1.3.5"` in root `package.json`
 - If issues persist, you may need to use Node.js instead (not recommended)
 
 ## CI/CD Integration
@@ -261,4 +261,4 @@ To rollback to a previous deployment:
 
 ## Last Updated
 
-November 2024
+January 2026
