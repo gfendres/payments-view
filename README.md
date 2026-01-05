@@ -144,13 +144,17 @@ Deploy to Vercel - see [deployment.md](./docs/deployment.md) for details. The pr
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these guidelines:
+**Contributions are welcome!** This is a solo-maintained project, but community contributions are highly valued and encouraged.
+
+Please follow these guidelines:
 
 1. Search the codebase for existing code
 2. Follow DDD architecture layers
 3. Write tests for new code
 4. Run `bun run lint` before committing
 5. Follow [Conventional Commits](https://www.conventionalcommits.org/)
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
 
 ### Code Standards
 
@@ -163,11 +167,19 @@ Contributions are welcome! Please follow these guidelines:
 
 For security vulnerabilities, please see our [Security Policy](./SECURITY.md) for responsible disclosure guidelines.
 
+### Response Times
+
+As this is solo-maintained, please allow:
+- Issues: 2-3 days for response
+- PRs: 3-5 days for review
+- Security: 4 days (see SECURITY.md)
+
 ## 📚 Documentation
 
 - **[Architecture](./docs/architecture.md)** - Technical architecture and DDD patterns
 - **[Design](./docs/design.md)** - Design system and UI guidelines
 - **[Deployment](./docs/deployment.md)** - Deployment guide for Vercel
+- **[Security Audit Checklist](./docs/SECURITY_AUDIT_CHECKLIST.md)** - Security audit guidelines
 
 ## 🔗 Resources
 

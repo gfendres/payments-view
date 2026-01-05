@@ -1,0 +1,12 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/gfendres/payments-view/discussions
+    about: Ask questions, share ideas, or discuss the project
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/gfendres/payments-view/security/advisories/new
+    about: Report a security vulnerability (private disclosure)
+  - name: 📚 Documentation
+    url: https://github.com/gfendres/payments-view/tree/main/docs
+    about: Read the project documentation
+

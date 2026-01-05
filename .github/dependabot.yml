@@ -1,8 +1,6 @@
 version: 2
 updates:
-  # Using Bun package ecosystem (requires Bun 1.1.39+ with text-based bun.lock)
-  # See: https://github.blog/changelog/2025-02-13-dependabot-version-updates-now-support-the-bun-package-manager-ga/
-
+  # Enable version updates for Bun dependencies
   - package-ecosystem: "bun"
     directory: "/"
     schedule:
@@ -10,32 +8,39 @@ updates:
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 10
+    reviewers:
+      - "gfendres"
     labels:
       - "dependencies"
       - "automated"
-    # Group all patch updates together
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Group minor and patch updates
     groups:
-      patch-updates:
-        patterns:
-          - "*"
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+      production-dependencies:
+        dependency-type: "production"
         update-types:
           - "patch"
-    # Ignore major version updates for stable packages
-    ignore:
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "next"
-        update-types: ["version-update:semver-major"]
 
-  # Enable security updates for GitHub Actions
+  # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-    open-pull-requests-limit: 5
+    reviewers:
+      - "gfendres"
     labels:
-      - "github-actions"
       - "dependencies"
-
+      - "github-actions"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"

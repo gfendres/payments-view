@@ -53,7 +53,7 @@ NEXT_PUBLIC_GNO_PRICE_EUR=250.00
 
 # OpenAI API Key (for future AI features)
 # Only needed if you plan to use AI insights
-OPENAI_API_KEY=sk-your_openai_api_key_here
+# OPENAI_API_KEY=your_api_key_here
 ```
 
 **Note**: `NODE_ENV` is automatically set to `production` by Vercel, no need to configure it.
@@ -102,7 +102,7 @@ This means:
 |----------|----------|-------------|---------|
 | `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` | ✅ Yes | WalletConnect project ID for wallet connections | `abc123def456...` |
 | `NEXT_PUBLIC_GNO_PRICE_EUR` | ❌ No | GNO token price in EUR for rewards calculations | `250.00` |
-| `OPENAI_API_KEY` | ❌ No | OpenAI API key for AI insights (future feature) | `sk-...` |
+| `OPENAI_API_KEY` | ❌ No | OpenAI API key for AI insights (future feature) | `your_api_key_here` |
 | `NODE_ENV` | ❌ No | Automatically set to `production` by Vercel | `production` |
 
 ### Setting Environment Variables in Vercel

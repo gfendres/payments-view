@@ -1,0 +1,23 @@
+# Code Owners for Gnosis Card Portfolio Dashboard
+# These owners will be requested for review when someone opens a pull request.
+
+# Default owners for everything in the repo
+* @gfendres
+
+# Core packages
+/packages/domain/ @gfendres
+/packages/application/ @gfendres
+/packages/api/ @gfendres
+
+# Infrastructure and external integrations
+/packages/infrastructure/ @gfendres
+
+# Documentation
+/docs/ @gfendres
+*.md @gfendres
+
+# Configuration files
+/.github/ @gfendres
+/vercel.json @gfendres
+/package.json @gfendres
+

@@ -652,7 +652,7 @@ export const env = envSchema.parse(process.env);
 NODE_ENV=development
 NEXT_PUBLIC_GNOSIS_PAY_API_URL=https://api.gnosispay.com
 NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_project_id
-OPENAI_API_KEY=sk-your_api_key
+# OPENAI_API_KEY=your_api_key_here  # Future feature
 ```
 
 ---
