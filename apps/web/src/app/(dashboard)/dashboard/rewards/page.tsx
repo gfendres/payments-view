@@ -13,7 +13,7 @@ import {
   EarningsChart,
   useCashbackStats,
 } from '@/features/rewards';
-import { useTransactions, useAllTransactions, TransactionList } from '@/features/transactions';
+import { useAllTransactions, VirtualTransactionList } from '@/features/transactions';
 import { useTokenPrice } from '@/features/pricing';
 import { CurrencyCode } from '@payments-view/constants';
 
@@ -71,13 +71,9 @@ function RewardsContent() {
 
   const {
     transactions: allTransactions,
+    isLoading: isLoadingTransactions,
     isFetching: isFetchingAllTransactions,
   } = useAllTransactions({ enabled: isAuthenticated });
-
-  const { transactions: recentTransactions, isLoading: isLoadingTransactions } = useTransactions({
-    limit: 50,
-    enabled: isAuthenticated,
-  });
 
   const { price: gnoPrice, isLoading: isLoadingPrice, currency: priceCurrency } = useTokenPrice({
     currency: CurrencyCode.EUR,
@@ -103,8 +99,8 @@ function RewardsContent() {
       : null;
 
   const eligibleTransactions = useMemo(() => {
-    return recentTransactions.filter((tx) => tx.isEligibleForCashback);
-  }, [recentTransactions]);
+    return allTransactions.filter((tx) => tx.isEligibleForCashback);
+  }, [allTransactions]);
 
   if (error) {
     return <RewardsError message={error} onRetry={() => refetch()} />;
@@ -170,10 +166,14 @@ function RewardsContent() {
               </p>
             </div>
           ) : (
-            <TransactionList
+            <VirtualTransactionList
               transactions={eligibleTransactions}
               isLoading={isLoadingTransactions}
+              isFetchingMore={false}
+              hasMore={false}
+              onLoadMore={undefined}
               cashbackRate={rewards.currentRate}
+              height={600}
             />
           )}
         </CardContent>
