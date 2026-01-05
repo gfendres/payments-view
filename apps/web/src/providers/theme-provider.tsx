@@ -60,28 +60,25 @@ interface ThemeProviderProps {
  * Handles theme state, persistence, and system preference sync
  */
 export function ThemeProvider({ children, defaultTheme = 'dark' }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(defaultTheme);
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
-    resolveTheme(defaultTheme)
-  );
+  // Initialize theme from storage or use default
+  const getInitialTheme = (): Theme => {
+    if (typeof window === 'undefined') return defaultTheme;
+    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
+    return stored && ['light', 'dark', 'system'].includes(stored) ? stored : defaultTheme;
+  };
+
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  const initialResolved = resolveTheme(getInitialTheme());
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(initialResolved);
   const [mounted, setMounted] = useState(false);
 
-  // Initialize theme from storage on mount
+  // Apply theme on mount and set mounted flag
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    if (stored && ['light', 'dark', 'system'].includes(stored)) {
-      setThemeState(stored);
-      const resolved = resolveTheme(stored);
-      setResolvedTheme(resolved);
-      applyTheme(resolved);
-    } else {
-      // Apply default theme
-      const resolved = resolveTheme(defaultTheme);
-      setResolvedTheme(resolved);
-      applyTheme(resolved);
-    }
+    const resolved = resolveTheme(theme);
+    applyTheme(resolved);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-  }, [defaultTheme]);
+  }, [theme]);
 
   // Listen for system theme changes when using 'system' theme
   useEffect(() => {
@@ -91,6 +88,7 @@ export function ThemeProvider({ children, defaultTheme = 'dark' }: ThemeProvider
 
     const handleChange = (e: MediaQueryListEvent) => {
       const newResolved = e.matches ? 'dark' : 'light';
+      // Update state in callback - this is intentional for theme sync with system preference
       setResolvedTheme(newResolved);
       applyTheme(newResolved);
     };

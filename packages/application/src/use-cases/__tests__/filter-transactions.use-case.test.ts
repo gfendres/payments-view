@@ -4,7 +4,6 @@ import { CategoryResolverService } from '@payments-view/domain/transaction';
 import { Transaction } from '@payments-view/domain/transaction';
 import { Money } from '@payments-view/domain/transaction';
 import { Merchant } from '@payments-view/domain/transaction';
-import { Category } from '@payments-view/domain/transaction';
 import {
   TransactionKind,
   TransactionStatus,
@@ -26,12 +25,12 @@ describe('FilterTransactionsUseCase', () => {
     id: string,
     merchantName: string,
     amount: number,
-    categoryId: CategoryId,
+    _categoryId: CategoryId,
     createdAt: Date,
     status: TransactionStatus = TransactionStatus.APPROVED,
     city?: string,
     country?: string,
-    mcc: string = '5411'
+    mcc = '5411'
   ): Transaction => {
     const merchant = Merchant.create({
       name: merchantName,
@@ -45,7 +44,7 @@ describe('FilterTransactionsUseCase', () => {
       threadId: `thread-${id}`,
       kind: TransactionKind.PAYMENT,
       status,
-      type: TransactionType.DEBIT,
+      type: TransactionType.PURCHASE,
       billingAmount: Money.fromNumber(amount, CurrencyCode.EUR),
       transactionAmount: Money.fromNumber(amount, CurrencyCode.EUR),
       merchant,
@@ -59,7 +58,7 @@ describe('FilterTransactionsUseCase', () => {
   test('should return all transactions when no filters applied', () => {
     const transactions = [
       createTransaction('tx1', 'Store A', 100, CategoryId.GROCERIES, new Date('2024-01-15')),
-      createTransaction('tx2', 'Store B', 50, CategoryId.RESTAURANTS, new Date('2024-01-20')),
+      createTransaction('tx2', 'Store B', 50, CategoryId.DINING, new Date('2024-01-20'), TransactionStatus.APPROVED, undefined, undefined, '5812'),
     ];
 
     const result = useCase.execute({ transactions, criteria: {} });
@@ -86,7 +85,11 @@ describe('FilterTransactionsUseCase', () => {
     expect(result.isSuccess).toBe(true);
     if (result.isSuccess) {
       expect(result.value.transactions).toHaveLength(1);
-      expect(result.value.transactions[0].id).toBe('tx1');
+      const tx = result.value.transactions[0];
+      expect(tx).toBeDefined();
+      if (tx) {
+        expect(tx.id).toBe('tx1');
+      }
       expect(result.value.appliedFilters).toContain('search');
     }
   });
@@ -105,7 +108,11 @@ describe('FilterTransactionsUseCase', () => {
     expect(result.isSuccess).toBe(true);
     if (result.isSuccess) {
       expect(result.value.transactions).toHaveLength(1);
-      expect(result.value.transactions[0].id).toBe('tx1');
+      const tx = result.value.transactions[0];
+      expect(tx).toBeDefined();
+      if (tx) {
+        expect(tx.id).toBe('tx1');
+      }
       expect(result.value.appliedFilters).toContain('categories');
     }
   });
@@ -128,7 +135,11 @@ describe('FilterTransactionsUseCase', () => {
     expect(result.isSuccess).toBe(true);
     if (result.isSuccess) {
       expect(result.value.transactions).toHaveLength(1);
-      expect(result.value.transactions[0].id).toBe('tx2');
+      const tx = result.value.transactions[0];
+      expect(tx).toBeDefined();
+      if (tx) {
+        expect(tx.id).toBe('tx2');
+      }
       expect(result.value.appliedFilters).toContain('after');
       expect(result.value.appliedFilters).toContain('before');
     }
@@ -165,7 +176,11 @@ describe('FilterTransactionsUseCase', () => {
     expect(result.isSuccess).toBe(true);
     if (result.isSuccess) {
       expect(result.value.transactions).toHaveLength(1);
-      expect(result.value.transactions[0].id).toBe('tx2');
+      const tx = result.value.transactions[0];
+      expect(tx).toBeDefined();
+      if (tx) {
+        expect(tx.id).toBe('tx2');
+      }
       expect(result.value.appliedFilters).toContain('status');
     }
   });
@@ -185,7 +200,11 @@ describe('FilterTransactionsUseCase', () => {
     expect(result.isSuccess).toBe(true);
     if (result.isSuccess) {
       expect(result.value.transactions).toHaveLength(1);
-      expect(result.value.transactions[0].id).toBe('tx1');
+      const tx = result.value.transactions[0];
+      expect(tx).toBeDefined();
+      if (tx) {
+        expect(tx.id).toBe('tx1');
+      }
       expect(result.value.appliedFilters).toContain('minAmount');
       expect(result.value.appliedFilters).toContain('maxAmount');
     }
@@ -205,7 +224,11 @@ describe('FilterTransactionsUseCase', () => {
     expect(result.isSuccess).toBe(true);
     if (result.isSuccess) {
       expect(result.value.transactions).toHaveLength(1);
-      expect(result.value.transactions[0].id).toBe('tx1');
+      const tx = result.value.transactions[0];
+      expect(tx).toBeDefined();
+      if (tx) {
+        expect(tx.id).toBe('tx1');
+      }
       expect(result.value.appliedFilters).toContain('city');
     }
   });
@@ -224,7 +247,11 @@ describe('FilterTransactionsUseCase', () => {
     expect(result.isSuccess).toBe(true);
     if (result.isSuccess) {
       expect(result.value.transactions).toHaveLength(1);
-      expect(result.value.transactions[0].id).toBe('tx1');
+      const tx = result.value.transactions[0];
+      expect(tx).toBeDefined();
+      if (tx) {
+        expect(tx.id).toBe('tx1');
+      }
       expect(result.value.appliedFilters).toContain('country');
     }
   });
@@ -248,7 +275,11 @@ describe('FilterTransactionsUseCase', () => {
     expect(result.isSuccess).toBe(true);
     if (result.isSuccess) {
       expect(result.value.transactions).toHaveLength(1);
-      expect(result.value.transactions[0].id).toBe('tx1');
+      const tx = result.value.transactions[0];
+      expect(tx).toBeDefined();
+      if (tx) {
+        expect(tx.id).toBe('tx1');
+      }
       expect(result.value.appliedFilters.length).toBeGreaterThan(1);
     }
   });

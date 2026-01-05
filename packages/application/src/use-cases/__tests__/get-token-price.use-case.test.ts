@@ -1,6 +1,7 @@
 import { describe, test, expect, mock } from 'bun:test';
 import { GetTokenPriceUseCase } from '../pricing/get-token-price.use-case';
 import { Result } from '@payments-view/domain/shared';
+import { ExternalServiceError } from '@payments-view/domain/shared';
 import { TokenPrice } from '@payments-view/domain/pricing';
 import type { ITokenPriceRepository } from '@payments-view/domain/pricing';
 import { CurrencyCode } from '@payments-view/constants';
@@ -53,7 +54,7 @@ describe('GetTokenPriceUseCase', () => {
   });
 
   test('should propagate errors from repository', async () => {
-    const error = new Error('Repository error');
+    const error = new ExternalServiceError('pricing', 'Repository error');
     const mockRepository: ITokenPriceRepository = {
       getTokenPrice: mock(() => Promise.resolve(Result.err(error))),
     };

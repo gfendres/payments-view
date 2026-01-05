@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { Result, Success, Failure } from '../result';
+import { Result } from '../result';
 
 describe('Result', () => {
   describe('Result.ok', () => {
@@ -43,7 +43,9 @@ describe('Result', () => {
       const mapped = result.map((x) => x * 2);
 
       expect(mapped.isSuccess).toBe(true);
-      expect(mapped.value).toBe(20);
+      if (mapped.isSuccess) {
+        expect(mapped.value).toBe(20);
+      }
     });
 
     test('flatMap should chain results', () => {
@@ -51,7 +53,9 @@ describe('Result', () => {
       const chained = result.flatMap((x) => Result.ok(x * 2));
 
       expect(chained.isSuccess).toBe(true);
-      expect(chained.value).toBe(20);
+      if (chained.isSuccess) {
+        expect(chained.value).toBe(20);
+      }
     });
 
     test('flatMap should propagate failures', () => {
@@ -60,7 +64,9 @@ describe('Result', () => {
       const chained = result.flatMap(() => Result.err(error));
 
       expect(chained.isFailure).toBe(true);
-      expect(chained.error).toBe(error);
+      if (chained.isFailure) {
+        expect(chained.error).toBe(error);
+      }
     });
 
     test('getOrElse should return value', () => {
@@ -72,14 +78,14 @@ describe('Result', () => {
   describe('Failure', () => {
     test('map should not transform failure', () => {
       const result = Result.err(new Error('Error'));
-      const mapped = result.map((x) => x * 2);
+      const mapped = result.map(() => 0);
 
       expect(mapped.isFailure).toBe(true);
     });
 
     test('flatMap should not transform failure', () => {
       const result = Result.err(new Error('Error'));
-      const chained = result.flatMap((x) => Result.ok(x * 2));
+      const chained = result.flatMap(() => Result.ok(0));
 
       expect(chained.isFailure).toBe(true);
     });
@@ -96,7 +102,9 @@ describe('Result', () => {
       const combined = Result.combine(results);
 
       expect(combined.isSuccess).toBe(true);
-      expect(combined.value).toEqual([1, 2, 3]);
+      if (combined.isSuccess) {
+        expect(combined.value).toEqual([1, 2, 3]);
+      }
     });
 
     test('should return first failure if any result fails', () => {
@@ -105,13 +113,17 @@ describe('Result', () => {
       const combined = Result.combine(results);
 
       expect(combined.isFailure).toBe(true);
-      expect(combined.error).toBe(error);
+      if (combined.isFailure) {
+        expect(combined.error).toBe(error);
+      }
     });
 
     test('should return empty array for empty input', () => {
       const combined = Result.combine([]);
       expect(combined.isSuccess).toBe(true);
-      expect(combined.value).toEqual([]);
+      if (combined.isSuccess) {
+        expect(combined.value).toEqual([]);
+      }
     });
   });
 });

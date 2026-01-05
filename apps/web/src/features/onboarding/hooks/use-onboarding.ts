@@ -64,7 +64,10 @@ export function useOnboarding() {
     if (typeof window !== 'undefined') {
       const completed = localStorage.getItem(ONBOARDING_STORAGE_KEY);
       const hasCompleted = completed === 'true';
+      // Initialize state from localStorage - intentional synchronous setState
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsCompleted(hasCompleted);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(!hasCompleted);
     }
   }, []);

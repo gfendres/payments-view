@@ -35,7 +35,7 @@ describe('CategoryResolverService', () => {
     });
 
     test('should return empty array for unknown category', () => {
-      const mccCodes = service.getMccCodesForCategory(9999 as CategoryId);
+      const mccCodes = service.getMccCodesForCategory('unknown' as unknown as CategoryId);
 
       expect(Array.isArray(mccCodes)).toBe(true);
     });
@@ -43,7 +43,7 @@ describe('CategoryResolverService', () => {
 
   describe('getMccCodesForCategories', () => {
     test('should return MCC codes for multiple categories', () => {
-      const categoryIds = [CategoryId.GROCERIES, CategoryId.RESTAURANTS];
+      const categoryIds = [CategoryId.GROCERIES, CategoryId.DINING];
       const mccCodes = service.getMccCodesForCategories(categoryIds);
 
       expect(Array.isArray(mccCodes)).toBe(true);
@@ -58,13 +58,13 @@ describe('CategoryResolverService', () => {
 
     test('should combine MCC codes from multiple categories', () => {
       const groceriesMcc = service.getMccCodesForCategory(CategoryId.GROCERIES);
-      const restaurantsMcc = service.getMccCodesForCategory(CategoryId.RESTAURANTS);
+      const diningMcc = service.getMccCodesForCategory(CategoryId.DINING);
       const combined = service.getMccCodesForCategories([
         CategoryId.GROCERIES,
-        CategoryId.RESTAURANTS,
+        CategoryId.DINING,
       ]);
 
-      expect(combined.length).toBe(groceriesMcc.length + restaurantsMcc.length);
+      expect(combined.length).toBe(groceriesMcc.length + diningMcc.length);
     });
   });
 
@@ -76,14 +76,14 @@ describe('CategoryResolverService', () => {
     });
 
     test('should return false when MCC does not match', () => {
-      const matches = service.mccMatchesCategories('5411', [CategoryId.RESTAURANTS]);
+      const matches = service.mccMatchesCategories('5411', [CategoryId.DINING]);
 
       expect(matches).toBe(false);
     });
 
     test('should return true when MCC matches any category', () => {
       const matches = service.mccMatchesCategories('5411', [
-        CategoryId.RESTAURANTS,
+        CategoryId.DINING,
         CategoryId.GROCERIES,
       ]);
 

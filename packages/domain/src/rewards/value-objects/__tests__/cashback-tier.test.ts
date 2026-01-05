@@ -1,6 +1,5 @@
 import { describe, test, expect } from 'bun:test';
 import { CashbackTierInfo } from '../cashback-tier';
-import { CashbackTier } from '@payments-view/constants';
 
 describe('CashbackTierInfo', () => {
   describe('fromBalance', () => {

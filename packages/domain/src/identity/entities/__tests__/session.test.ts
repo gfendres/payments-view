@@ -170,7 +170,7 @@ describe('Session', () => {
         createdAt,
       });
 
-      expect(() => session.ensureValid()).not.toThrow();
+      expect(() => { session.ensureValid(); }).not.toThrow();
     });
 
     test('should throw TokenExpiredError for expired session', () => {
@@ -182,7 +182,7 @@ describe('Session', () => {
         createdAt,
       });
 
-      expect(() => session.ensureValid()).toThrow(TokenExpiredError);
+      expect(() => { session.ensureValid(); }).toThrow(TokenExpiredError);
     });
   });
 });

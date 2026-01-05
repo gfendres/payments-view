@@ -12,7 +12,7 @@ describe('Money', () => {
     });
 
     test('should use custom decimals when provided', () => {
-      const money = Money.create('1000000', CurrencyCode.USDC, 6);
+      const money = Money.create('1000000', CurrencyCode.USD, 6);
       expect(money.decimals).toBe(6);
       expect(money.amountSmallest).toBe(1000000n);
     });
@@ -57,7 +57,7 @@ describe('Money', () => {
     });
 
     test('should handle different decimal places', () => {
-      const money = Money.create('1000000', CurrencyCode.USDC, 6);
+      const money = Money.create('1000000', CurrencyCode.USD, 6);
       expect(money.toNumber()).toBe(1.0);
     });
   });

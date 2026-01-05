@@ -1,7 +1,7 @@
 import { describe, test, expect, mock } from 'bun:test';
 import { AuthenticateUseCase } from '../auth/authenticate.use-case';
 import { Result } from '@payments-view/domain/shared';
-import { ValidationError } from '@payments-view/domain/shared';
+import { ValidationError, ExternalServiceError } from '@payments-view/domain/shared';
 import type { IAuthRepository } from '@payments-view/domain/identity';
 
 describe('AuthenticateUseCase', () => {
@@ -12,7 +12,7 @@ describe('AuthenticateUseCase', () => {
 
   test('should authenticate with valid input', async () => {
     const mockRepository: IAuthRepository = {
-      getNonce: mock(() => Promise.resolve(Result.err(new Error('Not implemented')))),
+      getNonce: mock(() => Promise.resolve(Result.err(new ExternalServiceError('test', 'Not implemented')))),
       authenticate: mock(() =>
         Promise.resolve(
           Result.ok({
@@ -47,8 +47,8 @@ describe('AuthenticateUseCase', () => {
 
   test('should return validation error for invalid address', async () => {
     const mockRepository: IAuthRepository = {
-      getNonce: mock(() => Promise.resolve(Result.err(new Error('Not implemented')))),
-      authenticate: mock(() => Promise.resolve(Result.err(new Error('Not implemented')))),
+      getNonce: mock(() => Promise.resolve(Result.err(new ExternalServiceError('test', 'Not implemented')))),
+      authenticate: mock(() => Promise.resolve(Result.err(new ExternalServiceError('test', 'Not implemented')))),
     };
 
     const useCase = new AuthenticateUseCase(mockRepository);
@@ -67,9 +67,9 @@ describe('AuthenticateUseCase', () => {
   });
 
   test('should propagate authentication errors', async () => {
-    const authError = new Error('Authentication failed');
+    const authError = new ExternalServiceError('auth', 'Authentication failed');
     const mockRepository: IAuthRepository = {
-      getNonce: mock(() => Promise.resolve(Result.err(new Error('Not implemented')))),
+      getNonce: mock(() => Promise.resolve(Result.err(new ExternalServiceError('test', 'Not implemented')))),
       authenticate: mock(() => Promise.resolve(Result.err(authError))),
     };
 
@@ -89,7 +89,7 @@ describe('AuthenticateUseCase', () => {
   test('should normalize address to lowercase', async () => {
     const upperAddress = validAddress.toUpperCase();
     const mockRepository: IAuthRepository = {
-      getNonce: mock(() => Promise.resolve(Result.err(new Error('Not implemented')))),
+      getNonce: mock(() => Promise.resolve(Result.err(new ExternalServiceError('test', 'Not implemented')))),
       authenticate: mock(() =>
         Promise.resolve(
           Result.ok({

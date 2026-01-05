@@ -61,7 +61,7 @@ export function useAllTransactions(options: UseAllTransactionsOptions = {}) {
   const transactions = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flatMap((page) => page.transactions) as SerializedTransaction[];
-  }, [data?.pages]);
+  }, [data]);
 
   const total = data?.pages[0]?.total ?? 0;
   const allPagesFetched = !hasNextPage && !isLoading && !isFetchingNextPage;

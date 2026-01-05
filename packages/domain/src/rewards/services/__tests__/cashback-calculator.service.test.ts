@@ -78,8 +78,14 @@ describe('CashbackCalculatorService', () => {
       const results = service.calculateBatchCashback(transactions, tierInfo);
 
       expect(results).toHaveLength(2);
-      expect(results[0].transactionId).toBe('tx1');
-      expect(results[1].transactionId).toBe('tx2');
+      const first = results[0];
+      const second = results[1];
+      expect(first).toBeDefined();
+      expect(second).toBeDefined();
+      if (first && second) {
+        expect(first.transactionId).toBe('tx1');
+        expect(second.transactionId).toBe('tx2');
+      }
     });
 
     test('should handle empty array', () => {
