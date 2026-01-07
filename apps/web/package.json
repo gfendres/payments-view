@@ -26,7 +26,7 @@
     "@trpc/client": "^11.0.0-rc.648",
     "@trpc/react-query": "^11.0.0-rc.648",
     "@trpc/server": "^11.0.0-rc.648",
-    "@vercel/analytics": "1.5.0",
+    "@vercel/analytics": "1.6.1",
     "@walletconnect/ethereum-provider": "2.23.0",
     "encoding": "^0.1.13",
     "fake-indexeddb": "^6.0.0",
