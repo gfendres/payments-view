@@ -1,7 +1,7 @@
 import { GetRewardsUseCase } from '@payments-view/application/use-cases';
 import type { RewardsInfo } from '@payments-view/domain/rewards';
 
-import { router, protectedProcedure, handleDomainError } from '../trpc';
+import { handleDomainError, protectedProcedure, router } from '../trpc';
 
 /**
  * Round rate to 2 decimal places

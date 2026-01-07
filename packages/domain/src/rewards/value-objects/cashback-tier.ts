@@ -1,6 +1,6 @@
 import {
-  type CashbackTier as CashbackTierEnum,
   CASHBACK_TIER_CONFIG,
+  type CashbackTier as CashbackTierEnum,
   getCashbackTier,
   getTotalCashbackRate,
   OG_BONUS_RATE,

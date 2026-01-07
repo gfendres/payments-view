@@ -25,7 +25,7 @@ export class GetRewardsUseCase {
    * Execute the use case
    */
   async execute(input: GetRewardsInput): Promise<Result<GetRewardsOutput, DomainError>> {
-    return this.rewardsRepository.getRewardsInfo(input.token);
+    return await this.rewardsRepository.getRewardsInfo(input.token);
   }
 }
 

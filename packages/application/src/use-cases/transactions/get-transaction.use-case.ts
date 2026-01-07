@@ -28,7 +28,7 @@ export class GetTransactionUseCase {
   async execute(
     input: GetTransactionInput
   ): Promise<Result<GetTransactionOutput, DomainError>> {
-    return this.transactionRepository.getTransaction(input.token, input.transactionId);
+    return await this.transactionRepository.getTransaction(input.token, input.transactionId);
   }
 }
 

@@ -1,4 +1,4 @@
-import { type CurrencyCode, CURRENCY_CONFIG, getCurrencySymbol } from '@payments-view/constants';
+import { CURRENCY_CONFIG, type CurrencyCode, getCurrencySymbol } from '@payments-view/constants';
 
 /**
  * Money value object - immutable representation of a monetary value

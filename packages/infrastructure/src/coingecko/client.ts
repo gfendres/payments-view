@@ -53,7 +53,7 @@ export class CoinGeckoClient {
       requestOptions.retries = retries;
     }
 
-    return this.httpClient.request<T>(endpoint, requestOptions);
+    return await this.httpClient.request<T>(endpoint, requestOptions);
   }
 
   private buildHeaders(): Record<string, string> {

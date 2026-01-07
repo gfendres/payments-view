@@ -1,5 +1,5 @@
 import { Result } from '@payments-view/domain/shared';
-import type { Transaction, CategoryResolverService } from '@payments-view/domain/transaction';
+import type { CategoryResolverService, Transaction } from '@payments-view/domain/transaction';
 import type { CategoryId, TransactionStatus } from '@payments-view/constants';
 
 /**

@@ -18,7 +18,7 @@ export class GetNonceUseCase {
    * Execute the use case
    */
   async execute(): Promise<Result<GetNonceOutput, DomainError>> {
-    return this.authRepository.getNonce();
+    return await this.authRepository.getNonce();
   }
 }
 

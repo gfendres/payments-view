@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 
 import { Card, CardContent } from '../../primitives';
 

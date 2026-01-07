@@ -1,5 +1,5 @@
 import { CurrencyCode } from '@payments-view/constants';
-import { RewardsInfo, Money } from '@payments-view/domain';
+import { Money, RewardsInfo } from '@payments-view/domain';
 
 import type { ApiRewardsResponse } from '../types';
 

@@ -1,14 +1,14 @@
 import {
-  TransactionKind,
-  TransactionStatus,
-  TransactionType,
   CurrencyCode,
   type CurrencyCode as CurrencyCodeType,
   isTransactionKind,
+  TransactionKind,
+  TransactionStatus,
+  TransactionType,
 } from '@payments-view/constants';
-import { Transaction, Merchant, Money } from '@payments-view/domain/transaction';
+import { Merchant, Money, Transaction } from '@payments-view/domain/transaction';
 
-import type { ApiTransaction, ApiCurrency } from '../types';
+import type { ApiCurrency, ApiTransaction } from '../types';
 
 /**
  * Map numeric ISO 4217 currency codes to alpha codes

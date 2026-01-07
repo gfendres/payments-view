@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { GetNonceUseCase, AuthenticateUseCase } from '@payments-view/application/use-cases';
+import { AuthenticateUseCase, GetNonceUseCase } from '@payments-view/application/use-cases';
 import { SiweService } from '@payments-view/domain/identity';
 
-import { router, publicProcedure, handleDomainError } from '../trpc';
+import { handleDomainError, publicProcedure, router } from '../trpc';
 
 /**
  * Input schema for generating SIWE message

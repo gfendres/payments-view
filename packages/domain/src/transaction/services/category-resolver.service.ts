@@ -1,7 +1,7 @@
 import {
   type CategoryId,
-  MCC_TO_CATEGORY,
   getCategoryFromMcc,
+  MCC_TO_CATEGORY,
 } from '@payments-view/constants';
 
 /**

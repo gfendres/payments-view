@@ -54,7 +54,7 @@ export class GnosisPayClient {
       requestOptions.retries = retries;
     }
 
-    return this.httpClient.request<T>(endpoint, requestOptions);
+    return await this.httpClient.request<T>(endpoint, requestOptions);
   }
 
   private buildHeaders(token?: string): Record<string, string> {

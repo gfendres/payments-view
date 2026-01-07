@@ -23,8 +23,8 @@ export interface HttpClientOptions {
   sensitiveParams?: string[];
 }
 
-const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = async (ms: number): Promise<void> =>
+  { await new Promise((resolve) => setTimeout(resolve, ms)); };
 
 const isRetriableStatus = (status: number): boolean => status >= 500;
 
@@ -107,7 +107,7 @@ export class HttpClient {
 
     this.logRequestStart(ctx.correlationId, method, ctx.url, Boolean(body), ctx.logContext);
 
-    return this.executeWithRetry<T>(ctx, method, body, timeout, retries);
+    return await this.executeWithRetry<T>(ctx, method, body, timeout, retries);
   }
 
   private async executeWithRetry<T>(
@@ -237,12 +237,12 @@ export class HttpClient {
     }
   }
 
-  private handleError<T>(error: unknown): Promise<{ response: ApiResult<T>; shouldRetry: boolean }> {
+  private async handleError<T>(error: unknown): Promise<{ response: ApiResult<T>; shouldRetry: boolean }> {
     if (error instanceof Error && error.name === 'AbortError') {
-      return Promise.resolve({ response: createTimeoutError(), shouldRetry: true });
+      return await Promise.resolve({ response: createTimeoutError(), shouldRetry: true });
     }
 
-    return Promise.resolve({ response: createNetworkError(error), shouldRetry: true });
+    return await Promise.resolve({ response: createNetworkError(error), shouldRetry: true });
   }
 
   private logRequestStart(

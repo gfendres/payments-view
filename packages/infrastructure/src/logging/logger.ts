@@ -1,8 +1,8 @@
 import {
-  LogLevel,
-  LOG_LEVEL_PRIORITY,
-  shouldLog,
   LOG_CONFIG,
+  LOG_LEVEL_PRIORITY,
+  LogLevel,
+  shouldLog,
 } from '@payments-view/constants';
 
 import type { ILogger, LogContext } from '@payments-view/domain';

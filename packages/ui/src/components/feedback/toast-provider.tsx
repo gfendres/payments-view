@@ -2,12 +2,12 @@
 
 import {
   createContext,
-  useContext,
-  useCallback,
-  useState,
   type ReactNode,
+  useCallback,
+  useContext,
+  useState,
 } from 'react';
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 

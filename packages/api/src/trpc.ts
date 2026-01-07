@@ -1,5 +1,5 @@
 import { initTRPC, TRPCError } from '@trpc/server';
-import { type ErrorCode, ERROR_HTTP_STATUS } from '@payments-view/constants';
+import { ERROR_HTTP_STATUS, type ErrorCode } from '@payments-view/constants';
 import type { DomainError } from '@payments-view/domain/shared';
 
 import type { Context } from './context';
@@ -43,7 +43,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
     });
   }
 
-  return next({
+  return await next({
     ctx: {
       ...ctx,
       session: ctx.session,

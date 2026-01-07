@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import {
-  ListTransactionsUseCase,
   GetTransactionUseCase,
+  ListTransactionsUseCase,
 } from '@payments-view/application/use-cases';
 
-import { router, protectedProcedure, handleDomainError } from '../trpc';
+import { handleDomainError, protectedProcedure, router } from '../trpc';
 
 import type { Transaction, TransactionQueryParams } from '@payments-view/domain/transaction';
 

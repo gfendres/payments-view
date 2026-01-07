@@ -1,9 +1,9 @@
 import {
+  type CurrencyCode,
+  isSuccessStatus,
   type TransactionKind,
   type TransactionStatus,
   type TransactionType,
-  type CurrencyCode,
-  isSuccessStatus,
 } from '@payments-view/constants';
 
 import type { Money } from '../value-objects/money';

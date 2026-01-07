@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { CurrencyCode, API_CONFIG } from '@payments-view/constants';
+import { API_CONFIG, CurrencyCode } from '@payments-view/constants';
 import { GetTokenPriceUseCase } from '@payments-view/application/use-cases';
 
-import { router, publicProcedure, handleDomainError } from '../trpc';
+import { handleDomainError, publicProcedure, router } from '../trpc';
 
 /**
  * Input schema for getting token price

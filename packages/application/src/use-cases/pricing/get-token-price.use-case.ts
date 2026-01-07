@@ -29,7 +29,7 @@ export class GetTokenPriceUseCase {
   async execute(
     input: GetTokenPriceInput
   ): Promise<Result<GetTokenPriceOutput, DomainError>> {
-    return this.tokenPriceRepository.getTokenPrice(input.tokenId, input.currency);
+    return await this.tokenPriceRepository.getTokenPrice(input.tokenId, input.currency);
   }
 }
 

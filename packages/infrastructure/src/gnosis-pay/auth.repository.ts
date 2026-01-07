@@ -1,13 +1,13 @@
-import { randomBytes, createHmac } from 'crypto';
+import { createHmac, randomBytes } from 'crypto';
 
 import { Result } from '@payments-view/domain/shared';
 import { ExternalServiceError } from '@payments-view/domain/shared';
 import { AUTH_CONFIG } from '@payments-view/constants';
 import type {
-  IAuthRepository,
-  NonceResult,
   AuthChallengeInput,
   AuthResult,
+  IAuthRepository,
+  NonceResult,
 } from '@payments-view/domain/identity';
 
 import { GnosisPayAuthClient } from './auth-client';

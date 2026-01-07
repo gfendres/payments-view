@@ -67,7 +67,7 @@ export class GnosisPayTransactionClient {
     const queryString = buildQueryString(params);
     const endpoint = `${API_CONFIG.GNOSIS_PAY.ENDPOINTS.TRANSACTIONS}${queryString}`;
 
-    return this.client.request<ApiTransaction[]>(endpoint, { token });
+    return await this.client.request<ApiTransaction[]>(endpoint, { token });
   }
 
   /**
@@ -79,7 +79,7 @@ export class GnosisPayTransactionClient {
   ): Promise<ApiResult<ApiTransaction>> {
     const endpoint = `${API_CONFIG.GNOSIS_PAY.ENDPOINTS.TRANSACTIONS}/${transactionId}`;
 
-    return this.client.request<ApiTransaction>(endpoint, { token });
+    return await this.client.request<ApiTransaction>(endpoint, { token });
   }
 }
 

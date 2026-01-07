@@ -2,10 +2,10 @@ import { API_CONFIG, REQUEST_TIMEOUT_MS } from '@payments-view/constants';
 
 import { GnosisPayClient } from './client';
 import type {
-  NonceResponse,
+  ApiResult,
   ChallengeRequest,
   ChallengeResponse,
-  ApiResult,
+  NonceResponse,
 } from './types';
 
 /**

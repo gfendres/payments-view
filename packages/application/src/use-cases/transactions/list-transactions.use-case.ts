@@ -2,8 +2,8 @@ import type { Result } from '@payments-view/domain/shared';
 import type { DomainError } from '@payments-view/domain/shared';
 import type {
   ITransactionRepository,
-  TransactionQueryParams,
   PaginatedTransactions,
+  TransactionQueryParams,
 } from '@payments-view/domain/transaction';
 
 /**
@@ -32,7 +32,7 @@ export class ListTransactionsUseCase {
   async execute(
     input: ListTransactionsInput
   ): Promise<Result<ListTransactionsOutput, DomainError>> {
-    return this.transactionRepository.getTransactions(input.token, input.params);
+    return await this.transactionRepository.getTransactions(input.token, input.params);
   }
 }
 

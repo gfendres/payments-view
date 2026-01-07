@@ -1,6 +1,6 @@
 import {
-  type CategoryId,
   type CategoryConfig,
+  type CategoryId,
   getCategoryConfig,
   getCategoryFromMcc,
 } from '@payments-view/constants';

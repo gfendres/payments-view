@@ -2,8 +2,8 @@ import { Result } from '@payments-view/domain/shared';
 import { ExternalServiceError, NotFoundError } from '@payments-view/domain/shared';
 import type {
   ITransactionRepository,
-  TransactionQueryParams,
   PaginatedTransactions,
+  TransactionQueryParams,
 } from '@payments-view/domain/transaction';
 import type { Transaction } from '@payments-view/domain/transaction';
 

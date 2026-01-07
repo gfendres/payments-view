@@ -18,7 +18,7 @@ export class GnosisPayRewardsClient {
    * Get rewards information
    */
   async getRewards(token: string): Promise<ApiResult<ApiRewardsResponse>> {
-    return this.client.request<ApiRewardsResponse>(
+    return await this.client.request<ApiRewardsResponse>(
       API_CONFIG.GNOSIS_PAY.ENDPOINTS.REWARDS,
       { token }
     );

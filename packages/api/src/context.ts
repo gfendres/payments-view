@@ -1,15 +1,15 @@
 import type { Session } from '@payments-view/domain/identity';
 import type {
   IAuthRepository,
-  ITransactionRepository,
   IRewardsRepository,
   ITokenPriceRepository,
+  ITransactionRepository,
 } from '@payments-view/domain';
 import {
-  GnosisPayAuthRepository,
-  GnosisPayTransactionRepository,
-  GnosisPayRewardsRepository,
   CoinGeckoTokenPriceRepository,
+  GnosisPayAuthRepository,
+  GnosisPayRewardsRepository,
+  GnosisPayTransactionRepository,
 } from '@payments-view/infrastructure';
 
 import { parseAuthHeader } from './middleware';
