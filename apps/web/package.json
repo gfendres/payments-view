@@ -18,7 +18,7 @@
     "@payments-view/domain": "workspace:*",
     "@payments-view/infrastructure": "workspace:*",
     "@payments-view/ui": "workspace:*",
-    "@rainbow-me/rainbowkit": "2.1.7",
+    "@rainbow-me/rainbowkit": "2.2.10",
     "@safe-global/safe-apps-provider": "0.18.6",
     "@safe-global/safe-apps-sdk": "9.1.0",
     "@tanstack/react-query": "^5.62.8",
