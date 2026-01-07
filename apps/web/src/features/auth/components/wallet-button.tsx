@@ -109,7 +109,7 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
                       </>
                     ) : (
                       <>
-                        {isHero && <Wallet className="mr-2 h-5 w-5" />}
+                        {isHero ? <Wallet className="mr-2 h-5 w-5" /> : null}
                         Connect Wallet
                       </>
                     )}
@@ -174,15 +174,13 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
                     title={chain.name}
                   >
                     <div className="flex min-w-0 items-center gap-2">
-                      {chain.hasIcon && chain.iconUrl && (
-                        <Image
+                      {chain.hasIcon && chain.iconUrl ? <Image
                           src={chain.iconUrl}
                           alt={chain.name ?? 'Chain icon'}
                           width={18}
                           height={18}
                           className="rounded-full"
-                        />
-                      )}
+                        /> : null}
                       <span className="truncate text-foreground">{chain.name}</span>
                     </div>
                     <span className="font-mono text-xs text-muted-foreground">

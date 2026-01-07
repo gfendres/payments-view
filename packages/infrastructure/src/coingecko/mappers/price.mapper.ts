@@ -1,4 +1,4 @@
-import type { CurrencyCode } from '@payments-view/constants';
+import { type CurrencyCode, FORMAT_CONFIG } from '@payments-view/constants';
 import { TokenPrice } from '@payments-view/domain/pricing';
 import type { CoinGeckoPriceData } from '../schemas';
 
@@ -19,7 +19,7 @@ export function mapCoinGeckoPriceToTokenPrice(
 
   // Get last updated timestamp
   const lastUpdatedAt = priceData.last_updated_at
-    ? new Date(priceData.last_updated_at * 1000) // CoinGecko uses Unix timestamp in seconds
+    ? new Date(priceData.last_updated_at * FORMAT_CONFIG.TIME.MS_PER_SECOND) // CoinGecko uses Unix timestamp in seconds
     : new Date();
 
   return TokenPrice.create({

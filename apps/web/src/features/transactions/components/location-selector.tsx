@@ -45,8 +45,7 @@ export function LocationSelector({
           <ChevronDown className={`h-4 w-4 transition-transform ${isCountryOpen ? 'rotate-180' : ''}`} />
         </Button>
 
-        {isCountryOpen && (
-          <>
+        {isCountryOpen ? <>
             {/* Backdrop */}
             <div className="fixed inset-0 z-40" onClick={() => setIsCountryOpen(false)} />
 
@@ -81,14 +80,13 @@ export function LocationSelector({
                       }}
                     >
                       <span className="flex-1 font-medium">{country}</span>
-                      {isSelected && <Check className="h-4 w-4" />}
+                      {isSelected ? <Check className="h-4 w-4" /> : null}
                     </button>
                   );
                 })}
               </div>
             </div>
-          </>
-        )}
+          </> : null}
       </div>
 
       {/* City Selector */}
@@ -107,8 +105,7 @@ export function LocationSelector({
           <ChevronDown className={`h-4 w-4 transition-transform ${isCityOpen ? 'rotate-180' : ''}`} />
         </Button>
 
-        {isCityOpen && (
-          <>
+        {isCityOpen ? <>
             {/* Backdrop */}
             <div className="fixed inset-0 z-40" onClick={() => setIsCityOpen(false)} />
 
@@ -143,14 +140,13 @@ export function LocationSelector({
                       }}
                     >
                       <span className="flex-1 font-medium">{city}</span>
-                      {isSelected && <Check className="h-4 w-4" />}
+                      {isSelected ? <Check className="h-4 w-4" /> : null}
                     </button>
                   );
                 })}
               </div>
             </div>
-          </>
-        )}
+          </> : null}
       </div>
     </div>
   );

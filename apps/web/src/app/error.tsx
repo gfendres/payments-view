@@ -31,12 +31,10 @@ export default function Error({ error, reset }: ErrorPageProps) {
         {process.env.NODE_ENV === 'development' && (
           <pre className="mx-auto mb-6 max-h-32 max-w-lg overflow-auto rounded-lg bg-muted p-4 text-left text-xs">
             {error.message}
-            {error.digest && (
-              <>
+            {error.digest ? <>
                 {'\n'}
                 Digest: {error.digest}
-              </>
-            )}
+              </> : null}
           </pre>
         )}
 

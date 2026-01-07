@@ -1,4 +1,4 @@
-import { CURRENCY_CONFIG, type CurrencyCode, getCurrencySymbol } from '@payments-view/constants';
+import { CURRENCY_CONFIG, type CurrencyCode, FORMAT_CONFIG, getCurrencySymbol } from '@payments-view/constants';
 
 /**
  * Money value object - immutable representation of a monetary value
@@ -23,7 +23,7 @@ export class Money {
    */
   static fromNumber(amount: number, currency: CurrencyCode): Money {
     const decimals = CURRENCY_CONFIG[currency].decimals;
-    const smallest = Math.round(amount * Math.pow(10, decimals));
+    const smallest = Math.round(amount * Math.pow(FORMAT_CONFIG.DECIMAL.PLACES, decimals));
     return new Money(BigInt(smallest), currency, decimals);
   }
 
@@ -59,7 +59,7 @@ export class Money {
    * Convert to number (in major unit)
    */
   toNumber(): number {
-    return Number(this._amount) / Math.pow(10, this._decimals);
+    return Number(this._amount) / Math.pow(FORMAT_CONFIG.DECIMAL.PLACES, this._decimals);
   }
 
   /**
@@ -112,28 +112,28 @@ export class Money {
    * Check if zero
    */
   isZero(): boolean {
-    return this._amount === 0n;
+    return this._amount === BigInt(0);
   }
 
   /**
    * Check if positive
    */
   isPositive(): boolean {
-    return this._amount > 0n;
+    return this._amount > BigInt(0);
   }
 
   /**
    * Check if negative
    */
   isNegative(): boolean {
-    return this._amount < 0n;
+    return this._amount < BigInt(0);
   }
 
   /**
    * Get absolute value
    */
   abs(): Money {
-    return this._amount < 0n
+    return this._amount < BigInt(0)
       ? new Money(-this._amount, this._currency, this._decimals)
       : this;
   }

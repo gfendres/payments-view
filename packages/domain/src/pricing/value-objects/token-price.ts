@@ -1,37 +1,39 @@
 import type { CurrencyCode } from '@payments-view/constants';
 
+interface TokenPriceProps {
+  readonly tokenId: string;
+  readonly price: number;
+  readonly currency: CurrencyCode;
+  readonly lastUpdatedAt: Date;
+  readonly change24h?: number | null;
+  readonly marketCap?: number | null;
+}
+
 /**
  * TokenPrice value object - represents a token's price in a specific currency
  */
 export class TokenPrice {
-  private constructor(
-    private readonly _tokenId: string,
-    private readonly _price: number,
-    private readonly _currency: CurrencyCode,
-    private readonly _lastUpdatedAt: Date,
-    private readonly _change24h?: number | null,
-    private readonly _marketCap?: number | null
-  ) {}
+  private readonly _tokenId: string;
+  private readonly _price: number;
+  private readonly _currency: CurrencyCode;
+  private readonly _lastUpdatedAt: Date;
+  private readonly _change24h?: number | null;
+  private readonly _marketCap?: number | null;
+
+  private constructor(props: TokenPriceProps) {
+    this._tokenId = props.tokenId;
+    this._price = props.price;
+    this._currency = props.currency;
+    this._lastUpdatedAt = props.lastUpdatedAt;
+    this._change24h = props.change24h ?? null;
+    this._marketCap = props.marketCap ?? null;
+  }
 
   /**
    * Create a TokenPrice instance
    */
-  static create(params: {
-    tokenId: string;
-    price: number;
-    currency: CurrencyCode;
-    lastUpdatedAt: Date;
-    change24h?: number | null;
-    marketCap?: number | null;
-  }): TokenPrice {
-    return new TokenPrice(
-      params.tokenId,
-      params.price,
-      params.currency,
-      params.lastUpdatedAt,
-      params.change24h,
-      params.marketCap
-    );
+  static create(params: TokenPriceProps): TokenPrice {
+    return new TokenPrice(params);
   }
 
   /**

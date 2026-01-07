@@ -1,3 +1,4 @@
+import { CHAIN_CONFIG } from '@payments-view/constants';
 import type { EthereumAddress } from '../../transaction/value-objects/ethereum-address';
 
 /**
@@ -46,7 +47,7 @@ export class Wallet {
    * Check if wallet is on Gnosis Chain
    */
   get isGnosisChain(): boolean {
-    return this._chainId === 100;
+    return this._chainId === CHAIN_CONFIG.IDS.GNOSIS;
   }
 
   /**

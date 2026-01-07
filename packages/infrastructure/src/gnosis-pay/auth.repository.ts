@@ -1,8 +1,7 @@
 import { createHmac, randomBytes } from 'crypto';
 
-import { Result } from '@payments-view/domain/shared';
-import { ExternalServiceError } from '@payments-view/domain/shared';
-import { AUTH_CONFIG } from '@payments-view/constants';
+import { ExternalServiceError, Result } from '@payments-view/domain/shared';
+import { AUTH_CONFIG, FORMAT_CONFIG } from '@payments-view/constants';
 import type {
   AuthChallengeInput,
   AuthResult,
@@ -12,7 +11,7 @@ import type {
 
 import { GnosisPayAuthClient } from './auth-client';
 
-const generateLocalNonce = (): string => randomBytes(16).toString('hex');
+const generateLocalNonce = (): string => randomBytes(FORMAT_CONFIG.CRYPTO.NONCE_BYTES).toString('hex');
 
 const getJwtSecret = (): string | undefined => {
   const envKey = AUTH_CONFIG.JWT_SIGNING_SECRET_ENV_KEY as keyof NodeJS.ProcessEnv;
@@ -29,8 +28,8 @@ const issueLocalJwt = (walletAddress: string): AuthResult | null => {
   }
 
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-  const nowSeconds = Math.floor(Date.now() / 1000);
-  const expSeconds = nowSeconds + Math.floor(AUTH_CONFIG.JWT_TTL_MS / 1000);
+  const nowSeconds = Math.floor(Date.now() / FORMAT_CONFIG.TIME.MS_PER_SECOND);
+  const expSeconds = nowSeconds + Math.floor(AUTH_CONFIG.JWT_TTL_MS / FORMAT_CONFIG.TIME.MS_PER_SECOND);
   const payload = Buffer.from(
     JSON.stringify({
       signerAddress: walletAddress,
@@ -45,7 +44,7 @@ const issueLocalJwt = (walletAddress: string): AuthResult | null => {
 
   return {
     token: `${unsigned}.${signature}`,
-    expiresAt: new Date(expSeconds * 1000),
+    expiresAt: new Date(expSeconds * FORMAT_CONFIG.TIME.MS_PER_SECOND),
   };
 };
 

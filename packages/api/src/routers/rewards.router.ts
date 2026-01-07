@@ -1,3 +1,4 @@
+import { FORMAT_CONFIG } from '@payments-view/constants';
 import { GetRewardsUseCase } from '@payments-view/application/use-cases';
 import type { RewardsInfo } from '@payments-view/domain/rewards';
 
@@ -7,7 +8,7 @@ import { handleDomainError, protectedProcedure, router } from '../trpc';
  * Round rate to 2 decimal places
  */
 function roundRate(rate: number): number {
-  return Math.round(rate * 100) / 100;
+  return Math.round(rate * FORMAT_CONFIG.PERCENTAGE.FULL) / FORMAT_CONFIG.PERCENTAGE.FULL;
 }
 
 /**

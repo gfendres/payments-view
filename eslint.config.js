@@ -115,6 +115,44 @@ export default tseslint.config(
       '@typescript-eslint/prefer-nullish-coalescing': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
 
+      // Function parameters and statements
+      'max-params': ['warn', 4], // Max 4 function parameters
+      'max-statements': ['warn', 20], // Max 20 statements per function
+
+      // Code clarity
+      'no-else-return': 'error', // Early returns preferred
+      'prefer-arrow-callback': 'warn', // Use arrow functions for callbacks
+      'no-lonely-if': 'warn', // Combine else-if chains
+      'no-unneeded-ternary': 'warn', // Simplify ternaries
+
+      // Naming conventions
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          selector: 'variable',
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+          leadingUnderscore: 'allow',
+        },
+        {
+          selector: 'function',
+          format: ['camelCase', 'PascalCase'],
+        },
+        {
+          selector: 'typeLike',
+          format: ['PascalCase'],
+        },
+        {
+          selector: 'enumMember',
+          format: ['UPPER_CASE'],
+        },
+        {
+          selector: 'interface',
+          format: ['PascalCase'],
+          // Allow I prefix for repository interfaces (DI pattern)
+          // e.g., IAuthRepository, ITransactionRepository
+        },
+      ],
+
       // Relax some strict rules for practicality
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/restrict-template-expressions': [
@@ -153,6 +191,9 @@ export default tseslint.config(
       '@typescript-eslint/no-inferrable-types': 'off',
       '@typescript-eslint/promise-function-async': 'off', // Mock functions don't need async
       'max-lines-per-function': 'off',
+      'max-params': 'off', // Test helpers can have many params
+      'max-statements': 'off', // Test setup can be long
+      'max-nested-callbacks': 'off', // Test suites nest describe/it blocks
       'complexity': 'off',
       'no-magic-numbers': 'off', // Test data can use literal numbers
       'no-duplicate-imports': 'off', // Tests often import types and values separately

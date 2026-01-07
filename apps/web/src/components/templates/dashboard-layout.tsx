@@ -59,12 +59,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div
+      {sidebarOpen ? <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        /> : null}
 
       {/* Sidebar */}
       <aside

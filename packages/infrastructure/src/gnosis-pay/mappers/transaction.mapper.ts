@@ -1,6 +1,7 @@
 import {
   CurrencyCode,
   type CurrencyCode as CurrencyCodeType,
+  FORMAT_CONFIG,
   isTransactionKind,
   TransactionKind,
   TransactionStatus,
@@ -131,7 +132,7 @@ function mapTransactionType(transactionType: string): TransactionType {
  * Extract last 4 digits from card token
  */
 function extractCardLast4(cardToken: string): string {
-  return cardToken.slice(-4);
+  return cardToken.slice(FORMAT_CONFIG.STRING.LAST_FOUR_OFFSET);
 }
 
 /**

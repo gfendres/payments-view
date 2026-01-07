@@ -1,4 +1,6 @@
 import {
+  FORMAT_CONFIG,
+  HTTP_CONFIG,
   MAX_RETRY_ATTEMPTS,
   REQUEST_TIMEOUT_MS,
   RETRY_DELAY_MS,
@@ -26,7 +28,7 @@ export interface HttpClientOptions {
 const sleep = async (ms: number): Promise<void> =>
   { await new Promise((resolve) => setTimeout(resolve, ms)); };
 
-const isRetriableStatus = (status: number): boolean => status >= 500;
+const isRetriableStatus = (status: number): boolean => status >= HTTP_CONFIG.STATUS_CODES.INTERNAL_SERVER_ERROR;
 
 const createTimeoutError = (): ApiResult<never> => ({
   success: false,
@@ -105,24 +107,25 @@ export class HttpClient {
       logContext,
     };
 
-    this.logRequestStart(ctx.correlationId, method, ctx.url, Boolean(body), ctx.logContext);
+    this.logRequestStart({ correlationId: ctx.correlationId, method, url: ctx.url, hasBody: Boolean(body), logContext: ctx.logContext });
 
-    return await this.executeWithRetry<T>(ctx, method, body, timeout, retries);
+    return await this.executeWithRetry<T>({ ctx, method, body, timeout, retries });
   }
 
-  private async executeWithRetry<T>(
+  private async executeWithRetry<T>(options: {
     ctx: {
       correlationId: string;
       headers: Record<string, string>;
       url: string;
       startTime: number;
       logContext: Record<string, unknown>;
-    },
-    method: HttpMethod,
-    body: unknown,
-    timeout: number,
-    retries: number
-  ): Promise<ApiResult<T>> {
+    };
+    method: HttpMethod;
+    body: unknown;
+    timeout: number;
+    retries: number;
+  }): Promise<ApiResult<T>> {
+    const { ctx, method, body, timeout, retries } = options;
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (attempt > 0) {
         this.logger.debug('Retrying request', {
@@ -132,21 +135,21 @@ export class HttpClient {
         });
       }
 
-      const result = await this.executeRequest<T>(ctx.url, method, ctx.headers, body, timeout);
+      const result = await this.executeRequest<T>({ url: ctx.url, method, headers: ctx.headers, body, timeout });
 
       if (result.shouldRetry && attempt < retries) {
         await this.handleRetry(ctx.correlationId, attempt, result.response);
         continue;
       }
 
-      this.logResponse(
-        ctx.correlationId,
+      this.logResponse({
+        correlationId: ctx.correlationId,
         method,
-        ctx.url,
-        result.response,
-        Date.now() - ctx.startTime,
-        ctx.logContext
-      );
+        url: ctx.url,
+        response: result.response,
+        durationMs: Date.now() - ctx.startTime,
+        logContext: ctx.logContext,
+      });
 
       return result.response;
     }
@@ -180,13 +183,14 @@ export class HttpClient {
     return createMaxRetriesError();
   }
 
-  private async executeRequest<T>(
-    url: string,
-    method: HttpMethod,
-    headers: Record<string, string>,
-    body: unknown,
-    timeout: number
-  ): Promise<{ response: ApiResult<T>; shouldRetry: boolean }> {
+  private async executeRequest<T>(options: {
+    url: string;
+    method: HttpMethod;
+    headers: Record<string, string>;
+    body: unknown;
+    timeout: number;
+  }): Promise<{ response: ApiResult<T>; shouldRetry: boolean }> {
+    const { url, method, headers, body, timeout } = options;
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
@@ -245,36 +249,38 @@ export class HttpClient {
     return await Promise.resolve({ response: createNetworkError(error), shouldRetry: true });
   }
 
-  private logRequestStart(
-    correlationId: string,
-    method: string,
-    url: string,
-    hasBody: boolean,
-    context: Record<string, unknown>
-  ): void {
+  private logRequestStart(options: {
+    correlationId: string;
+    method: string;
+    url: string;
+    hasBody: boolean;
+    logContext: Record<string, unknown>;
+  }): void {
+    const { correlationId, method, url, hasBody, logContext } = options;
     this.logger.info('API request started', {
       correlationId,
       method,
       url: this.sanitizeUrl(url),
       hasBody,
-      ...context,
+      ...logContext,
     });
   }
 
-  private logResponse<T>(
-    correlationId: string,
-    method: string,
-    url: string,
-    result: ApiResult<T>,
-    durationMs: number,
-    context: Record<string, unknown>
-  ): void {
+  private logResponse<T>(options: {
+    correlationId: string;
+    method: string;
+    url: string;
+    response: ApiResult<T>;
+    durationMs: number;
+    logContext: Record<string, unknown>;
+  }): void {
+    const { correlationId, method, url, response: result, durationMs, logContext } = options;
     const baseContext = {
       correlationId,
       method,
       url: this.sanitizeUrl(url),
       durationMs,
-      ...context,
+      ...logContext,
     };
 
     if (result.success) {
@@ -285,7 +291,7 @@ export class HttpClient {
       });
     } else {
       const statusCode = result.error.statusCode ?? 0;
-      const isClientError = statusCode >= 400 && statusCode < 500;
+      const isClientError = statusCode >= HTTP_CONFIG.STATUS_CODES.BAD_REQUEST && statusCode < HTTP_CONFIG.STATUS_CODES.INTERNAL_SERVER_ERROR;
 
       if (isClientError) {
         this.logger.warn('API request failed (client error)', {
@@ -322,6 +328,6 @@ export class HttpClient {
   }
 
   private generateCorrelationId(): string {
-    return `${this.correlationPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    return `${this.correlationPrefix}-${Date.now()}-${Math.random().toString(FORMAT_CONFIG.UUID.BASE36_RADIX).slice(FORMAT_CONFIG.UUID.ID_SLICE_START, FORMAT_CONFIG.UUID.ID_SLICE_END)}`;
   }
 }

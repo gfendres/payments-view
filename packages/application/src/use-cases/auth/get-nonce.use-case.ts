@@ -1,5 +1,4 @@
-import type { Result } from '@payments-view/domain/shared';
-import type { DomainError } from '@payments-view/domain/shared';
+import type { DomainError, Result } from '@payments-view/domain/shared';
 import type { IAuthRepository, NonceResult } from '@payments-view/domain/identity';
 
 /**

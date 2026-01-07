@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FORMAT_CONFIG } from '@payments-view/constants';
 
 /**
  * CoinGecko API Price Schemas
@@ -45,7 +46,7 @@ export function parseCoinGeckoPriceResponse(data: unknown): CoinGeckoPriceRespon
   if (!result.success) {
     console.error('[CoinGecko Schema] Price response validation failed:', {
       errors: result.error.issues,
-      receivedData: JSON.stringify(data, null, 2).substring(0, 500),
+      receivedData: JSON.stringify(data, null, 2).substring(0, FORMAT_CONFIG.STRING_LIMITS.MAX_ERROR_MESSAGE),
     });
     return null;
   }

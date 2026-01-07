@@ -1,7 +1,5 @@
-import { Result } from '@payments-view/domain/shared';
-import { ExternalServiceError } from '@payments-view/domain/shared';
-import type { IRewardsRepository } from '@payments-view/domain/rewards';
-import type { RewardsInfo } from '@payments-view/domain/rewards';
+import { ExternalServiceError, Result } from '@payments-view/domain/shared';
+import type { IRewardsRepository, RewardsInfo } from '@payments-view/domain/rewards';
 
 import { GnosisPayRewardsClient } from './rewards-client';
 import { mapRewardsInfo } from './mappers';

@@ -117,11 +117,9 @@ function RewardsContent() {
           <h1 className="text-2xl font-bold">Rewards</h1>
           <p className="text-muted-foreground">
             Track your cashback earnings and tier progress
-            {isFetchingAllTransactions && (
-              <span className="ml-2 text-xs text-muted-foreground/70">
+            {isFetchingAllTransactions ? <span className="ml-2 text-xs text-muted-foreground/70">
                 (loading transactions...)
-              </span>
-            )}
+              </span> : null}
           </p>
         </div>
         <Button variant="subtle" size="sm" onClick={() => refetch()} className="gap-2 self-start">

@@ -222,8 +222,7 @@ export function FilterPanel({ filters, onFiltersChange, transactions = [] }: Fil
             onChange={handleSearchChange}
             className="pl-10"
           />
-          {searchValue && (
-            <Button
+          {searchValue ? <Button
               type="button"
               variant="ghost"
               size="sm"
@@ -234,8 +233,7 @@ export function FilterPanel({ filters, onFiltersChange, transactions = [] }: Fil
               }}
             >
               <X className="h-4 w-4" />
-            </Button>
-          )}
+            </Button> : null}
         </div>
         <Button
           type="button"
@@ -244,17 +242,14 @@ export function FilterPanel({ filters, onFiltersChange, transactions = [] }: Fil
         >
           <SlidersHorizontal className="mr-2 h-4 w-4" />
           Filters
-          {hasActiveFilters && (
-            <span className="bg-primary-foreground text-primary ml-2 rounded-full px-2 py-0.5 text-xs">
+          {hasActiveFilters ? <span className="bg-primary-foreground text-primary ml-2 rounded-full px-2 py-0.5 text-xs">
               {activeFilters.length}
-            </span>
-          )}
+            </span> : null}
         </Button>
       </div>
 
       {/* Expanded filters */}
-      {isExpanded && (
-        <div className="bg-card/40 grid grid-cols-1 gap-6 rounded-xl p-4 sm:grid-cols-2 lg:grid-cols-4">
+      {isExpanded ? <div className="bg-card/40 grid grid-cols-1 gap-6 rounded-xl p-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-3">
             <label className="text-muted-foreground text-sm font-medium">Category</label>
             <CategorySelector
@@ -298,8 +293,7 @@ export function FilterPanel({ filters, onFiltersChange, transactions = [] }: Fil
               onCountryChange={handleCountryChange}
             />
           </div>
-        </div>
-      )}
+        </div> : null}
 
       {/* Active filters */}
       <ActiveFilters

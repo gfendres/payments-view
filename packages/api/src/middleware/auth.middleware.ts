@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 
 import { Session } from '@payments-view/domain/identity';
 import { EthereumAddress } from '@payments-view/domain/transaction';
-import { AUTH_CONFIG } from '@payments-view/constants';
+import { AUTH_CONFIG, FORMAT_CONFIG } from '@payments-view/constants';
 
 const logAuthDebug = (message: string, details: Record<string, unknown> = {}): void => {
   if (process.env.LOG_AUTH_DEBUG !== 'true') {
@@ -166,7 +166,7 @@ export const createSessionFromToken = (token: string): Session | null => {
   }
 
   // Check expiration
-  const expiresAt = new Date(payload.exp * 1000);
+  const expiresAt = new Date(payload.exp * FORMAT_CONFIG.TIME.MS_PER_SECOND);
   if (expiresAt <= new Date()) {
     logAuthDebug('token expired', { exp: expiresAt.toISOString(), now: new Date().toISOString() });
     return null;
@@ -184,7 +184,7 @@ export const createSessionFromToken = (token: string): Session | null => {
     walletAddress: addressResult.value,
     token,
     expiresAt,
-    createdAt: new Date(payload.iat * 1000),
+    createdAt: new Date(payload.iat * FORMAT_CONFIG.TIME.MS_PER_SECOND),
   });
 };
 

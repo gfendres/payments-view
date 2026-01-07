@@ -1,6 +1,6 @@
 import { CashbackTierInfo } from '../value-objects/cashback-tier';
 import { Money } from '../../transaction/value-objects/money';
-import { CurrencyCode, OG_BONUS_RATE } from '@payments-view/constants';
+import { CurrencyCode, FORMAT_CONFIG, OG_BONUS_RATE } from '@payments-view/constants';
 
 /**
  * RewardsInfo entity props
@@ -110,7 +110,7 @@ export class RewardsInfo {
    * Calculate cashback for a given amount
    */
   calculateCashback(amount: Money): Money {
-    const rate = this.currentRate / 100;
+    const rate = this.currentRate / FORMAT_CONFIG.PERCENTAGE.FULL;
     return amount.multiply(rate);
   }
 }

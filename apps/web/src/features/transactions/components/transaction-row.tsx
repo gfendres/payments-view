@@ -171,12 +171,10 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
         </div>
         <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs sm:text-sm">
           <span className="truncate">{category.name}</span>
-          {transaction.merchant.city && (
-            <>
+          {transaction.merchant.city ? <>
               <span className="text-border">•</span>
               <span className="truncate">{transaction.merchant.city}</span>
-            </>
-          )}
+            </> : null}
         </div>
       </div>
 
@@ -191,11 +189,9 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
             {isPositive ? '+' : '-'}
             {transaction.billingAmount.formatted}
           </span>
-          {showCashback && (
-            <span className="text-[11px] font-medium tabular-nums text-emerald-500 sm:text-xs">
+          {showCashback ? <span className="text-[11px] font-medium tabular-nums text-emerald-500 sm:text-xs">
               {formatCashback(cashbackEarned)} cashback
-            </span>
-          )}
+            </span> : null}
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="text-muted-foreground text-[11px] leading-tight sm:text-xs">

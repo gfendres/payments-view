@@ -47,16 +47,13 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="flex items-center gap-2">
-          {selectedCategories.length === 1 && selectedCategories[0] && (
-            <CategoryIcon icon={CATEGORIES[selectedCategories[0]].icon} size={16} />
-          )}
+          {selectedCategories.length === 1 && selectedCategories[0] ? <CategoryIcon icon={CATEGORIES[selectedCategories[0]].icon} size={16} /> : null}
           {getSelectedLabel()}
         </span>
         <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 
-      {isOpen && (
-        <>
+      {isOpen ? <>
           {/* Backdrop */}
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
@@ -81,7 +78,7 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
                       <CategoryIcon icon={category.icon} size={18} />
                     </span>
                     <span className="flex-1 font-medium">{category.name}</span>
-                    {isSelected && <Check className="h-4 w-4" />}
+                    {isSelected ? <Check className="h-4 w-4" /> : null}
                   </button>
                 );
               })}
@@ -104,8 +101,7 @@ export function CategorySelector({ selectedCategories, onChange }: CategorySelec
               </div>
             )}
           </div>
-        </>
-      )}
+        </> : null}
     </div>
   );
 }

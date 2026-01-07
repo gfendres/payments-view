@@ -1,8 +1,6 @@
-import { Result } from '@payments-view/domain/shared';
-import type { DomainError, ValidationError } from '@payments-view/domain/shared';
-import { Session } from '@payments-view/domain/identity';
+import { type DomainError, Result, type ValidationError } from '@payments-view/domain/shared';
+import { type IAuthRepository, Session } from '@payments-view/domain/identity';
 import { EthereumAddress } from '@payments-view/domain/transaction';
-import type { IAuthRepository } from '@payments-view/domain/identity';
 
 /**
  * Authenticate use case input

@@ -1,6 +1,7 @@
 import {
   CASHBACK_TIER_CONFIG,
   type CashbackTier as CashbackTierEnum,
+  FORMAT_CONFIG,
   getCashbackTier,
   getTotalCashbackRate,
   OG_BONUS_RATE,
@@ -92,14 +93,14 @@ export class CashbackTierInfo {
    * Get progress percentage to next tier
    */
   get progressToNextTier(): number {
-    if (this.isMaxTier) return 100;
+    if (this.isMaxTier) return FORMAT_CONFIG.PERCENTAGE.FULL;
 
     const min = this.minGnoForCurrentTier;
     const max = this.maxGnoForCurrentTier;
-    if (max === null) return 100;
+    if (max === null) return FORMAT_CONFIG.PERCENTAGE.FULL;
 
     const range = max - min;
-    return range > 0 ? ((this._gnoBalance - min) / range) * 100 : 100;
+    return range > 0 ? ((this._gnoBalance - min) / range) * FORMAT_CONFIG.PERCENTAGE.FULL : FORMAT_CONFIG.PERCENTAGE.FULL;
   }
 
   /**

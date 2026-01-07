@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
+import { FORMAT_CONFIG } from '@payments-view/constants';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -38,7 +39,7 @@ const MAX_TOASTS = 5;
  * Generate unique toast ID.
  */
 function generateId(): string {
-  return `toast-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return `toast-${Date.now()}-${Math.random().toString(FORMAT_CONFIG.UUID.BASE36_RADIX).slice(FORMAT_CONFIG.UUID.ID_SLICE_START, FORMAT_CONFIG.UUID.ID_SLICE_END)}`;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FORMAT_CONFIG } from '@payments-view/constants';
 
 /**
  * Gnosis Pay API Transaction Schemas
@@ -116,7 +117,7 @@ export function parseApiTransaction(data: unknown): ApiTransaction | null {
   if (!result.success) {
     console.error('[API Schema] Transaction validation failed:', {
       errors: result.error.issues,
-      receivedData: JSON.stringify(data, null, 2).substring(0, 500),
+      receivedData: JSON.stringify(data, null, 2).substring(0, FORMAT_CONFIG.STRING_LIMITS.MAX_ERROR_MESSAGE),
     });
     return null;
   }
@@ -141,7 +142,7 @@ export function parseApiTransactions(data: unknown): ApiTransaction[] {
     if (!result.success) {
       console.error(`[API Schema] Transaction ${i} validation failed:`, {
         errors: result.error.issues,
-        receivedData: JSON.stringify(data[i], null, 2).substring(0, 500),
+        receivedData: JSON.stringify(data[i], null, 2).substring(0, FORMAT_CONFIG.STRING_LIMITS.MAX_ERROR_MESSAGE),
       });
       // Continue with other transactions instead of failing completely
     } else {

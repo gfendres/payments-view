@@ -1,5 +1,4 @@
-import type { Result } from '@payments-view/domain/shared';
-import type { DomainError } from '@payments-view/domain/shared';
+import type { DomainError, Result } from '@payments-view/domain/shared';
 import type { ITransactionRepository, Transaction } from '@payments-view/domain/transaction';
 
 /**

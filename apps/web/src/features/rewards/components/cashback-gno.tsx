@@ -64,8 +64,7 @@ export function CashbackGno({
             </p>
           </div>
         </div>
-        {!isMaxTier && gnoNeededForNextTier && (
-          <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
+        {!isMaxTier && gnoNeededForNextTier ? <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
             <p className="text-sm font-medium text-amber-400">
               {gnoNeededForNextTier.toFixed(2)} GNO to next tier
             </p>
@@ -78,8 +77,7 @@ export function CashbackGno({
                 Add purchases or top up GNO to reach the next tier faster.
               </p>
             )}
-          </div>
-        )}
+          </div> : null}
         <div className="text-muted-foreground text-xs">
           Assumes cashback is paid in GNO at the stated price. Increase spend or hold more GNO
           to accelerate tier upgrades.

@@ -1,8 +1,7 @@
 import { API_CONFIG } from '@payments-view/constants';
 
 import { CoinGeckoClient } from './client';
-import { parseCoinGeckoPriceResponse } from './schemas';
-import type { CoinGeckoPriceResponse } from './schemas';
+import { type CoinGeckoPriceResponse, parseCoinGeckoPriceResponse } from './schemas';
 import type { ApiResult } from '../http/types';
 
 /**

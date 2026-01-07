@@ -1,5 +1,4 @@
-import type { Result } from '@payments-view/domain/shared';
-import type { DomainError } from '@payments-view/domain/shared';
+import type { DomainError, Result } from '@payments-view/domain/shared';
 import type { CurrencyCode } from '@payments-view/constants';
 import type { ITokenPriceRepository, TokenPrice } from '@payments-view/domain/pricing';
 

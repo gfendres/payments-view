@@ -1,11 +1,11 @@
-import { Result } from '@payments-view/domain/shared';
-import { ExternalServiceError, NotFoundError } from '@payments-view/domain/shared';
+import { ExternalServiceError, NotFoundError, Result } from '@payments-view/domain/shared';
+import { HTTP_CONFIG } from '@payments-view/constants';
 import type {
   ITransactionRepository,
   PaginatedTransactions,
+  Transaction,
   TransactionQueryParams,
 } from '@payments-view/domain/transaction';
-import type { Transaction } from '@payments-view/domain/transaction';
 
 import { GnosisPayTransactionClient } from './transaction-client';
 import { mapTransaction, mapTransactions } from './mappers';
@@ -129,7 +129,7 @@ export class GnosisPayTransactionRepository implements ITransactionRepository {
     const result = await this.client.getTransaction(token, transactionId);
 
     if (!result.success) {
-      if (result.error.statusCode === 404) {
+      if (result.error.statusCode === HTTP_CONFIG.STATUS_CODES.NOT_FOUND) {
         return Result.err(new NotFoundError('Transaction', transactionId));
       }
 

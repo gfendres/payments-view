@@ -129,8 +129,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
         <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 
-      {isOpen && (
-        <>
+      {isOpen ? <>
           {/* Backdrop */}
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
@@ -204,8 +203,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
               </Button>
             </div>
           </div>
-        </>
-      )}
+        </> : null}
     </div>
   );
 }

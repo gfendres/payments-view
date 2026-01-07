@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
+import { FORMAT_CONFIG } from '@payments-view/constants';
 
 import { Card, CardContent } from '../../primitives';
 
@@ -46,8 +47,8 @@ export interface StatCardProps {
  * Calculate percentage change between two values.
  */
 function calculatePercentageChange(current: number, previous: number): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
-  return ((current - previous) / previous) * 100;
+  if (previous === 0) return current > 0 ? FORMAT_CONFIG.PERCENTAGE.FULL : 0;
+  return ((current - previous) / previous) * FORMAT_CONFIG.PERCENTAGE.FULL;
 }
 
 /**
@@ -55,8 +56,8 @@ function calculatePercentageChange(current: number, previous: number): number {
  */
 function formatPercentage(value: number): string {
   const abs = Math.abs(value);
-  if (abs >= 100) return `${Math.round(abs)}%`;
-  if (abs >= 10) return `${abs.toFixed(0)}%`;
+  if (abs >= FORMAT_CONFIG.PERCENTAGE.FULL) return `${Math.round(abs)}%`;
+  if (abs >= FORMAT_CONFIG.DECIMAL.PLACES) return `${abs.toFixed(0)}%`;
   return `${abs.toFixed(1)}%`;
 }
 

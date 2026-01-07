@@ -1,3 +1,4 @@
+import { FORMAT_CONFIG } from '@payments-view/constants';
 import type { Session } from '@payments-view/domain/identity';
 import type {
   IAuthRepository,
@@ -52,7 +53,7 @@ export interface CreateContextOptions {
  * Generate a correlation ID
  */
 const generateCorrelationId = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(FORMAT_CONFIG.UUID.BASE36_RADIX).substring(FORMAT_CONFIG.UUID.ID_SLICE_START, FORMAT_CONFIG.UUID.ID_SLICE_END)}`;
 };
 
 const buildRepositories = (

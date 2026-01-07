@@ -123,8 +123,7 @@ export function TierProgress({ rewards, className }: TierProgressProps) {
                 <span className="text-sm font-normal text-muted-foreground">GNO</span>
               </p>
             </div>
-            {rewards.isOgHolder && (
-              <Tooltip>
+            {rewards.isOgHolder ? <Tooltip>
                 <TooltipTrigger>
                   <div className="rounded-lg bg-primary/20 px-3 py-1.5 text-sm font-medium text-primary">
                     OG +{tier.ogBonusRate}%
@@ -133,8 +132,7 @@ export function TierProgress({ rewards, className }: TierProgressProps) {
                 <TooltipContent>
                   <p>OG NFT holder bonus adds {tier.ogBonusRate}% to your cashback rate</p>
                 </TooltipContent>
-              </Tooltip>
-            )}
+              </Tooltip> : null}
           </div>
         </div>
 
@@ -170,15 +168,13 @@ export function TierProgress({ rewards, className }: TierProgressProps) {
           </div>
         )}
 
-        {tier.isMaxTier && (
-          <div className="rounded-xl bg-primary/10 p-4 text-center">
+        {tier.isMaxTier ? <div className="rounded-xl bg-primary/10 p-4 text-center">
             <Crown className="mx-auto mb-2 h-8 w-8 text-primary" />
             <p className="font-medium text-primary">Maximum Tier Reached!</p>
             <p className="mt-1 text-sm text-muted-foreground">
               You&apos;re earning the highest cashback rate
             </p>
-          </div>
-        )}
+          </div> : null}
 
         {/* Tier Milestones */}
         <div className="mt-6">

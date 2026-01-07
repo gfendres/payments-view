@@ -1,5 +1,4 @@
-import type { Result } from '@payments-view/domain/shared';
-import type { DomainError } from '@payments-view/domain/shared';
+import type { DomainError, Result } from '@payments-view/domain/shared';
 import type { IRewardsRepository, RewardsInfo } from '@payments-view/domain/rewards';
 
 /**
@@ -28,4 +27,3 @@ export class GetRewardsUseCase {
     return await this.rewardsRepository.getRewardsInfo(input.token);
   }
 }
-

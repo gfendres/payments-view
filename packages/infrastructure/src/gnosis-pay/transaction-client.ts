@@ -2,10 +2,10 @@ import { API_CONFIG } from '@payments-view/constants';
 
 import { GnosisPayClient } from './client';
 import type {
+  ApiResult,
   ApiTransaction,
   TransactionQueryParams,
 } from './types';
-import type { ApiResult } from './types';
 
 /**
  * Build query string from params

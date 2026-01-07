@@ -176,7 +176,7 @@ function DashboardContent() {
           <CardContent>
             <SpendingChart
               transactions={filteredAllTransactions}
-              showTimeControls={true}
+              showTimeControls
               initialTimePeriod="all"
             />
           </CardContent>

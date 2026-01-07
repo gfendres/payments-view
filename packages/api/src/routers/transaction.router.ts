@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PAGINATION_CONFIG } from '@payments-view/constants';
 import {
   GetTransactionUseCase,
   ListTransactionsUseCase,
@@ -12,7 +13,7 @@ import type { Transaction, TransactionQueryParams } from '@payments-view/domain/
  * Transaction query params schema
  */
 const transactionQuerySchema = z.object({
-  limit: z.number().min(1).max(100).optional(),
+  limit: z.number().min(1).max(PAGINATION_CONFIG.MAX_PAGE_SIZE).optional(),
   offset: z.number().min(0).optional(),
   before: z.string().datetime().optional(),
   after: z.string().datetime().optional(),

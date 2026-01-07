@@ -1,6 +1,7 @@
 import {
   CASHBACK_TIER_CONFIG,
   type CashbackTier as CashbackTierEnum,
+  FORMAT_CONFIG,
   getTotalCashbackRate,
 } from '@payments-view/constants';
 
@@ -68,7 +69,7 @@ export class CashbackCalculatorService {
   ): TransactionCashback {
     const billingAmount = Math.abs(transaction.billingAmount);
     const cashbackRate = transaction.isEligibleForCashback ? tierInfo.totalRate : 0;
-    const cashbackAmount = billingAmount * (cashbackRate / 100);
+    const cashbackAmount = billingAmount * (cashbackRate / FORMAT_CONFIG.PERCENTAGE.FULL);
 
     return {
       transactionId: transaction.id,
@@ -106,13 +107,13 @@ export class CashbackCalculatorService {
 
       if (tx.isEligibleForCashback) {
         eligibleSpending += amount;
-        totalCashback += amount * (tierInfo.totalRate / 100);
+        totalCashback += amount * (tierInfo.totalRate / FORMAT_CONFIG.PERCENTAGE.FULL);
         eligibleTransactionCount++;
       }
     }
 
     const averageCashbackRate =
-      eligibleSpending > 0 ? (totalCashback / eligibleSpending) * 100 : 0;
+      eligibleSpending > 0 ? (totalCashback / eligibleSpending) * FORMAT_CONFIG.PERCENTAGE.FULL : 0;
 
     return {
       totalSpending,
@@ -143,7 +144,7 @@ export class CashbackCalculatorService {
     let potentialExtraCashback = 0;
     if (nextRate !== null) {
       const rateDifference = nextRate - tierInfo.totalRate;
-      potentialExtraCashback = monthlySpending * (rateDifference / 100);
+      potentialExtraCashback = monthlySpending * (rateDifference / FORMAT_CONFIG.PERCENTAGE.FULL);
     }
 
     return {

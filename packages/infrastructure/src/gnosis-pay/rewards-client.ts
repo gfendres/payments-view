@@ -1,8 +1,7 @@
 import { API_CONFIG } from '@payments-view/constants';
 
 import { GnosisPayClient } from './client';
-import type { ApiRewardsResponse } from './types';
-import type { ApiResult } from './types';
+import type { ApiResult, ApiRewardsResponse } from './types';
 
 /**
  * Gnosis Pay rewards API client
