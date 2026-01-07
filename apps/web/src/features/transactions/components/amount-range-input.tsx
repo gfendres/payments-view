@@ -48,7 +48,7 @@ export function AmountRangeInput({ value, onChange, currency = '€' }: AmountRa
     // Sync controlled input state with prop changes - intentional
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMinInput(formatAmount(value.min));
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setMaxInput(formatAmount(value.max));
   }, [value.min, value.max]);
 

@@ -67,7 +67,7 @@ export function useOnboarding() {
       // Initialize state from localStorage - intentional synchronous setState
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsCompleted(hasCompleted);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setIsOpen(!hasCompleted);
     }
   }, []);

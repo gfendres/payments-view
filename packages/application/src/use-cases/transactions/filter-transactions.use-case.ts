@@ -59,29 +59,59 @@ export class FilterTransactionsUseCase {
 
     let filtered = [...transactions];
 
-    // Apply search filter
-    const searchTerm = criteria.search?.trim();
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((tx) => {
-        const matchesMerchant = tx.merchant.name.toLowerCase().includes(searchLower);
-        const matchesCategory = tx.category.name.toLowerCase().includes(searchLower);
-        return matchesMerchant || matchesCategory;
-      });
-      appliedFilters.push('search');
-    }
+    filtered = this.applySearchFilter(filtered, criteria.search, appliedFilters);
+    filtered = this.applyCategoryFilter(filtered, criteria.categories, appliedFilters);
+    filtered = this.applyDateRangeFilter(filtered, criteria.after, criteria.before, appliedFilters);
+    filtered = this.applyStatusFilter(filtered, criteria.status, appliedFilters);
+    filtered = this.applyAmountRangeFilter(filtered, criteria.minAmount, criteria.maxAmount, appliedFilters);
+    filtered = this.applyLocationFilter(filtered, criteria.city, criteria.country, appliedFilters);
 
-    // Apply category filter
-    const categories = criteria.categories;
-    if (categories?.length) {
-      filtered = filtered.filter((tx) =>
-        this.categoryResolver.mccMatchesCategories(tx.merchant.mcc, categories)
-      );
-      appliedFilters.push('categories');
-    }
+    return Result.ok({
+      transactions: filtered,
+      totalMatched: filtered.length,
+      appliedFilters,
+    });
+  }
 
-    // Apply date range filter
-    const { after, before } = criteria;
+  private applySearchFilter(
+    transactions: Transaction[],
+    search: string | undefined,
+    appliedFilters: string[]
+  ): Transaction[] {
+    const searchTerm = search?.trim();
+    if (!searchTerm) return transactions;
+
+    const searchLower = searchTerm.toLowerCase();
+    appliedFilters.push('search');
+
+    return transactions.filter((tx) => {
+      const matchesMerchant = tx.merchant.name.toLowerCase().includes(searchLower);
+      const matchesCategory = tx.category.name.toLowerCase().includes(searchLower);
+      return matchesMerchant || matchesCategory;
+    });
+  }
+
+  private applyCategoryFilter(
+    transactions: Transaction[],
+    categories: CategoryId[] | undefined,
+    appliedFilters: string[]
+  ): Transaction[] {
+    if (!categories?.length) return transactions;
+
+    appliedFilters.push('categories');
+    return transactions.filter((tx) =>
+      this.categoryResolver.mccMatchesCategories(tx.merchant.mcc, categories)
+    );
+  }
+
+  private applyDateRangeFilter(
+    transactions: Transaction[],
+    after: Date | undefined,
+    before: Date | undefined,
+    appliedFilters: string[]
+  ): Transaction[] {
+    let filtered = transactions;
+
     if (after) {
       filtered = filtered.filter((tx) => tx.createdAt >= after);
       appliedFilters.push('after');
@@ -92,14 +122,28 @@ export class FilterTransactionsUseCase {
       appliedFilters.push('before');
     }
 
-    // Apply status filter
-    if (criteria.status) {
-      filtered = filtered.filter((tx) => tx.status === criteria.status);
-      appliedFilters.push('status');
-    }
+    return filtered;
+  }
 
-    // Apply amount range filters
-    const { minAmount, maxAmount } = criteria;
+  private applyStatusFilter(
+    transactions: Transaction[],
+    status: TransactionStatus | undefined,
+    appliedFilters: string[]
+  ): Transaction[] {
+    if (!status) return transactions;
+
+    appliedFilters.push('status');
+    return transactions.filter((tx) => tx.status === status);
+  }
+
+  private applyAmountRangeFilter(
+    transactions: Transaction[],
+    minAmount: number | undefined,
+    maxAmount: number | undefined,
+    appliedFilters: string[]
+  ): Transaction[] {
+    let filtered = transactions;
+
     if (minAmount !== undefined) {
       filtered = filtered.filter((tx) => tx.billingAmount.toNumber() >= minAmount);
       appliedFilters.push('minAmount');
@@ -110,22 +154,27 @@ export class FilterTransactionsUseCase {
       appliedFilters.push('maxAmount');
     }
 
-    // Apply city filter
-    if (criteria.city) {
-      filtered = filtered.filter((tx) => tx.merchant.city === criteria.city);
+    return filtered;
+  }
+
+  private applyLocationFilter(
+    transactions: Transaction[],
+    city: string | undefined,
+    country: string | undefined,
+    appliedFilters: string[]
+  ): Transaction[] {
+    let filtered = transactions;
+
+    if (city) {
+      filtered = filtered.filter((tx) => tx.merchant.city === city);
       appliedFilters.push('city');
     }
 
-    // Apply country filter
-    if (criteria.country) {
-      filtered = filtered.filter((tx) => tx.merchant.country === criteria.country);
+    if (country) {
+      filtered = filtered.filter((tx) => tx.merchant.country === country);
       appliedFilters.push('country');
     }
 
-    return Result.ok({
-      transactions: filtered,
-      totalMatched: filtered.length,
-      appliedFilters,
-    });
+    return filtered;
   }
 }
