@@ -180,7 +180,10 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
 
       {/* Amount & Status */}
       <div className="flex shrink-0 flex-col items-end gap-1">
-        <div className="flex flex-col items-end gap-0.5">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {showCashback ? <span className="text-[11px] font-medium tabular-nums text-emerald-500 sm:text-xs">
+              {formatCashback(cashbackEarned)}
+            </span> : null}
           <span
             className={`text-base font-semibold tabular-nums sm:text-lg ${
               isPositive ? 'text-emerald-500' : 'text-foreground'
@@ -189,9 +192,6 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
             {isPositive ? '+' : '-'}
             {transaction.billingAmount.formatted}
           </span>
-          {showCashback ? <span className="text-[11px] font-medium tabular-nums text-emerald-500 sm:text-xs">
-              {formatCashback(cashbackEarned)} cashback
-            </span> : null}
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="text-muted-foreground text-[11px] leading-tight sm:text-xs">

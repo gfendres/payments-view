@@ -75,4 +75,3 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     console.log('[Finance Dashboard] Wagmi config initialized');
   }, 100);
 }
-
