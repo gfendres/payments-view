@@ -13,7 +13,7 @@ import {
   GnosisPayTransactionRepository,
 } from '@payments-view/infrastructure';
 
-import { parseAuthHeader } from './middleware';
+import { decodeJwt, parseAuth } from './middleware';
 
 /**
  * tRPC context for requests
@@ -25,9 +25,18 @@ export interface Context {
   session: Session | undefined;
 
   /**
+   * True when session token is a Gnosis-issued API token (contains userId claim).
+   */
+  isProviderSession: boolean;
+
+  /**
    * Request correlation ID for logging
    */
   correlationId: string;
+  /**
+   * Full request URL (when available)
+   */
+  requestUrl: string | undefined;
 
   /**
    * Request-scoped dependencies
@@ -45,6 +54,8 @@ export interface Context {
  */
 export interface CreateContextOptions {
   authHeader?: string;
+  cookieHeader?: string;
+  requestUrl?: string;
   correlationId?: string;
   repositories?: Partial<Context['repositories']>;
 }
@@ -72,13 +83,19 @@ const buildRepositories = (
  * Create tRPC context from request
  */
 export const createContext = (options: CreateContextOptions = {}): Context => {
-  // Parse session from auth header
-  const session = options.authHeader ? parseAuthHeader(options.authHeader) : undefined;
+  // Parse session from cookie or auth header
+  const session = parseAuth({
+    authHeader: options.authHeader,
+    cookieHeader: options.cookieHeader,
+  });
   const repositories = buildRepositories(options.repositories);
+  const isProviderSession = session ? Boolean(decodeJwt(session.token)?.userId) : false;
 
   return {
     session: session ?? undefined,
+    isProviderSession,
     correlationId: options.correlationId ?? generateCorrelationId(),
+    requestUrl: options.requestUrl,
     repositories,
   };
 };

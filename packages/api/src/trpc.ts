@@ -43,6 +43,14 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
     });
   }
 
+  if (!ctx.isProviderSession) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message:
+        'Local development session cannot access live Gnosis data. Use an allowlisted SIWE domain.',
+    });
+  }
+
   return await next({
     ctx: {
       ...ctx,
@@ -75,4 +83,3 @@ export const handleDomainError = (error: DomainError): TRPCError => {
     cause: error,
   });
 };
-

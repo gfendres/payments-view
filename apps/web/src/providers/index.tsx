@@ -63,14 +63,11 @@ export function Providers({ children }: ProvidersProps) {
       links: [
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
-          headers() {
-            if (typeof window !== 'undefined') {
-              const token = sessionStorage.getItem('gnosis_auth_token');
-              if (token) {
-                return { Authorization: `Bearer ${token}` };
-              }
-            }
-            return {};
+          fetch(url, options) {
+            return fetch(url, {
+              ...(options ?? {}),
+              credentials: 'same-origin',
+            });
           },
         }),
       ],

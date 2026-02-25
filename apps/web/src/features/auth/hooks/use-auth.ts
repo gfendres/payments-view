@@ -7,6 +7,7 @@ import { useAuthContext } from '../context/auth-context';
  */
 interface UseAuthReturn {
   isAuthenticated: boolean;
+  isSessionResolved: boolean;
   isLoading: boolean;
   isConnected: boolean;
   walletAddress: string | undefined;
@@ -24,6 +25,7 @@ export function useAuth(): UseAuthReturn {
 
   return {
     isAuthenticated: context.isAuthenticated,
+    isSessionResolved: context.isSessionResolved,
     isLoading: context.isLoading,
     isConnected: context.isConnected,
     walletAddress: context.walletAddress,
@@ -32,4 +34,3 @@ export function useAuth(): UseAuthReturn {
     signOut: context.signOut,
   };
 }
-

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AuthenticateUseCase, GetNonceUseCase } from '@payments-view/application/use-cases';
 import { SiweService } from '@payments-view/domain/identity';
+import { AUTH_CONFIG } from '@payments-view/constants';
 
 import { handleDomainError, publicProcedure, router } from '../trpc';
 
@@ -20,6 +21,54 @@ const authenticateSchema = z.object({
   message: z.string().min(1, 'Message is required'),
   signature: z.string().regex(/^0x[a-fA-F0-9]+$/, 'Invalid signature format'),
 });
+
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
+
+/**
+ * Resolve SIWE domain/URI with environment overrides and safe request-based fallback.
+ */
+const resolveSiweOriginConfig = (
+  requestUrl?: string
+): {
+  domain: string;
+  uri: string;
+} => {
+  const configuredDomain = process.env['SIWE_DOMAIN']?.trim();
+  const configuredUri = process.env['SIWE_URI']?.trim();
+
+  let uri = configuredUri || AUTH_CONFIG.SIWE_URI;
+  let domain = configuredDomain || AUTH_CONFIG.SIWE_DOMAIN;
+
+  if (!configuredDomain || !configuredUri) {
+    if (requestUrl) {
+      try {
+        const parsedUrl = new URL(requestUrl);
+        const isLocalHost = LOCAL_HOSTNAMES.has(parsedUrl.hostname);
+
+        if (!isLocalHost) {
+          if (!configuredUri) {
+            uri = parsedUrl.origin;
+          }
+          if (!configuredDomain) {
+            domain = parsedUrl.hostname;
+          }
+        }
+      } catch {
+        // no-op: keep defaults
+      }
+    }
+
+    if (!configuredDomain) {
+      try {
+        domain = new URL(uri).hostname || domain;
+      } catch {
+        // no-op: keep resolved domain
+      }
+    }
+  }
+
+  return { domain, uri };
+};
 
 /**
  * Auth tRPC router
@@ -57,9 +106,12 @@ export const authRouter = router({
 
       // Generate SIWE message
       const siweService = new SiweService();
+      const { domain, uri } = resolveSiweOriginConfig(ctx.requestUrl);
       const message = siweService.createFormattedMessage({
         address: input.address,
         nonce: nonceResult.value.nonce,
+        domain,
+        uri,
         ...(input.chainId !== undefined && { chainId: input.chainId }),
       });
 

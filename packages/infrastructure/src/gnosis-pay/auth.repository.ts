@@ -100,8 +100,11 @@ export class GnosisPayAuthRepository implements IAuthRepository {
       return Result.ok(secretToken);
     }
 
+    const providerErrorMessage =
+      [result.error.error, result.error.message].filter(Boolean).join(': ') || 'Authentication failed';
+
     return Result.err(
-      new ExternalServiceError('GnosisPay', result.error.message ?? 'Authentication failed')
+      new ExternalServiceError('GnosisPay', providerErrorMessage)
     );
   }
 }

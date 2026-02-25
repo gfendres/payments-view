@@ -20,27 +20,29 @@ import { trpc } from '@/lib/trpc';
  */
 interface AuthContextState {
   isAuthenticated: boolean;
+  isSessionResolved: boolean;
   isLoading: boolean;
   isConnected: boolean;
   walletAddress: string | undefined;
-  token: string | null;
   error: string | null;
   signIn: () => Promise<void>;
   signOut: () => void;
 }
 
 /**
- * Storage keys
+ * Session response payload
  */
-const AUTH_TOKEN_KEY = 'gnosis_auth_token';
-const AUTH_EXPIRY_KEY = 'gnosis_auth_expiry';
-const AUTH_ADDRESS_KEY = 'gnosis_auth_address';
+interface SessionResponse {
+  authenticated: boolean;
+  walletAddress?: string;
+  expiresAt?: string;
+  error?: string;
+}
 
 /**
- * Delay before clearing auth when wallet appears disconnected (ms)
- * This prevents race conditions during page navigation when wagmi hasn't reconnected yet
+ * Throttle session checks triggered by visibility changes (ms)
  */
-const WALLET_DISCONNECT_GRACE_PERIOD_MS = 2000;
+const SESSION_REVALIDATION_THROTTLE_MS = 1500;
 
 /**
  * Auth context
@@ -48,48 +50,19 @@ const WALLET_DISCONNECT_GRACE_PERIOD_MS = 2000;
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
 /**
- * Load auth from storage
+ * Extract meaningful error from failed HTTP calls
  */
-const loadFromStorage = () => {
-  if (typeof window === 'undefined') {
-    return { token: null, expiresAt: null, walletAddress: null };
+const getErrorMessage = async (response: Response): Promise<string> => {
+  try {
+    const payload = (await response.json()) as { error?: string };
+    if (payload.error) {
+      return payload.error;
+    }
+  } catch {
+    // no-op
   }
 
-  const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
-  const expiryStr = sessionStorage.getItem(AUTH_EXPIRY_KEY);
-  const walletAddress = sessionStorage.getItem(AUTH_ADDRESS_KEY);
-
-  if (!token || !expiryStr) {
-    return { token: null, expiresAt: null, walletAddress: null };
-  }
-
-  const expiresAt = new Date(expiryStr);
-
-  // Check if expired
-  if (expiresAt <= new Date()) {
-    clearStorage();
-    return { token: null, expiresAt: null, walletAddress: null };
-  }
-
-  return { token, expiresAt, walletAddress };
-};
-
-/**
- * Save auth to storage
- */
-const saveToStorage = (token: string, expiresAt: string, walletAddress: string) => {
-  sessionStorage.setItem(AUTH_TOKEN_KEY, token);
-  sessionStorage.setItem(AUTH_EXPIRY_KEY, expiresAt);
-  sessionStorage.setItem(AUTH_ADDRESS_KEY, walletAddress);
-};
-
-/**
- * Clear auth from storage
- */
-const clearStorage = () => {
-  sessionStorage.removeItem(AUTH_TOKEN_KEY);
-  sessionStorage.removeItem(AUTH_EXPIRY_KEY);
-  sessionStorage.removeItem(AUTH_ADDRESS_KEY);
+  return 'Authentication request failed';
 };
 
 /**
@@ -100,7 +73,7 @@ interface AuthProviderProps {
 }
 
 /**
- * Auth provider component with token refresh
+ * Auth provider component backed by server-side cookie sessions
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   const { address, isConnected, isConnecting, isReconnecting } = useAccount();
@@ -108,130 +81,188 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { disconnect } = useDisconnect();
   const queryClient = useQueryClient();
 
-  const [token, setToken] = useState<string | null>(null);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [authenticatedWalletAddress, setAuthenticatedWalletAddress] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasHydrated, setHasHydrated] = useState(false);
+  const [isSessionResolved, setIsSessionResolved] = useState(false);
 
-  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const revalidateInFlightRef = useRef<Promise<void> | null>(null);
+  const lastRevalidationAtRef = useRef(0);
   const isSigningRef = useRef(false);
-  const disconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isHandlingMismatchRef = useRef(false);
 
-  // tRPC mutations
+  // tRPC mutation for SIWE message generation
   const generateSiweMessage = trpc.auth.generateSiweMessage.useMutation();
-  const authenticate = trpc.auth.authenticate.useMutation();
 
-  // Load initial state from storage on hydration
-  useEffect(() => {
-    const stored = loadFromStorage();
-    if (stored.token && stored.expiresAt) {
-      setToken(stored.token);
-      setWalletAddress(stored.walletAddress);
-      setExpiresAt(stored.expiresAt);
-    }
-    // Mark as hydrated after loading storage
-    setHasHydrated(true);
-  }, []);
-
-  /**
-   * Clear auth state
-   */
-  const clearAuth = useCallback(() => {
-    setToken(null);
-    setWalletAddress(null);
+  const clearAuthState = useCallback(() => {
+    setAuthenticatedWalletAddress(null);
     setExpiresAt(null);
-    clearStorage();
-    if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current);
-      refreshTimeoutRef.current = null;
-    }
   }, []);
 
-  /**
-   * Setup auto-refresh timer
-   */
-  const setupRefreshTimer = useCallback(
-    (expiry: Date) => {
-      // Clear existing timer
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-      }
-
-      // Calculate refresh time (5 minutes before expiry)
-      const refreshTime = expiry.getTime() - AUTH_CONFIG.JWT_EXPIRY_BUFFER_MS - Date.now();
-
-      if (refreshTime <= 0) {
-        // Token already needs refresh or is expired
-        clearAuth();
+  const applySession = useCallback(
+    (payload: SessionResponse) => {
+      if (!payload.authenticated || !payload.walletAddress || !payload.expiresAt) {
+        clearAuthState();
         return;
       }
 
-      // Set timer to clear auth before expiry
-      // In a real app, this would trigger a token refresh
-      // For now, we just clear auth and user needs to sign in again
-      refreshTimeoutRef.current = setTimeout(() => {
-        clearAuth();
-      }, refreshTime);
+      const parsedExpiry = new Date(payload.expiresAt);
+      if (Number.isNaN(parsedExpiry.getTime()) || parsedExpiry <= new Date()) {
+        clearAuthState();
+        return;
+      }
+
+      setAuthenticatedWalletAddress(payload.walletAddress);
+      setExpiresAt(parsedExpiry);
     },
-    [clearAuth]
+    [clearAuthState]
   );
 
-  // Setup refresh timer when expiresAt changes
-  useEffect(() => {
-    if (expiresAt) {
-      setupRefreshTimer(expiresAt);
-    }
+  const revalidateSession = useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      const now = Date.now();
+      if (!force && now - lastRevalidationAtRef.current < SESSION_REVALIDATION_THROTTLE_MS) {
+        return;
+      }
 
-    return () => {
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
+      if (revalidateInFlightRef.current) {
+        await revalidateInFlightRef.current;
+        return;
+      }
+
+      lastRevalidationAtRef.current = now;
+
+      const task = (async () => {
+        try {
+          const response = await fetch('/api/auth/session', {
+            method: 'GET',
+            credentials: 'same-origin',
+            cache: 'no-store',
+          });
+
+          if (!response.ok) {
+            throw new Error(await getErrorMessage(response));
+          }
+
+          const payload = (await response.json()) as SessionResponse;
+          applySession(payload);
+        } catch {
+          // Preserve in-memory session on transient network failures.
+        } finally {
+          setIsSessionResolved(true);
+        }
+      })();
+
+      revalidateInFlightRef.current = task;
+      try {
+        await task;
+      } finally {
+        revalidateInFlightRef.current = null;
+      }
+    },
+    [applySession]
+  );
+
+  // Load initial session from secure cookies
+  useEffect(() => {
+    void revalidateSession({ force: true });
+  }, [revalidateSession]);
+
+  // Revalidate session when app regains visibility after wallet app round-trips
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void revalidateSession();
       }
     };
-  }, [expiresAt, setupRefreshTimer]);
 
-  // Clear auth if wallet disconnects or address changes
-  // Skip if we're in the middle of signing, reconnecting, connecting, or haven't hydrated yet
+    const handlePageShow = () => {
+      void revalidateSession();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [revalidateSession]);
+
+  // Proactively refresh in-memory session when expiry is reached
   useEffect(() => {
-    // Clear any pending disconnect timeout
-    if (disconnectTimeoutRef.current) {
-      clearTimeout(disconnectTimeoutRef.current);
-      disconnectTimeoutRef.current = null;
-    }
-
-    // Don't clear during initial hydration, while reconnecting, connecting, or signing
-    if (!hasHydrated || isReconnecting || isConnecting || isSigningRef.current) {
+    if (!expiresAt) {
       return;
     }
 
-    if (!isConnected && token) {
-      // Wallet appears disconnected but we have a token
-      // Use a grace period to avoid race conditions during page navigation
-      // where wagmi hasn't reconnected yet
-      disconnectTimeoutRef.current = setTimeout(() => {
-        // Double-check we still have a token and wallet is still disconnected
-        const stored = loadFromStorage();
-        if (stored.token) {
-          clearAuth();
-        }
-      }, WALLET_DISCONNECT_GRACE_PERIOD_MS);
-    } else if (
-      address &&
-      walletAddress &&
-      address.toLowerCase() !== walletAddress.toLowerCase()
-    ) {
-      // Address changed, clear auth immediately
-      clearAuth();
+    const msUntilExpiry = expiresAt.getTime() - Date.now();
+    if (msUntilExpiry <= 0) {
+      clearAuthState();
+      return;
     }
 
+    const timeoutId = setTimeout(() => {
+      void revalidateSession({ force: true });
+    }, msUntilExpiry + 1000);
+
     return () => {
-      if (disconnectTimeoutRef.current) {
-        clearTimeout(disconnectTimeoutRef.current);
-        disconnectTimeoutRef.current = null;
+      clearTimeout(timeoutId);
+    };
+  }, [expiresAt, clearAuthState, revalidateSession]);
+
+  // If a different wallet connects while a session exists, invalidate server cookie and reset client auth.
+  useEffect(() => {
+    if (
+      !isSessionResolved ||
+      !authenticatedWalletAddress ||
+      !address ||
+      !isConnected ||
+      isConnecting ||
+      isReconnecting ||
+      isSigningRef.current
+    ) {
+      return;
+    }
+
+    if (address.toLowerCase() === authenticatedWalletAddress.toLowerCase()) {
+      return;
+    }
+    if (isHandlingMismatchRef.current) {
+      return;
+    }
+
+    const invalidateSessionForMismatch = async () => {
+      isHandlingMismatchRef.current = true;
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      } finally {
+        clearAuthState();
+        disconnect();
+        queryClient.clear();
+        setError('Connected wallet changed. Please sign in again.');
+        isHandlingMismatchRef.current = false;
       }
     };
-  }, [isConnected, isConnecting, isReconnecting, hasHydrated, address, walletAddress, token, clearAuth]);
+
+    void invalidateSessionForMismatch();
+  }, [
+    isSessionResolved,
+    authenticatedWalletAddress,
+    address,
+    isConnected,
+    isConnecting,
+    isReconnecting,
+    disconnect,
+    queryClient,
+    clearAuthState,
+  ]);
 
   /**
    * Sign in with SIWE
@@ -256,22 +287,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Sign message
       const signature = await signMessageAsync({ message });
 
-      // Authenticate
-      const result = await authenticate.mutateAsync({
-        address,
-        message,
-        signature,
+      // Submit SIWE challenge via secure cookie auth endpoint
+      const response = await fetch('/api/auth/siwe', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          address,
+          message,
+          signature,
+        }),
       });
 
-      // Save state
-      const expiry = new Date(result.expiresAt);
-      setToken(result.token);
-      setWalletAddress(result.walletAddress);
-      setExpiresAt(expiry);
-      saveToStorage(result.token, result.expiresAt, result.walletAddress);
-      setupRefreshTimer(expiry);
+      if (!response.ok) {
+        throw new Error(await getErrorMessage(response));
+      }
 
-      // Invalidate all queries to force refetch with new auth token
+      const sessionPayload = (await response.json()) as {
+        walletAddress: string;
+        expiresAt: string;
+      };
+      applySession({
+        authenticated: true,
+        walletAddress: sessionPayload.walletAddress,
+        expiresAt: sessionPayload.expiresAt,
+      });
+      setIsSessionResolved(true);
+
+      // Invalidate queries so protected data refetches with the new server session
       await queryClient.invalidateQueries();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
@@ -285,8 +330,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isConnected,
     generateSiweMessage,
     signMessageAsync,
-    authenticate,
-    setupRefreshTimer,
+    applySession,
     queryClient,
   ]);
 
@@ -294,20 +338,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Sign out
    */
   const signOut = useCallback(() => {
-    clearAuth();
-    disconnect();
-    // Clear all cached queries
-    queryClient.clear();
-  }, [clearAuth, disconnect, queryClient]);
+    setError(null);
+    setIsLoading(true);
 
-  const isAuthenticated = !!token && !!expiresAt && expiresAt > new Date();
+    const clearSession = async () => {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      } finally {
+        clearAuthState();
+        disconnect();
+        queryClient.clear();
+        setIsSessionResolved(true);
+        setIsLoading(false);
+      }
+    };
+
+    void clearSession();
+  }, [clearAuthState, disconnect, queryClient]);
+
+  const isAuthenticated =
+    !!authenticatedWalletAddress && !!expiresAt && expiresAt > new Date();
 
   const value: AuthContextState = {
     isAuthenticated,
+    isSessionResolved,
     isLoading,
     isConnected,
     walletAddress: address,
-    token,
     error,
     signIn,
     signOut,

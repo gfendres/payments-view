@@ -6,6 +6,7 @@ import { appRouter, createContext } from '@payments-view/api';
  */
 const handler = (req: Request) => {
   const authHeader = req.headers.get('Authorization');
+  const cookieHeader = req.headers.get('cookie');
 
   return fetchRequestHandler({
     endpoint: '/api/trpc',
@@ -14,6 +15,8 @@ const handler = (req: Request) => {
     createContext: () =>
       createContext({
         authHeader: authHeader ?? undefined,
+        cookieHeader: cookieHeader ?? undefined,
+        requestUrl: req.url,
       }),
     onError:
       process.env.NODE_ENV === 'development'

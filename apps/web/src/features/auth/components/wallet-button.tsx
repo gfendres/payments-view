@@ -21,10 +21,11 @@ interface WalletButtonProps {
  */
 export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }: WalletButtonProps) {
   const router = useRouter();
-  const { isAuthenticated, isLoading, isConnected, signIn, signOut } = useAuth();
+  const { isAuthenticated, isLoading, isConnected, error, signIn, signOut } = useAuth();
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isStandaloneIos, setIsStandaloneIos] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Redirect when authenticated
@@ -63,13 +64,22 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
     };
   }, []);
 
+  useEffect(() => {
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      ((navigator as Navigator & { standalone?: boolean }).standalone ?? false);
+
+    setIsStandaloneIos(isIos && isStandalone);
+  }, []);
+
   const isHero = variant === 'hero';
 
   return (
     <ConnectButton.Custom>
       {({ account, chain, openConnectModal, openChainModal, mounted }) => {
         const ready = mounted;
-        const connected = ready && account && chain;
+        const isWalletConnected = Boolean(ready && account && chain);
 
         return (
           <div
@@ -84,7 +94,7 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
           >
             {(() => {
               // Not connected - show connect button
-              if (!connected) {
+              if (!isWalletConnected) {
                 return (
                   <Button
                     onClick={() => {
@@ -117,6 +127,10 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
                 );
               }
 
+              if (!account || !chain) {
+                return null;
+              }
+
               // Wrong chain - show switch chain
               if (chain.unsupported) {
                 return (
@@ -142,25 +156,35 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
                   : 'h-11 w-full justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 text-primary shadow-none hover:bg-primary/15';
 
                 return (
-                  <Button
-                    onClick={handleSignIn}
-                    disabled={isLoading || !isConnected}
-                    variant="default"
-                    size={isHero ? 'lg' : 'default'}
-                    className={signInButtonClass}
-                  >
-                    {isLoading ? (
-                      <>
-                        <LoadingSpinner />
-                        <span className="ml-2">Signing in...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Wallet className="h-4 w-4" />
-                        <span>Sign in with Ethereum</span>
-                      </>
-                    )}
-                  </Button>
+                  <div className={isHero ? 'flex flex-col items-center gap-3' : 'flex w-full flex-col gap-2'}>
+                    <Button
+                      onClick={handleSignIn}
+                      disabled={isLoading || !isConnected}
+                      variant="default"
+                      size={isHero ? 'lg' : 'default'}
+                      className={signInButtonClass}
+                    >
+                      {isLoading ? (
+                        <>
+                          <LoadingSpinner />
+                          <span className="ml-2">Signing in...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Wallet className="h-4 w-4" />
+                          <span>Sign in with Ethereum</span>
+                        </>
+                      )}
+                    </Button>
+                    {isStandaloneIos ? (
+                      <p className="max-w-xs text-center text-xs text-muted-foreground">
+                        Approve in Rainbow, then return to this app.
+                      </p>
+                    ) : null}
+                    {error ? (
+                      <p className="max-w-xs text-center text-sm text-destructive">{error}</p>
+                    ) : null}
+                  </div>
                 );
               }
 

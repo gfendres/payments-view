@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { Session } from '@payments-view/domain/identity';
 import { EthereumAddress } from '@payments-view/domain/transaction';
 import { AUTH_CONFIG, FORMAT_CONFIG } from '@payments-view/constants';
+import { extractTokenFromCookieHeader } from './auth-cookie';
 
 const logAuthDebug = (message: string, details: Record<string, unknown> = {}): void => {
   if (process.env.LOG_AUTH_DEBUG !== 'true') {
@@ -16,6 +17,14 @@ const logAuthDebug = (message: string, details: Record<string, unknown> = {}): v
       timestamp: new Date().toISOString(),
       ...details,
     })
+  );
+};
+
+const isLocalJwtSessionAllowed = (): boolean => {
+  return (
+    process.env.NODE_ENV !== 'production' &&
+    (process.env['ALLOW_LOCAL_JWT_SESSION'] === 'true' ||
+      process.env['ENABLE_LOCAL_JWT_FALLBACK'] === 'true')
   );
 };
 
@@ -115,7 +124,6 @@ const validateSignature = (
  */
 export const extractToken = (authHeader?: string): string | null => {
   if (!authHeader) {
-    logAuthDebug('missing Authorization header');
     return null;
   }
 
@@ -165,6 +173,14 @@ export const createSessionFromToken = (token: string): Session | null => {
     return null;
   }
 
+  if (!payload.userId && !isLocalJwtSessionAllowed()) {
+    logAuthDebug('local JWT token rejected for session', {
+      nodeEnv: process.env.NODE_ENV,
+      hasUserId: false,
+    });
+    return null;
+  }
+
   // Check expiration
   const expiresAt = new Date(payload.exp * FORMAT_CONFIG.TIME.MS_PER_SECOND);
   if (expiresAt <= new Date()) {
@@ -199,7 +215,21 @@ export const validateSessionNotExpiring = (session: Session): boolean => {
  * Parse auth header and create session
  */
 export const parseAuthHeader = (authHeader?: string): Session | null => {
-  const token = extractToken(authHeader);
+  return parseAuth({ authHeader });
+};
+
+export interface ParseAuthInput {
+  authHeader?: string | undefined;
+  cookieHeader?: string | undefined;
+}
+
+/**
+ * Parse auth credentials (cookie preferred, Authorization fallback) and create session.
+ */
+export const parseAuth = ({ authHeader, cookieHeader }: ParseAuthInput): Session | null => {
+  const cookieToken = extractTokenFromCookieHeader(cookieHeader);
+  const headerToken = cookieToken ? null : extractToken(authHeader);
+  const token = cookieToken ?? headerToken;
 
   if (!token) {
     return null;
