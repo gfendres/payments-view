@@ -24,6 +24,48 @@ const authenticateSchema = z.object({
 
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
 
+const normalizeSiweDomain = (value?: string): string | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  // Accept accidental URL input and extract hostname.
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      return new URL(trimmed).hostname.toLowerCase();
+    } catch {
+      // fall through to lightweight normalization below
+    }
+  }
+
+  const withoutPath = trimmed.replace(/\/.*$/, '');
+  return withoutPath.toLowerCase();
+};
+
+const normalizeSiweUri = (value?: string): string | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    // Use origin to avoid trailing slash/path mismatches.
+    return new URL(trimmed).origin;
+  } catch {
+    // Best-effort fallback if value is malformed.
+    return trimmed.replace(/\/+$/, '');
+  }
+};
+
 /**
  * Resolve SIWE domain/URI with environment overrides and safe request-based fallback.
  */
@@ -33,8 +75,8 @@ const resolveSiweOriginConfig = (
   domain: string;
   uri: string;
 } => {
-  const configuredDomain = process.env['SIWE_DOMAIN']?.trim();
-  const configuredUri = process.env['SIWE_URI']?.trim();
+  const configuredDomain = normalizeSiweDomain(process.env['SIWE_DOMAIN']);
+  const configuredUri = normalizeSiweUri(process.env['SIWE_URI']);
 
   let uri = configuredUri || AUTH_CONFIG.SIWE_URI;
   let domain = configuredDomain || AUTH_CONFIG.SIWE_DOMAIN;
@@ -67,7 +109,10 @@ const resolveSiweOriginConfig = (
     }
   }
 
-  return { domain, uri };
+  return {
+    domain: normalizeSiweDomain(domain) || AUTH_CONFIG.SIWE_DOMAIN,
+    uri: normalizeSiweUri(uri) || AUTH_CONFIG.SIWE_URI,
+  };
 };
 
 /**
