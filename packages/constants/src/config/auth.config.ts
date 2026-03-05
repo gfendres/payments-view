@@ -20,12 +20,12 @@ export const AUTH_CONFIG = {
   /**
    * SIWE domain (hostname registered with Gnosis Pay)
    */
-  SIWE_DOMAIN: 'www.financedashboard.app',
+  SIWE_DOMAIN: 'financedashboard.app',
 
   /**
    * SIWE URI (origin registered with Gnosis Pay, must include protocol)
    */
-  SIWE_URI: 'https://www.financedashboard.app',
+  SIWE_URI: 'https://financedashboard.app',
 
   /**
    * SIWE statement
