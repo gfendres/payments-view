@@ -319,7 +319,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Invalidate queries so protected data refetches with the new server session
       await queryClient.invalidateQueries();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+      const raw = err instanceof Error ? err.message : '';
+      const isUserRejection =
+        /user rejected|denied|cancelled/i.test(raw);
+      const errorMessage = isUserRejection
+        ? 'Signature request was rejected.'
+        : raw || 'Authentication failed. Please try again.';
       setError(errorMessage);
     } finally {
       isSigningRef.current = false;

@@ -65,17 +65,19 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   if (authResult.isFailure) {
-    const domain = extractSiweDomain(parsedInput.message);
     const message = authResult.error.message;
     const isDomainRejected = /siwe domain not allowed/i.test(message);
 
+    if (isDomainRejected) {
+      const domain = extractSiweDomain(parsedInput.message);
+      console.error(
+        `[SIWE] Domain rejected by provider (${domain ?? 'unknown'}). Check SIWE_DOMAIN / SIWE_URI env vars.`
+      );
+    }
+
     return createNoStoreJsonResponse(
-      {
-        error: isDomainRejected
-          ? `SIWE domain is not allowlisted (${domain ?? 'unknown domain'}). Configure SIWE_DOMAIN and SIWE_URI to an approved origin.`
-          : message,
-      },
-      { status: isDomainRejected ? 400 : 401 }
+      { error: isDomainRejected ? 'Authentication failed. Please try again later.' : message },
+      { status: isDomainRejected ? 500 : 401 }
     );
   }
 
@@ -92,11 +94,12 @@ export async function POST(request: Request): Promise<Response> {
   const jwtPayload = decodeJwt(token);
   if (!jwtPayload?.userId && !isLocalJwtFallbackEnabled()) {
     const domain = extractSiweDomain(parsedInput.message);
+    console.error(
+      `[SIWE] JWT missing userId claim (domain: ${domain ?? 'unknown'}). The SIWE domain may not be accepted by the provider.`
+    );
     return createNoStoreJsonResponse(
-      {
-        error: `Authentication failed because the SIWE domain is not accepted (${domain ?? 'unknown domain'}). Configure SIWE_DOMAIN and SIWE_URI to an allowlisted domain.`,
-      },
-      { status: 400 }
+      { error: 'Authentication failed. Please try again later.' },
+      { status: 500 }
     );
   }
 

@@ -18,14 +18,14 @@ export const AUTH_CONFIG = {
   SESSION_STORAGE_KEY: 'gnosis_session',
 
   /**
-   * SIWE domain
+   * SIWE domain (hostname registered with Gnosis Pay)
    */
-  SIWE_DOMAIN: 'payments-view.app',
+  SIWE_DOMAIN: 'www.financedashboard.app',
 
   /**
-   * SIWE URI
+   * SIWE URI (origin registered with Gnosis Pay, must include protocol)
    */
-  SIWE_URI: 'https://payments-view.app',
+  SIWE_URI: 'https://www.financedashboard.app',
 
   /**
    * SIWE statement

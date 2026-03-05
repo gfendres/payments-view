@@ -22,97 +22,25 @@ const authenticateSchema = z.object({
   signature: z.string().regex(/^0x[a-fA-F0-9]+$/, 'Invalid signature format'),
 });
 
-const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
-
-const normalizeSiweDomain = (value?: string): string | undefined => {
-  if (!value) {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  // Accept accidental URL input and extract hostname.
-  if (/^https?:\/\//i.test(trimmed)) {
-    try {
-      return new URL(trimmed).hostname.toLowerCase();
-    } catch {
-      // fall through to lightweight normalization below
-    }
-  }
-
-  const withoutPath = trimmed.replace(/\/.*$/, '');
-  return withoutPath.toLowerCase();
-};
-
-const normalizeSiweUri = (value?: string): string | undefined => {
-  if (!value) {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  try {
-    // Use origin to avoid trailing slash/path mismatches.
-    return new URL(trimmed).origin;
-  } catch {
-    // Best-effort fallback if value is malformed.
-    return trimmed.replace(/\/+$/, '');
-  }
-};
+/**
+ * Ensure URI has a protocol prefix (EIP-4361 requires a proper URI).
+ * Handles the common misconfiguration of setting SIWE_URI to a bare hostname.
+ */
+const ensureUriProtocol = (value: string): string =>
+  /^https?:\/\//i.test(value) ? value : `https://${value}`;
 
 /**
- * Resolve SIWE domain/URI with environment overrides and safe request-based fallback.
+ * Resolve SIWE domain/URI.
+ *
+ * Priority: SIWE_DOMAIN / SIWE_URI env vars → AUTH_CONFIG defaults.
+ * The deployment hostname (request URL) is intentionally NOT used because
+ * the Gnosis Pay-approved domain may differ from the Vercel deployment host.
  */
-const resolveSiweOriginConfig = (
-  requestUrl?: string
-): {
-  domain: string;
-  uri: string;
-} => {
-  const configuredDomain = normalizeSiweDomain(process.env['SIWE_DOMAIN']);
-  const configuredUri = normalizeSiweUri(process.env['SIWE_URI']);
+const resolveSiweOriginConfig = (): { domain: string; uri: string } => {
+  const domain = process.env['SIWE_DOMAIN']?.trim() || AUTH_CONFIG.SIWE_DOMAIN;
+  const rawUri = process.env['SIWE_URI']?.trim() || AUTH_CONFIG.SIWE_URI;
 
-  let uri = configuredUri || AUTH_CONFIG.SIWE_URI;
-  let domain = configuredDomain || AUTH_CONFIG.SIWE_DOMAIN;
-
-  if (!configuredDomain || !configuredUri) {
-    if (requestUrl) {
-      try {
-        const parsedUrl = new URL(requestUrl);
-        const isLocalHost = LOCAL_HOSTNAMES.has(parsedUrl.hostname);
-
-        if (!isLocalHost) {
-          if (!configuredUri) {
-            uri = parsedUrl.origin;
-          }
-          if (!configuredDomain) {
-            domain = parsedUrl.hostname;
-          }
-        }
-      } catch {
-        // no-op: keep defaults
-      }
-    }
-
-    if (!configuredDomain) {
-      try {
-        domain = new URL(uri).hostname || domain;
-      } catch {
-        // no-op: keep resolved domain
-      }
-    }
-  }
-
-  return {
-    domain: normalizeSiweDomain(domain) || AUTH_CONFIG.SIWE_DOMAIN,
-    uri: normalizeSiweUri(uri) || AUTH_CONFIG.SIWE_URI,
-  };
+  return { domain, uri: ensureUriProtocol(rawUri) };
 };
 
 /**
@@ -151,7 +79,7 @@ export const authRouter = router({
 
       // Generate SIWE message
       const siweService = new SiweService();
-      const { domain, uri } = resolveSiweOriginConfig(ctx.requestUrl);
+      const { domain, uri } = resolveSiweOriginConfig();
       const message = siweService.createFormattedMessage({
         address: input.address,
         nonce: nonceResult.value.nonce,
