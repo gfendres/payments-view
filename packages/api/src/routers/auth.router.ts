@@ -20,27 +20,48 @@ const authenticateSchema = z.object({
   address: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address'),
   message: z.string().min(1, 'Message is required'),
   signature: z.string().regex(/^0x[a-fA-F0-9]+$/, 'Invalid signature format'),
+  siweCookie: z.string().min(1).optional(),
+  debug: z
+    .object({
+      clientSignatureValid: z.boolean().optional(),
+      recoveredAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address').optional(),
+      signatureLength: z.number().int().positive().optional(),
+      clientVerificationError: z.string().min(1).optional(),
+    })
+    .optional(),
 });
 
-/**
- * Ensure URI has a protocol prefix (EIP-4361 requires a proper URI).
- * Handles the common misconfiguration of setting SIWE_URI to a bare hostname.
- */
-const ensureUriProtocol = (value: string): string =>
-  /^https?:\/\//i.test(value) ? value : `https://${value}`;
+const resolveRequestHost = (headers?: Headers, requestUrl?: string): string => {
+  const forwardedHost = headers?.get('x-forwarded-host')?.trim();
+  if (forwardedHost) {
+    return forwardedHost;
+  }
 
-/**
- * Resolve SIWE domain/URI.
- *
- * Priority: SIWE_DOMAIN / SIWE_URI env vars → AUTH_CONFIG defaults.
- * The deployment hostname (request URL) is intentionally NOT used because
- * the Gnosis Pay-approved domain may differ from the Vercel deployment host.
- */
-const resolveSiweOriginConfig = (): { domain: string; uri: string } => {
-  const domain = process.env['SIWE_DOMAIN']?.trim() || AUTH_CONFIG.SIWE_DOMAIN;
-  const rawUri = process.env['SIWE_URI']?.trim() || AUTH_CONFIG.SIWE_URI;
+  const host = headers?.get('host')?.trim();
+  if (host) {
+    return host;
+  }
 
-  return { domain, uri: ensureUriProtocol(rawUri) };
+  if (requestUrl) {
+    return new URL(requestUrl).host;
+  }
+
+  return AUTH_CONFIG.SIWE_DOMAIN;
+};
+
+const logAuthDebug = (message: string, details: Record<string, unknown> = {}): void => {
+  if (process.env.LOG_AUTH_DEBUG !== 'true') {
+    return;
+  }
+
+  console.warn(
+    JSON.stringify({
+      level: 'warn',
+      message: `[auth-debug] ${message}`,
+      timestamp: new Date().toISOString(),
+      ...details,
+    })
+  );
 };
 
 /**
@@ -79,18 +100,28 @@ export const authRouter = router({
 
       // Generate SIWE message
       const siweService = new SiweService();
-      const { domain, uri } = resolveSiweOriginConfig();
+      const domain = resolveRequestHost(ctx.requestHeaders, ctx.requestUrl);
+      const uri = AUTH_CONFIG.SIWE_URI;
+      logAuthDebug('generating SIWE message', {
+        address: input.address,
+        chainId: input.chainId ?? AUTH_CONFIG.CHAIN_ID,
+        domain,
+        uri,
+        siweCookiePresent: Boolean(nonceResult.value.siweCookie),
+      });
       const message = siweService.createFormattedMessage({
         address: input.address,
         nonce: nonceResult.value.nonce,
         domain,
         uri,
+        statement: AUTH_CONFIG.SIWE_STATEMENT,
         ...(input.chainId !== undefined && { chainId: input.chainId }),
       });
 
       return {
         message,
         nonce: nonceResult.value.nonce,
+        siweCookie: nonceResult.value.siweCookie,
       };
     }),
 
@@ -98,12 +129,24 @@ export const authRouter = router({
    * Authenticate with SIWE signature
    */
   authenticate: publicProcedure.input(authenticateSchema).mutation(async ({ ctx, input }) => {
+    logAuthDebug('received SIWE authentication payload', {
+      address: input.address,
+      messageLength: input.message.length,
+      signatureLength: input.signature.length,
+      clientSignatureValid: input.debug?.clientSignatureValid,
+      recoveredAddress: input.debug?.recoveredAddress,
+      clientVerificationError: input.debug?.clientVerificationError,
+      clientSignatureLength: input.debug?.signatureLength,
+      siweCookiePresent: Boolean(input.siweCookie),
+    });
+
     const useCase = new AuthenticateUseCase(ctx.repositories.authRepository);
 
     const result = await useCase.execute({
       walletAddress: input.address,
       message: input.message,
       signature: input.signature,
+      ...(input.siweCookie ? { siweCookie: input.siweCookie } : {}),
     });
 
     if (result.isFailure) {

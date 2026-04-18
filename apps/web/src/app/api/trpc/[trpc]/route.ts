@@ -16,6 +16,7 @@ const handler = (req: Request) => {
       createContext({
         authHeader: authHeader ?? undefined,
         cookieHeader: cookieHeader ?? undefined,
+        requestHeaders: req.headers,
         requestUrl: req.url,
       }),
     onError:

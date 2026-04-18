@@ -19,6 +19,15 @@ const authenticateSchema = z.object({
   address: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address'),
   message: z.string().min(1, 'Message is required'),
   signature: z.string().regex(/^0x[a-fA-F0-9]+$/, 'Invalid signature format'),
+  siweCookie: z.string().min(1).optional(),
+  debug: z
+    .object({
+      clientSignatureValid: z.boolean().optional(),
+      recoveredAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+      signatureLength: z.number().int().positive().optional(),
+      clientVerificationError: z.string().min(1).optional(),
+    })
+    .optional(),
 });
 
 const SIWE_SIGNIN_PREFIX = ' wants you to sign in with your Ethereum account:';
@@ -38,7 +47,7 @@ const extractSiweDomain = (message: string): string | null => {
 };
 
 const isLocalJwtFallbackEnabled = (): boolean =>
-  process.env.NODE_ENV !== 'production' && process.env['ENABLE_LOCAL_JWT_FALLBACK'] === 'true';
+  process.env.NODE_ENV !== 'production' && process.env.ENABLE_LOCAL_JWT_FALLBACK === 'true';
 
 /**
  * Complete SIWE auth flow and persist session as an HttpOnly cookie.
@@ -57,11 +66,19 @@ export async function POST(request: Request): Promise<Response> {
     return createNoStoreJsonResponse({ error: 'Invalid request payload' }, { status: 400 });
   }
 
-  const authenticateUseCase = new AuthenticateUseCase(new GnosisPayAuthRepository());
+  const requestOrigin = request.headers.get('origin') ?? new URL(request.url).origin;
+  const requestReferer = request.headers.get('referer') ?? request.url;
+  const authenticateUseCase = new AuthenticateUseCase(
+    new GnosisPayAuthRepository(undefined, {
+      origin: requestOrigin,
+      referer: requestReferer,
+    })
+  );
   const authResult = await authenticateUseCase.execute({
     walletAddress: parsedInput.address,
     message: parsedInput.message,
     signature: parsedInput.signature,
+    ...(parsedInput.siweCookie ? { siweCookie: parsedInput.siweCookie } : {}),
   });
 
   if (authResult.isFailure) {
@@ -71,7 +88,7 @@ export async function POST(request: Request): Promise<Response> {
     if (isDomainRejected) {
       const domain = extractSiweDomain(parsedInput.message);
       console.error(
-        `[SIWE] Domain rejected by provider (${domain ?? 'unknown'}). Check SIWE_DOMAIN / SIWE_URI env vars.`
+        `[SIWE] Domain rejected by provider (${domain ?? 'unknown'}). Check the exact SIWE domain, URI, statement, chain ID, and issuedAt values.`
       );
     }
 

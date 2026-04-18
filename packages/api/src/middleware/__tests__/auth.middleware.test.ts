@@ -1,4 +1,7 @@
-import { describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'bun:test';
+import { createHmac } from 'crypto';
+
+import { AUTH_CONFIG } from '@payments-view/constants';
 
 import {
   extractTokenFromCookieHeader,
@@ -6,14 +9,27 @@ import {
   getSessionCookieOptions,
   isSessionTokenTooLarge,
 } from '../auth-cookie';
-import { parseAuth } from '../auth.middleware';
+import { parseAuth, parseAuthHeader } from '../auth.middleware';
 
-const createJwtLikeToken = (walletAddress: string): string => {
+const validAddress = '0x1234567890123456789012345678901234567890';
+const originalEnv: {
+  allowLocalJwtSession: string | undefined;
+  authJwtSecret: string | undefined;
+  enableLocalJwtFallback: string | undefined;
+  nodeEnv: NodeJS.ProcessEnv['NODE_ENV'];
+} = {
+  allowLocalJwtSession: process.env['ALLOW_LOCAL_JWT_SESSION'],
+  authJwtSecret: process.env.AUTH_JWT_SECRET,
+  enableLocalJwtFallback: process.env.ENABLE_LOCAL_JWT_FALLBACK,
+  nodeEnv: process.env.NODE_ENV,
+};
+
+const createProviderToken = (walletAddress: string): string => {
   const nowSeconds = Math.floor(Date.now() / 1000);
   const payload = {
     userId: 'user-1',
     signerAddress: walletAddress,
-    chainId: 100,
+    chainId: AUTH_CONFIG.CHAIN_ID,
     exp: nowSeconds + 3600,
     iat: nowSeconds,
   };
@@ -26,22 +42,49 @@ const createJwtLikeToken = (walletAddress: string): string => {
   return `${headerEncoded}.${payloadEncoded}.signature`;
 };
 
-const createLocalJwtLikeToken = (walletAddress: string): string => {
+const createLocalToken = (secret: string): string => {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
   const nowSeconds = Math.floor(Date.now() / 1000);
-  const payload = {
-    signerAddress: walletAddress,
-    chainId: 100,
-    exp: nowSeconds + 3600,
-    iat: nowSeconds,
-  };
+  const payload = Buffer.from(
+    JSON.stringify({
+      signerAddress: validAddress,
+      chainId: AUTH_CONFIG.CHAIN_ID,
+      iat: nowSeconds,
+      exp: nowSeconds + 3600,
+    })
+  ).toString('base64url');
 
-  const headerEncoded = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString(
-    'base64url'
-  );
-  const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const unsigned = `${header}.${payload}`;
+  const signature = createHmac('sha256', secret).update(unsigned).digest('base64url');
 
-  return `${headerEncoded}.${payloadEncoded}.signature`;
+  return `${unsigned}.${signature}`;
 };
+
+afterEach(() => {
+  if (typeof originalEnv.allowLocalJwtSession === 'undefined') {
+    Reflect.deleteProperty(process.env, 'ALLOW_LOCAL_JWT_SESSION');
+  } else {
+    process.env['ALLOW_LOCAL_JWT_SESSION'] = originalEnv.allowLocalJwtSession;
+  }
+
+  if (typeof originalEnv.authJwtSecret === 'undefined') {
+    Reflect.deleteProperty(process.env, 'AUTH_JWT_SECRET');
+  } else {
+    process.env.AUTH_JWT_SECRET = originalEnv.authJwtSecret;
+  }
+
+  if (typeof originalEnv.enableLocalJwtFallback === 'undefined') {
+    Reflect.deleteProperty(process.env, 'ENABLE_LOCAL_JWT_FALLBACK');
+  } else {
+    process.env.ENABLE_LOCAL_JWT_FALLBACK = originalEnv.enableLocalJwtFallback;
+  }
+
+  if (typeof originalEnv.nodeEnv === 'undefined') {
+    Reflect.deleteProperty(process.env, 'NODE_ENV');
+  } else {
+    process.env.NODE_ENV = originalEnv.nodeEnv;
+  }
+});
 
 describe('auth cookie helpers', () => {
   test('extractTokenFromCookieHeader prioritizes secure cookie name', () => {
@@ -64,7 +107,10 @@ describe('auth cookie helpers', () => {
 
   test('getSessionCookieOptions computes secure and maxAge', () => {
     const expiresAt = new Date(Date.now() + 60_000);
-    const secureOptions = getSessionCookieOptions('https://payments-view.app/api/auth/siwe', expiresAt);
+    const secureOptions = getSessionCookieOptions(
+      'https://payments-view.app/api/auth/siwe',
+      expiresAt
+    );
     const devOptions = getSessionCookieOptions('http://localhost:3000/api/auth/siwe', expiresAt);
 
     expect(secureOptions.secure).toBe(true);
@@ -83,8 +129,8 @@ describe('auth cookie helpers', () => {
 
 describe('parseAuth', () => {
   test('prefers cookie token over Authorization header token', () => {
-    const cookieToken = createJwtLikeToken('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
-    const headerToken = createJwtLikeToken('0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+    const cookieToken = createProviderToken('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    const headerToken = createProviderToken('0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
 
     const session = parseAuth({
       cookieHeader: `__Host-pv_session=${cookieToken}`,
@@ -96,7 +142,7 @@ describe('parseAuth', () => {
   });
 
   test('falls back to Authorization header when cookie is absent', () => {
-    const headerToken = createJwtLikeToken('0xcccccccccccccccccccccccccccccccccccccccc');
+    const headerToken = createProviderToken('0xcccccccccccccccccccccccccccccccccccccccc');
 
     const session = parseAuth({
       authHeader: `Bearer ${headerToken}`,
@@ -111,8 +157,12 @@ describe('parseAuth', () => {
     expect(session).toBeNull();
   });
 
-  test('rejects local tokens without userId by default', () => {
-    const token = createLocalJwtLikeToken('0xdddddddddddddddddddddddddddddddddddddddd');
+  test('rejects local tokens without an enabled development fallback', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.AUTH_JWT_SECRET = 'test-secret';
+    process.env.ENABLE_LOCAL_JWT_FALLBACK = 'false';
+
+    const token = createLocalToken('test-secret');
     const session = parseAuth({
       cookieHeader: `__Host-pv_session=${token}`,
     });
@@ -120,24 +170,53 @@ describe('parseAuth', () => {
     expect(session).toBeNull();
   });
 
-  test('allows local tokens when ENABLE_LOCAL_JWT_FALLBACK is true', () => {
-    const previous = process.env['ENABLE_LOCAL_JWT_FALLBACK'];
-    process.env['ENABLE_LOCAL_JWT_FALLBACK'] = 'true';
+  test('allows local cookie sessions when development fallback is enabled', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.AUTH_JWT_SECRET = 'test-secret';
+    process.env.ENABLE_LOCAL_JWT_FALLBACK = 'true';
 
-    try {
-      const token = createLocalJwtLikeToken('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
-      const session = parseAuth({
-        cookieHeader: `__Host-pv_session=${token}`,
-      });
+    const token = createLocalToken('test-secret');
+    const session = parseAuth({
+      cookieHeader: `__Host-pv_session=${token}`,
+    });
 
-      expect(session).not.toBeNull();
-      expect(session?.walletAddress.value).toBe('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
-    } finally {
-      if (previous === undefined) {
-        delete process.env['ENABLE_LOCAL_JWT_FALLBACK'];
-      } else {
-        process.env['ENABLE_LOCAL_JWT_FALLBACK'] = previous;
-      }
-    }
+    expect(session).not.toBeNull();
+    expect(session?.walletAddress.value).toBe(validAddress.toLowerCase());
+  });
+});
+
+describe('parseAuthHeader', () => {
+  test('rejects local JWTs when local fallback is disabled', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.AUTH_JWT_SECRET = 'test-secret';
+    process.env.ENABLE_LOCAL_JWT_FALLBACK = 'false';
+
+    const token = createLocalToken('test-secret');
+    const session = parseAuthHeader(`Bearer ${token}`);
+
+    expect(session).toBeNull();
+  });
+
+  test('accepts valid local JWTs only when local fallback is enabled', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.AUTH_JWT_SECRET = 'test-secret';
+    process.env.ENABLE_LOCAL_JWT_FALLBACK = 'true';
+
+    const token = createLocalToken('test-secret');
+    const session = parseAuthHeader(`Bearer ${token}`);
+
+    expect(session).not.toBeNull();
+    expect(session?.walletAddress.value).toBe(validAddress.toLowerCase());
+  });
+
+  test('rejects invalid local JWT signatures even when local fallback is enabled', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.AUTH_JWT_SECRET = 'expected-secret';
+    process.env.ENABLE_LOCAL_JWT_FALLBACK = 'true';
+
+    const token = createLocalToken('different-secret');
+    const session = parseAuthHeader(`Bearer ${token}`);
+
+    expect(session).toBeNull();
   });
 });

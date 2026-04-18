@@ -11,7 +11,27 @@ import type {
 
 import { GnosisPayAuthClient } from './auth-client';
 
+interface AuthRequestContext {
+  origin?: string;
+  referer?: string;
+}
+
 const generateLocalNonce = (): string => randomBytes(FORMAT_CONFIG.CRYPTO.NONCE_BYTES).toString('hex');
+
+const logAuthDebug = (message: string, details: Record<string, unknown> = {}): void => {
+  if (process.env.LOG_AUTH_DEBUG !== 'true') {
+    return;
+  }
+
+  console.warn(
+    JSON.stringify({
+      level: 'warn',
+      message: `[auth-debug] ${message}`,
+      timestamp: new Date().toISOString(),
+      ...details,
+    })
+  );
+};
 
 const getJwtSecret = (): string | undefined => {
   const envKey = AUTH_CONFIG.JWT_SIGNING_SECRET_ENV_KEY as keyof NodeJS.ProcessEnv;
@@ -53,9 +73,11 @@ const issueLocalJwt = (walletAddress: string): AuthResult | null => {
  */
 export class GnosisPayAuthRepository implements IAuthRepository {
   private readonly authClient: GnosisPayAuthClient;
+  private readonly requestContext: AuthRequestContext;
 
-  constructor(authClient?: GnosisPayAuthClient) {
+  constructor(authClient?: GnosisPayAuthClient, requestContext: AuthRequestContext = {}) {
     this.authClient = authClient ?? new GnosisPayAuthClient();
+    this.requestContext = requestContext;
   }
 
   /**
@@ -65,9 +87,27 @@ export class GnosisPayAuthRepository implements IAuthRepository {
     const result = await this.authClient.getNonce();
 
     if (result.success) {
-      return Result.ok({ nonce: result.data.nonce });
+      logAuthDebug('using provider nonce');
+      return Result.ok({
+        nonce: result.data.nonce,
+        ...(result.data.siweCookie ? { siweCookie: result.data.siweCookie } : {}),
+      });
     }
 
+    if (!isLocalJwtFallbackEnabled()) {
+      logAuthDebug('provider nonce request failed and local fallback is disabled', {
+        error: result.error.message,
+        statusCode: result.error.statusCode,
+      });
+      return Result.err(
+        new ExternalServiceError('GnosisPay', result.error.message ?? 'Failed to get nonce')
+      );
+    }
+
+    logAuthDebug('provider nonce request failed, generating local nonce fallback', {
+      error: result.error.message,
+      statusCode: result.error.statusCode,
+    });
     const localNonce = generateLocalNonce();
     return Result.ok({ nonce: localNonce });
   }
@@ -82,10 +122,24 @@ export class GnosisPayAuthRepository implements IAuthRepository {
     const secretToken =
       localFallbackEnabled && input.walletAddress ? issueLocalJwt(input.walletAddress) : null;
 
-    const result = await this.authClient.submitChallenge({
-      message: input.message,
-      signature: input.signature,
+    logAuthDebug('submitting SIWE challenge', {
+      siweCookiePresent: Boolean(input.siweCookie),
+      origin: this.requestContext.origin,
+      referer: this.requestContext.referer,
     });
+
+    const result = await this.authClient.submitChallenge(
+      {
+        message: input.message,
+        signature: input.signature,
+        ttlInSeconds: Math.floor(AUTH_CONFIG.JWT_TTL_MS / FORMAT_CONFIG.TIME.MS_PER_SECOND),
+      },
+      {
+        ...(input.siweCookie ? { siweCookie: input.siweCookie } : {}),
+        ...(this.requestContext.origin ? { origin: this.requestContext.origin } : {}),
+        ...(this.requestContext.referer ? { referer: this.requestContext.referer } : {}),
+      }
+    );
 
     if (result.success) {
       const expiresAt = new Date(Date.now() + AUTH_CONFIG.JWT_TTL_MS);

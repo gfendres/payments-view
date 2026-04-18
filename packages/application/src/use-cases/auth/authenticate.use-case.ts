@@ -9,6 +9,7 @@ export interface AuthenticateInput {
   walletAddress: string;
   message: string;
   signature: string;
+  siweCookie?: string;
 }
 
 /**
@@ -41,6 +42,7 @@ export class AuthenticateUseCase {
     const authResult = await this.authRepository.authenticate({
       message: input.message,
       signature: input.signature,
+      ...(input.siweCookie ? { siweCookie: input.siweCookie } : {}),
       walletAddress: addressResult.value.value,
     });
 

@@ -7,6 +7,7 @@ import type { DomainError } from '../../shared/errors';
  */
 export interface NonceResult {
   nonce: string;
+  siweCookie?: string;
 }
 
 /**
@@ -15,6 +16,7 @@ export interface NonceResult {
 export interface AuthChallengeInput {
   message: string;
   signature: string;
+  siweCookie?: string;
   walletAddress?: string;
 }
 

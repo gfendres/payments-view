@@ -4,9 +4,19 @@ import { GnosisPayClient } from './client';
 import type {
   ApiResult,
   ChallengeRequest,
+  ChallengeRequestOptions,
   ChallengeResponse,
   NonceResponse,
 } from './types';
+
+const extractCookiePair = (setCookieHeader: string | null): string | undefined => {
+  const cookiePair = setCookieHeader?.split(';')[0]?.trim();
+  return cookiePair ?? undefined;
+};
+
+const normalizeNonce = (value: string): string => {
+  return value.trim().replace(/^"+|"+$/g, '');
+};
 
 /**
  * Gnosis Pay authentication client
@@ -55,7 +65,15 @@ export class GnosisPayAuthClient {
 
       // The nonce endpoint returns plain text
       const nonce = await response.text();
-      return { success: true, data: { nonce: nonce.trim() } };
+      const siweCookie = extractCookiePair(response.headers.get('set-cookie'));
+
+      return {
+        success: true,
+        data: {
+          nonce: normalizeNonce(nonce),
+          ...(siweCookie ? { siweCookie } : {}),
+        },
+      };
     } catch (error) {
       return {
         success: false,
@@ -70,12 +88,30 @@ export class GnosisPayAuthClient {
   /**
    * Submit SIWE challenge to get JWT
    */
-  async submitChallenge(request: ChallengeRequest): Promise<ApiResult<ChallengeResponse>> {
+  async submitChallenge(
+    request: ChallengeRequest,
+    options: ChallengeRequestOptions = {}
+  ): Promise<ApiResult<ChallengeResponse>> {
+    const headers: Record<string, string> = {};
+
+    if (options.siweCookie) {
+      headers['Cookie'] = options.siweCookie;
+    }
+
+    if (options.origin) {
+      headers['Origin'] = options.origin;
+    }
+
+    if (options.referer) {
+      headers['Referer'] = options.referer;
+    }
+
     const result = await this.client.request<ChallengeResponse>(
       API_CONFIG.GNOSIS_PAY.ENDPOINTS.AUTH_CHALLENGE,
       {
         method: 'POST',
         body: request,
+        headers,
       }
     );
 

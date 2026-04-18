@@ -25,12 +25,12 @@ export const AUTH_CONFIG = {
   /**
    * SIWE URI (origin registered with Gnosis Pay, must include protocol)
    */
-  SIWE_URI: 'https://www.financedashboard.app',
+  SIWE_URI: 'https://api.gnosispay.com/',
 
   /**
    * SIWE statement
    */
-  SIWE_STATEMENT: 'Sign in with Ethereum to Finance Dashboard',
+  SIWE_STATEMENT: 'Sign in with Ethereum to Gnosis Pay',
 
   /**
    * SIWE version

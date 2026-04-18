@@ -9,15 +9,13 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
+import { useAccount, useSignMessage, useDisconnect, useSwitchChain } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import { AUTH_CONFIG } from '@payments-view/constants';
 
 import { trpc } from '@/lib/trpc';
+import { analyzeSignedSiweMessage } from '../lib/signature-debug';
 
-/**
- * Auth context state
- */
 interface AuthContextState {
   isAuthenticated: boolean;
   isSessionResolved: boolean;
@@ -29,9 +27,6 @@ interface AuthContextState {
   signOut: () => void;
 }
 
-/**
- * Session response payload
- */
 interface SessionResponse {
   authenticated: boolean;
   walletAddress?: string;
@@ -39,19 +34,10 @@ interface SessionResponse {
   error?: string;
 }
 
-/**
- * Throttle session checks triggered by visibility changes (ms)
- */
 const SESSION_REVALIDATION_THROTTLE_MS = 1500;
 
-/**
- * Auth context
- */
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
-/**
- * Extract meaningful error from failed HTTP calls
- */
 const getErrorMessage = async (response: Response): Promise<string> => {
   try {
     const payload = (await response.json()) as { error?: string };
@@ -65,19 +51,14 @@ const getErrorMessage = async (response: Response): Promise<string> => {
   return 'Authentication request failed';
 };
 
-/**
- * Auth provider props
- */
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-/**
- * Auth provider component backed by server-side cookie sessions
- */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
+  const { address, chainId, isConnected, isConnecting, isReconnecting } = useAccount();
   const { signMessageAsync } = useSignMessage();
+  const { switchChainAsync } = useSwitchChain();
   const { disconnect } = useDisconnect();
   const queryClient = useQueryClient();
 
@@ -92,7 +73,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isSigningRef = useRef(false);
   const isHandlingMismatchRef = useRef(false);
 
-  // tRPC mutation for SIWE message generation
   const generateSiweMessage = trpc.auth.generateSiweMessage.useMutation();
 
   const clearAuthState = useCallback(() => {
@@ -164,12 +144,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     [applySession]
   );
 
-  // Load initial session from secure cookies
   useEffect(() => {
     void revalidateSession({ force: true });
   }, [revalidateSession]);
 
-  // Revalidate session when app regains visibility after wallet app round-trips
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -190,7 +168,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [revalidateSession]);
 
-  // Proactively refresh in-memory session when expiry is reached
   useEffect(() => {
     if (!expiresAt) {
       return;
@@ -211,7 +188,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [expiresAt, clearAuthState, revalidateSession]);
 
-  // If a different wallet connects while a session exists, invalidate server cookie and reset client auth.
   useEffect(() => {
     if (
       !isSessionResolved ||
@@ -228,6 +204,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (address.toLowerCase() === authenticatedWalletAddress.toLowerCase()) {
       return;
     }
+
     if (isHandlingMismatchRef.current) {
       return;
     }
@@ -264,9 +241,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     clearAuthState,
   ]);
 
-  /**
-   * Sign in with SIWE
-   */
   const signIn = useCallback(async () => {
     if (!address || !isConnected) {
       setError('Wallet not connected');
@@ -278,16 +252,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isSigningRef.current = true;
 
     try {
-      // Generate SIWE message
-      const { message } = await generateSiweMessage.mutateAsync({
+      if (chainId !== AUTH_CONFIG.CHAIN_ID) {
+        await switchChainAsync({ chainId: AUTH_CONFIG.CHAIN_ID });
+      }
+
+      const { message, siweCookie } = await generateSiweMessage.mutateAsync({
         address,
         chainId: AUTH_CONFIG.CHAIN_ID,
       });
 
-      // Sign message
       const signature = await signMessageAsync({ message });
+      const debug = await analyzeSignedSiweMessage({
+        address,
+        message,
+        signature,
+      });
 
-      // Submit SIWE challenge via secure cookie auth endpoint
       const response = await fetch('/api/auth/siwe', {
         method: 'POST',
         credentials: 'same-origin',
@@ -298,6 +278,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           address,
           message,
           signature,
+          siweCookie,
+          debug,
         }),
       });
 
@@ -309,6 +291,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         walletAddress: string;
         expiresAt: string;
       };
+
       applySession({
         authenticated: true,
         walletAddress: sessionPayload.walletAddress,
@@ -316,12 +299,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       setIsSessionResolved(true);
 
-      // Invalidate queries so protected data refetches with the new server session
       await queryClient.invalidateQueries();
     } catch (err) {
       const raw = err instanceof Error ? err.message : '';
-      const isUserRejection =
-        /user rejected|denied|cancelled/i.test(raw);
+      const isUserRejection = /user rejected|denied|cancelled/i.test(raw);
       const errorMessage = isUserRejection
         ? 'Signature request was rejected.'
         : raw || 'Authentication failed. Please try again.';
@@ -332,16 +313,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [
     address,
+    chainId,
     isConnected,
     generateSiweMessage,
     signMessageAsync,
+    switchChainAsync,
     applySession,
     queryClient,
   ]);
 
-  /**
-   * Sign out
-   */
   const signOut = useCallback(() => {
     setError(null);
     setIsLoading(true);
@@ -384,9 +364,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/**
- * Hook to use auth context
- */
 export function useAuthContext(): AuthContextState {
   const context = useContext(AuthContext);
   if (!context) {
