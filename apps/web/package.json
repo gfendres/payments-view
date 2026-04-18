@@ -44,9 +44,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.0.0",
     "@eslint/eslintrc": "^3.2.0",
-    "@next/eslint-plugin-next": "^15.0.4",
+    "@tailwindcss/postcss": "^4.0.0",
     "@types/jspdf": "2.0.0",
     "@types/node": "^25.0.3",
     "@types/react": "^19.0.2",

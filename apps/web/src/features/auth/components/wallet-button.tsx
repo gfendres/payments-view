@@ -9,6 +9,19 @@ import { Button } from '@payments-view/ui';
 
 import { useAuth } from '../hooks/use-auth';
 
+const getIsStandaloneIos = (): boolean => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    return false;
+  }
+
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    ((navigator as Navigator & { standalone?: boolean }).standalone ?? false);
+
+  return isIos && isStandalone;
+};
+
 interface WalletButtonProps {
   /** Variant for different contexts */
   variant?: 'default' | 'hero';
@@ -25,7 +38,7 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isStandaloneIos, setIsStandaloneIos] = useState(false);
+  const [isStandaloneIos] = useState(getIsStandaloneIos);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Redirect when authenticated
@@ -62,15 +75,6 @@ export function WalletButton({ variant = 'default', redirectTo = '/dashboard' }:
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
-
-  useEffect(() => {
-    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      ((navigator as Navigator & { standalone?: boolean }).standalone ?? false);
-
-    setIsStandaloneIos(isIos && isStandalone);
   }, []);
 
   const isHero = variant === 'hero';
