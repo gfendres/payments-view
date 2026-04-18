@@ -68,4 +68,27 @@ describe('authRouter.generateSiweMessage', () => {
     expect(lines[9]).not.toContain('undefined');
     expect(result.siweCookie).toBe('siwe-session=test');
   });
+
+  test('uses the configured production SIWE domain for non-local hosts', async () => {
+    const caller = appRouter.createCaller(
+      createContext({
+        requestHeaders: new Headers({
+          host: 'financedashboard.app',
+        }),
+        repositories: {
+          authRepository: createAuthRepository(),
+        },
+      })
+    );
+
+    const result = await caller.auth.generateSiweMessage({
+      address: validAddress,
+      chainId: 100,
+    });
+
+    expect(result.message).toContain(
+      'www.financedashboard.app wants you to sign in with your Ethereum account:'
+    );
+    expect(result.message).toContain('URI: https://api.gnosispay.com/');
+  });
 });

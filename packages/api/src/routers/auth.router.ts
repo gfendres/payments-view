@@ -23,6 +23,9 @@ const authenticateSchema = z.object({
   siweCookie: z.string().min(1).optional(),
 });
 
+const ensureUriProtocol = (value: string): string =>
+  /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
 const resolveRequestHost = (headers?: Headers, requestUrl?: string): string => {
   const forwardedHost = headers?.get('x-forwarded-host')?.trim();
   if (forwardedHost) {
@@ -39,6 +42,33 @@ const resolveRequestHost = (headers?: Headers, requestUrl?: string): string => {
   }
 
   return AUTH_CONFIG.SIWE_DOMAIN;
+};
+
+const isLocalSiweHost = (host: string): boolean => {
+  return /^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host);
+};
+
+const resolveSiweOriginConfig = (
+  headers?: Headers,
+  requestUrl?: string
+): { domain: string; uri: string } => {
+  const configuredDomain = process.env['SIWE_DOMAIN']?.trim() ?? AUTH_CONFIG.SIWE_DOMAIN;
+  const configuredUri = ensureUriProtocol(
+    process.env['SIWE_URI']?.trim() ?? AUTH_CONFIG.SIWE_URI
+  );
+  const requestHost = resolveRequestHost(headers, requestUrl);
+
+  if (isLocalSiweHost(requestHost)) {
+    return {
+      domain: requestHost,
+      uri: configuredUri,
+    };
+  }
+
+  return {
+    domain: configuredDomain,
+    uri: configuredUri,
+  };
 };
 
 /**
@@ -77,8 +107,7 @@ export const authRouter = router({
 
       // Generate SIWE message
       const siweService = new SiweService();
-      const domain = resolveRequestHost(ctx.requestHeaders, ctx.requestUrl);
-      const uri = AUTH_CONFIG.SIWE_URI;
+      const { domain, uri } = resolveSiweOriginConfig(ctx.requestHeaders, ctx.requestUrl);
       const message = siweService.createFormattedMessage({
         address: input.address,
         nonce: nonceResult.value.nonce,
