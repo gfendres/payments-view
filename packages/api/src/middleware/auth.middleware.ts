@@ -5,21 +5,6 @@ import { EthereumAddress } from '@payments-view/domain/transaction';
 import { AUTH_CONFIG, FORMAT_CONFIG } from '@payments-view/constants';
 import { extractTokenFromCookieHeader } from './auth-cookie';
 
-const logAuthDebug = (message: string, details: Record<string, unknown> = {}): void => {
-  if (process.env.LOG_AUTH_DEBUG !== 'true') {
-    return;
-  }
-
-  console.warn(
-    JSON.stringify({
-      level: 'warn',
-      message: `[auth-debug] ${message}`,
-      timestamp: new Date().toISOString(),
-      ...details,
-    })
-  );
-};
-
 const isLocalJwtSessionAllowed = (): boolean => {
   return (
     process.env.NODE_ENV !== 'production' &&
@@ -55,20 +40,10 @@ const parsePayload = (payloadSegment: string): JwtPayload | null => {
     const decoded = Buffer.from(payloadSegment, 'base64url').toString('utf-8');
     const parsed = JSON.parse(decoded) as JwtPayload;
     if (!parsed.signerAddress || !parsed.exp || !parsed.iat) {
-      logAuthDebug('payload missing required fields', {
-        hasSigner: Boolean(parsed.signerAddress),
-        hasExp: Boolean(parsed.exp),
-        hasIat: Boolean(parsed.iat),
-        hasUserId: Boolean(parsed.userId),
-      });
       return null;
     }
     return parsed;
-  } catch (error) {
-    logAuthDebug('payload parse failed', {
-      payloadLength: payloadSegment.length,
-      error: error instanceof Error ? error.message : 'unknown',
-    });
+  } catch {
     return null;
   }
 };
@@ -103,19 +78,16 @@ const validateSignature = (
   }
 
   if (!isLocalJwtFallbackEnabled()) {
-    logAuthDebug('rejecting local token because local fallback is disabled');
     return null;
   }
 
   // Locally-issued tokens (no userId) must be verified with AUTH_JWT_SECRET
   const secret = getSigningSecret();
   if (!secret) {
-    logAuthDebug('rejecting local token because AUTH_JWT_SECRET is missing');
     return null;
   }
 
   if (!isSignatureValid(secret, header, payload, signature)) {
-    logAuthDebug('rejecting local token because signature verification failed');
     return null;
   }
 
@@ -132,7 +104,6 @@ export const extractToken = (authHeader?: string): string | null => {
 
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    logAuthDebug('invalid Authorization format', { parts: parts.length, scheme: parts[0] });
     return null;
   }
 
@@ -148,7 +119,6 @@ export const decodeJwt = (token: string): JwtPayload | null => {
   try {
     const [header, payload, signature] = token.split('.');
     if (!header || !payload || !signature) {
-      logAuthDebug('token missing parts', { hasHeader: Boolean(header), hasPayload: Boolean(payload), hasSignature: Boolean(signature) });
       return null;
     }
 
@@ -156,11 +126,7 @@ export const decodeJwt = (token: string): JwtPayload | null => {
     if (!parsed) return null;
 
     return validateSignature(header, payload, signature, parsed);
-  } catch (error) {
-    logAuthDebug('decodeJwt failed', {
-      error: error instanceof Error ? error.message : 'unknown',
-      tokenLength: token.length,
-    });
+  } catch {
     return null;
   }
 };
@@ -172,37 +138,22 @@ export const createSessionFromToken = (token: string): Session | null => {
   const payload = decodeJwt(token);
 
   if (!payload) {
-    logAuthDebug('decodeJwt returned null', { tokenLength: token.length });
     return null;
   }
 
-  logAuthDebug('decoded bearer token', {
-    hasUserId: Boolean(payload.userId),
-    signerAddress: payload.signerAddress,
-    chainId: payload.chainId,
-    localFallbackEnabled: isLocalJwtFallbackEnabled(),
-    tokenLength: token.length,
-  });
-
   if (!payload.userId && !isLocalJwtSessionAllowed()) {
-    logAuthDebug('local JWT token rejected for session', {
-      nodeEnv: process.env.NODE_ENV,
-      hasUserId: false,
-    });
     return null;
   }
 
   // Check expiration
   const expiresAt = new Date(payload.exp * FORMAT_CONFIG.TIME.MS_PER_SECOND);
   if (expiresAt <= new Date()) {
-    logAuthDebug('token expired', { exp: expiresAt.toISOString(), now: new Date().toISOString() });
     return null;
   }
 
   // Create ethereum address from signerAddress field
   const addressResult = EthereumAddress.create(payload.signerAddress);
   if (addressResult.isFailure) {
-    logAuthDebug('invalid signer address', { signerAddress: payload.signerAddress });
     return null;
   }
 
@@ -247,12 +198,5 @@ export const parseAuth = ({ authHeader, cookieHeader }: ParseAuthInput): Session
   }
 
   const session = createSessionFromToken(token);
-
-  if (!session) {
-    logAuthDebug('createSessionFromToken returned null', {
-      tokenLength: token.length,
-    });
-  }
-
   return session;
 };

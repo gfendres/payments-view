@@ -18,21 +18,6 @@ interface AuthRequestContext {
 
 const generateLocalNonce = (): string => randomBytes(FORMAT_CONFIG.CRYPTO.NONCE_BYTES).toString('hex');
 
-const logAuthDebug = (message: string, details: Record<string, unknown> = {}): void => {
-  if (process.env.LOG_AUTH_DEBUG !== 'true') {
-    return;
-  }
-
-  console.warn(
-    JSON.stringify({
-      level: 'warn',
-      message: `[auth-debug] ${message}`,
-      timestamp: new Date().toISOString(),
-      ...details,
-    })
-  );
-};
-
 const getJwtSecret = (): string | undefined => {
   const envKey = AUTH_CONFIG.JWT_SIGNING_SECRET_ENV_KEY as keyof NodeJS.ProcessEnv;
   return process.env[envKey];
@@ -87,7 +72,6 @@ export class GnosisPayAuthRepository implements IAuthRepository {
     const result = await this.authClient.getNonce();
 
     if (result.success) {
-      logAuthDebug('using provider nonce');
       return Result.ok({
         nonce: result.data.nonce,
         ...(result.data.siweCookie ? { siweCookie: result.data.siweCookie } : {}),
@@ -95,19 +79,11 @@ export class GnosisPayAuthRepository implements IAuthRepository {
     }
 
     if (!isLocalJwtFallbackEnabled()) {
-      logAuthDebug('provider nonce request failed and local fallback is disabled', {
-        error: result.error.message,
-        statusCode: result.error.statusCode,
-      });
       return Result.err(
         new ExternalServiceError('GnosisPay', result.error.message ?? 'Failed to get nonce')
       );
     }
 
-    logAuthDebug('provider nonce request failed, generating local nonce fallback', {
-      error: result.error.message,
-      statusCode: result.error.statusCode,
-    });
     const localNonce = generateLocalNonce();
     return Result.ok({ nonce: localNonce });
   }
@@ -121,12 +97,6 @@ export class GnosisPayAuthRepository implements IAuthRepository {
     // Try to issue local JWT for explicitly enabled local development
     const secretToken =
       localFallbackEnabled && input.walletAddress ? issueLocalJwt(input.walletAddress) : null;
-
-    logAuthDebug('submitting SIWE challenge', {
-      siweCookiePresent: Boolean(input.siweCookie),
-      origin: this.requestContext.origin,
-      referer: this.requestContext.referer,
-    });
 
     const result = await this.authClient.submitChallenge(
       {

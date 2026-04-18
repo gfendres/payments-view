@@ -11,7 +11,6 @@ declare namespace NodeJS {
 
     // Auth configuration
     AUTH_JWT_SECRET?: string;
-    LOG_AUTH_DEBUG?: string;
     ENABLE_LOCAL_JWT_FALLBACK?: string;
 
     // Gnosis Pay API

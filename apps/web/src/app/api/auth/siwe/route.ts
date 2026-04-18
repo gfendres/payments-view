@@ -20,31 +20,7 @@ const authenticateSchema = z.object({
   message: z.string().min(1, 'Message is required'),
   signature: z.string().regex(/^0x[a-fA-F0-9]+$/, 'Invalid signature format'),
   siweCookie: z.string().min(1).optional(),
-  debug: z
-    .object({
-      clientSignatureValid: z.boolean().optional(),
-      recoveredAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
-      signatureLength: z.number().int().positive().optional(),
-      clientVerificationError: z.string().min(1).optional(),
-    })
-    .optional(),
 });
-
-const SIWE_SIGNIN_PREFIX = ' wants you to sign in with your Ethereum account:';
-
-const extractSiweDomain = (message: string): string | null => {
-  const firstLine = message.split('\n')[0];
-  if (!firstLine) {
-    return null;
-  }
-
-  const delimiterIndex = firstLine.indexOf(SIWE_SIGNIN_PREFIX);
-  if (delimiterIndex <= 0) {
-    return null;
-  }
-
-  return firstLine.slice(0, delimiterIndex).trim() || null;
-};
 
 const isLocalJwtFallbackEnabled = (): boolean =>
   process.env.NODE_ENV !== 'production' && process.env.ENABLE_LOCAL_JWT_FALLBACK === 'true';
@@ -85,13 +61,6 @@ export async function POST(request: Request): Promise<Response> {
     const message = authResult.error.message;
     const isDomainRejected = /siwe domain not allowed/i.test(message);
 
-    if (isDomainRejected) {
-      const domain = extractSiweDomain(parsedInput.message);
-      console.error(
-        `[SIWE] Domain rejected by provider (${domain ?? 'unknown'}). Check the exact SIWE domain, URI, statement, chain ID, and issuedAt values.`
-      );
-    }
-
     return createNoStoreJsonResponse(
       { error: isDomainRejected ? 'Authentication failed. Please try again later.' : message },
       { status: isDomainRejected ? 500 : 401 }
@@ -110,10 +79,6 @@ export async function POST(request: Request): Promise<Response> {
 
   const jwtPayload = decodeJwt(token);
   if (!jwtPayload?.userId && !isLocalJwtFallbackEnabled()) {
-    const domain = extractSiweDomain(parsedInput.message);
-    console.error(
-      `[SIWE] JWT missing userId claim (domain: ${domain ?? 'unknown'}). The SIWE domain may not be accepted by the provider.`
-    );
     return createNoStoreJsonResponse(
       { error: 'Authentication failed. Please try again later.' },
       { status: 500 }

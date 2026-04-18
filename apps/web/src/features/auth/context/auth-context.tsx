@@ -14,7 +14,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AUTH_CONFIG } from '@payments-view/constants';
 
 import { trpc } from '@/lib/trpc';
-import { analyzeSignedSiweMessage } from '../lib/signature-debug';
 
 interface AuthContextState {
   isAuthenticated: boolean;
@@ -262,11 +261,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       const signature = await signMessageAsync({ message });
-      const debug = await analyzeSignedSiweMessage({
-        address,
-        message,
-        signature,
-      });
 
       const response = await fetch('/api/auth/siwe', {
         method: 'POST',
@@ -279,7 +273,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           message,
           signature,
           siweCookie,
-          debug,
         }),
       });
 
