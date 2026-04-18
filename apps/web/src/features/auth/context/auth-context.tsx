@@ -9,11 +9,13 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
+import { useAccount, useSignMessage, useDisconnect, useSwitchChain } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import { AUTH_CONFIG } from '@payments-view/constants';
 
 import { trpc } from '@/lib/trpc';
+import { analyzeSignedSiweMessage } from '../lib/signature-debug';
+import { hasProviderUserIdClaim } from '../lib/token';
 
 /**
  * Auth context state
@@ -71,6 +73,12 @@ const loadFromStorage = () => {
     return { token: null, expiresAt: null, walletAddress: null };
   }
 
+  // Reject stale locally-issued tokens so the client doesn't keep replaying them.
+  if (!hasProviderUserIdClaim(token)) {
+    clearStorage();
+    return { token: null, expiresAt: null, walletAddress: null };
+  }
+
   return { token, expiresAt, walletAddress };
 };
 
@@ -103,8 +111,9 @@ interface AuthProviderProps {
  * Auth provider component with token refresh
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
+  const { address, chainId, isConnected, isConnecting, isReconnecting } = useAccount();
   const { signMessageAsync } = useSignMessage();
+  const { switchChainAsync } = useSwitchChain();
   const { disconnect } = useDisconnect();
   const queryClient = useQueryClient();
 
@@ -247,20 +256,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isSigningRef.current = true;
 
     try {
+      if (chainId !== AUTH_CONFIG.CHAIN_ID) {
+        await switchChainAsync({ chainId: AUTH_CONFIG.CHAIN_ID });
+      }
+
       // Generate SIWE message
-      const { message } = await generateSiweMessage.mutateAsync({
+      const { message, siweCookie } = await generateSiweMessage.mutateAsync({
         address,
         chainId: AUTH_CONFIG.CHAIN_ID,
       });
 
       // Sign message
       const signature = await signMessageAsync({ message });
+      const debug = await analyzeSignedSiweMessage({
+        address,
+        message,
+        signature,
+      });
 
       // Authenticate
       const result = await authenticate.mutateAsync({
         address,
         message,
         signature,
+        siweCookie,
+        debug,
       });
 
       // Save state
@@ -282,9 +302,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [
     address,
+    chainId,
     isConnected,
     generateSiweMessage,
     signMessageAsync,
+    switchChainAsync,
     authenticate,
     setupRefreshTimer,
     queryClient,

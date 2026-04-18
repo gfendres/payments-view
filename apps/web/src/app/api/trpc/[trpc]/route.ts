@@ -14,6 +14,8 @@ const handler = (req: Request) => {
     createContext: () =>
       createContext({
         authHeader: authHeader ?? undefined,
+        requestHeaders: req.headers,
+        requestUrl: req.url,
       }),
     onError:
       process.env.NODE_ENV === 'development'

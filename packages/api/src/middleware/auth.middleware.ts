@@ -39,6 +39,9 @@ const getSigningSecret = (): string | undefined => {
   return process.env[AUTH_CONFIG.JWT_SIGNING_SECRET_ENV_KEY];
 };
 
+const isLocalJwtFallbackEnabled = (): boolean =>
+  process.env.NODE_ENV !== 'production' && process.env.ENABLE_LOCAL_JWT_FALLBACK === 'true';
+
 const parsePayload = (payloadSegment: string): JwtPayload | null => {
   try {
     const decoded = Buffer.from(payloadSegment, 'base64url').toString('utf-8');
@@ -70,7 +73,7 @@ const isSignatureValid = (
 ): boolean => {
   const unsigned = `${header}.${payload}`;
   const expected = createHmac('sha256', secret).update(unsigned).digest('base64url');
-  const expectedBuffer = Buffer.from(expected);
+  const expectedBuffer = Buffer.from(expected, 'base64url');
   const signatureBuffer = Buffer.from(signature, 'base64url');
 
   return (
@@ -91,20 +94,21 @@ const validateSignature = (
     return parsed;
   }
 
-  // Locally-issued tokens (no userId) must be verified with AUTH_JWT_SECRET
-  const secret = getSigningSecret();
-  const isValidSignature = secret ? isSignatureValid(secret, header, payload, signature) : false;
-
-  if (secret && !isValidSignature) {
-    // In development, allow payload parsing even if signature can't be verified (e.g., external tokens)
-    if (process.env.NODE_ENV === 'production') {
-      return null;
-    }
-    return parsed;
+  if (!isLocalJwtFallbackEnabled()) {
+    logAuthDebug('rejecting local token because local fallback is disabled');
+    return null;
   }
 
-  if (!secret && process.env.NODE_ENV === 'production') {
-    return null; // require verification in production for local tokens
+  // Locally-issued tokens (no userId) must be verified with AUTH_JWT_SECRET
+  const secret = getSigningSecret();
+  if (!secret) {
+    logAuthDebug('rejecting local token because AUTH_JWT_SECRET is missing');
+    return null;
+  }
+
+  if (!isSignatureValid(secret, header, payload, signature)) {
+    logAuthDebug('rejecting local token because signature verification failed');
+    return null;
   }
 
   return parsed;
@@ -164,6 +168,14 @@ export const createSessionFromToken = (token: string): Session | null => {
     logAuthDebug('decodeJwt returned null', { tokenLength: token.length });
     return null;
   }
+
+  logAuthDebug('decoded bearer token', {
+    hasUserId: Boolean(payload.userId),
+    signerAddress: payload.signerAddress,
+    chainId: payload.chainId,
+    localFallbackEnabled: isLocalJwtFallbackEnabled(),
+    tokenLength: token.length,
+  });
 
   // Check expiration
   const expiresAt = new Date(payload.exp * FORMAT_CONFIG.TIME.MS_PER_SECOND);

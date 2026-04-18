@@ -9,6 +9,7 @@ interface RequestOptions {
   method?: HttpMethod;
   body?: unknown;
   token?: string;
+  headers?: Record<string, string>;
   timeout?: number;
   retries?: number;
 }
@@ -30,7 +31,7 @@ export class GnosisPayClient {
   }
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
-    const { method = 'GET', body, token, timeout, retries } = options;
+    const { method = 'GET', body, token, headers, timeout, retries } = options;
 
     const requestOptions: {
       method: HttpMethod;
@@ -42,7 +43,7 @@ export class GnosisPayClient {
     } = {
       method,
       body,
-      headers: this.buildHeaders(token),
+      headers: this.buildHeaders(token, headers),
       logContext: { hasToken: Boolean(token) },
     };
 
@@ -57,8 +58,8 @@ export class GnosisPayClient {
     return await this.httpClient.request<T>(endpoint, requestOptions);
   }
 
-  private buildHeaders(token?: string): Record<string, string> {
-    const headers: Record<string, string> = {};
+  private buildHeaders(token?: string, additionalHeaders?: Record<string, string>): Record<string, string> {
+    const headers: Record<string, string> = { ...(additionalHeaders ?? {}) };
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;

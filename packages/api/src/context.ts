@@ -30,6 +30,16 @@ export interface Context {
   correlationId: string;
 
   /**
+   * Raw request headers for request-scoped upstream forwarding.
+   */
+  requestHeaders: Headers | undefined;
+
+  /**
+   * Request URL when available.
+   */
+  requestUrl: string | undefined;
+
+  /**
    * Request-scoped dependencies
    */
   repositories: {
@@ -46,6 +56,8 @@ export interface Context {
 export interface CreateContextOptions {
   authHeader?: string;
   correlationId?: string;
+  requestHeaders?: Headers;
+  requestUrl?: string;
   repositories?: Partial<Context['repositories']>;
 }
 
@@ -56,15 +68,32 @@ const generateCorrelationId = (): string => {
   return `${Date.now()}-${Math.random().toString(FORMAT_CONFIG.UUID.BASE36_RADIX).substring(FORMAT_CONFIG.UUID.ID_SLICE_START, FORMAT_CONFIG.UUID.ID_SLICE_END)}`;
 };
 
+const buildAuthRequestContext = (options: CreateContextOptions): {
+  origin?: string;
+  referer?: string;
+} => {
+  const requestOrigin =
+    options.requestHeaders?.get('origin') ??
+    (options.requestUrl ? new URL(options.requestUrl).origin : undefined);
+  const referer = options.requestHeaders?.get('referer') ?? options.requestUrl;
+
+  return {
+    ...(requestOrigin ? { origin: requestOrigin } : {}),
+    ...(referer ? { referer } : {}),
+  };
+};
+
 const buildRepositories = (
-  repositories?: CreateContextOptions['repositories']
+  options: CreateContextOptions = {}
 ): Context['repositories'] => ({
-  authRepository: repositories?.authRepository ?? new GnosisPayAuthRepository(),
+  authRepository:
+    options.repositories?.authRepository ??
+    new GnosisPayAuthRepository(undefined, buildAuthRequestContext(options)),
   transactionRepository:
-    repositories?.transactionRepository ?? new GnosisPayTransactionRepository(),
-  rewardsRepository: repositories?.rewardsRepository ?? new GnosisPayRewardsRepository(),
+    options.repositories?.transactionRepository ?? new GnosisPayTransactionRepository(),
+  rewardsRepository: options.repositories?.rewardsRepository ?? new GnosisPayRewardsRepository(),
   tokenPriceRepository:
-    repositories?.tokenPriceRepository ??
+    options.repositories?.tokenPriceRepository ??
     new CoinGeckoTokenPriceRepository(undefined, process.env['COINGECKO_API_KEY']),
 });
 
@@ -74,11 +103,13 @@ const buildRepositories = (
 export const createContext = (options: CreateContextOptions = {}): Context => {
   // Parse session from auth header
   const session = options.authHeader ? parseAuthHeader(options.authHeader) : undefined;
-  const repositories = buildRepositories(options.repositories);
+  const repositories = buildRepositories(options);
 
   return {
     session: session ?? undefined,
     correlationId: options.correlationId ?? generateCorrelationId(),
+    requestHeaders: options.requestHeaders,
+    requestUrl: options.requestUrl,
     repositories,
   };
 };

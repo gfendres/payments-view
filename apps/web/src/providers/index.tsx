@@ -10,6 +10,7 @@ import { TooltipProvider, ToastProvider } from '@payments-view/ui';
 import { wagmiConfig } from '@/lib/wagmi';
 import { trpc } from '@/lib/trpc';
 import { AuthProvider } from '@/features/auth';
+import { hasProviderUserIdClaim } from '@/features/auth/lib/token';
 import { ThemeProvider } from './theme-provider';
 
 import '@rainbow-me/rainbowkit/styles.css';
@@ -67,6 +68,12 @@ export function Providers({ children }: ProvidersProps) {
             if (typeof window !== 'undefined') {
               const token = sessionStorage.getItem('gnosis_auth_token');
               if (token) {
+                if (!hasProviderUserIdClaim(token)) {
+                  sessionStorage.removeItem('gnosis_auth_token');
+                  sessionStorage.removeItem('gnosis_auth_expiry');
+                  sessionStorage.removeItem('gnosis_auth_address');
+                  return {};
+                }
                 return { Authorization: `Bearer ${token}` };
               }
             }

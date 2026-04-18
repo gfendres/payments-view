@@ -7,6 +7,7 @@
  */
 export interface NonceResponse {
   nonce: string;
+  siweCookie?: string;
 }
 
 /**
@@ -15,6 +16,13 @@ export interface NonceResponse {
 export interface ChallengeRequest {
   message: string;
   signature: string;
+  ttlInSeconds?: number;
+}
+
+export interface ChallengeRequestOptions {
+  siweCookie?: string;
+  origin?: string;
+  referer?: string;
 }
 
 /**
