@@ -7,6 +7,7 @@ import {
   getSessionCookieName,
   getSessionCookieOptions,
   isSessionTokenTooLarge,
+  resolveSiweChallengeRequestContext,
 } from '@payments-view/api';
 
 import {
@@ -42,13 +43,9 @@ export async function POST(request: Request): Promise<Response> {
     return createNoStoreJsonResponse({ error: 'Invalid request payload' }, { status: 400 });
   }
 
-  const requestOrigin = request.headers.get('origin') ?? new URL(request.url).origin;
-  const requestReferer = request.headers.get('referer') ?? request.url;
+  const requestContext = resolveSiweChallengeRequestContext(request.headers, request.url);
   const authenticateUseCase = new AuthenticateUseCase(
-    new GnosisPayAuthRepository(undefined, {
-      origin: requestOrigin,
-      referer: requestReferer,
-    })
+    new GnosisPayAuthRepository(undefined, requestContext)
   );
   const authResult = await authenticateUseCase.execute({
     walletAddress: parsedInput.address,

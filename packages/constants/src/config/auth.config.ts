@@ -33,6 +33,16 @@ export const AUTH_CONFIG = {
   SIWE_STATEMENT: 'Sign in with Ethereum to Gnosis Pay',
 
   /**
+   * Interactive auth challenges should fail fast instead of hanging behind generic retries.
+   */
+  SIWE_CHALLENGE_TIMEOUT_MS: 15 * 1000,
+
+  /**
+   * Interactive auth should surface upstream failures immediately to the user.
+   */
+  SIWE_CHALLENGE_MAX_RETRY_ATTEMPTS: 0,
+
+  /**
    * SIWE version
    */
   SIWE_VERSION: '1',

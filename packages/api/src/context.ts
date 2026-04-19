@@ -14,6 +14,7 @@ import {
 } from '@payments-view/infrastructure';
 
 import { decodeJwt, parseAuth } from './middleware';
+import { resolveSiweChallengeRequestContext } from './siwe-origin';
 
 /**
  * tRPC context for requests
@@ -78,15 +79,7 @@ const buildAuthRequestContext = (options: CreateContextOptions): {
   origin?: string;
   referer?: string;
 } => {
-  const requestOrigin =
-    options.requestHeaders?.get('origin') ??
-    (options.requestUrl ? new URL(options.requestUrl).origin : undefined);
-  const referer = options.requestHeaders?.get('referer') ?? options.requestUrl;
-
-  return {
-    ...(requestOrigin ? { origin: requestOrigin } : {}),
-    ...(referer ? { referer } : {}),
-  };
+  return resolveSiweChallengeRequestContext(options.requestHeaders, options.requestUrl);
 };
 
 const buildRepositories = (

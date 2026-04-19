@@ -1,4 +1,4 @@
-import { API_CONFIG, REQUEST_TIMEOUT_MS } from '@payments-view/constants';
+import { API_CONFIG, AUTH_CONFIG, REQUEST_TIMEOUT_MS } from '@payments-view/constants';
 
 import { GnosisPayClient } from './client';
 import type {
@@ -112,6 +112,8 @@ export class GnosisPayAuthClient {
         method: 'POST',
         body: request,
         headers,
+        timeout: AUTH_CONFIG.SIWE_CHALLENGE_TIMEOUT_MS,
+        retries: AUTH_CONFIG.SIWE_CHALLENGE_MAX_RETRY_ATTEMPTS,
       }
     );
 
