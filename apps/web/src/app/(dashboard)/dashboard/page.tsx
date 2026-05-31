@@ -8,13 +8,11 @@ import { useAuth } from '@/features/auth';
 import { useRewards, useCashbackStats, EarnedThisMonthCard } from '@/features/rewards';
 import {
   VirtualTransactionList,
-  TransactionDetailDialog,
   FilterPanel,
   SpendingChart,
   useAllTransactions,
   useTransactionFilters,
   useExportTransactions,
-  type SerializedTransaction,
 } from '@/features/transactions';
 import { applyTransactionFilters } from '@/features/transactions/lib/transaction-use-cases';
 
@@ -29,8 +27,6 @@ function DashboardContent() {
   const { filters, setFilters, hasActiveFilters } = useTransactionFilters();
   const { exportToCsv, exportToPdf, isExporting } = useExportTransactions();
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<SerializedTransaction | null>(null);
 
   // Fetch all transactions for display, stats, and charts
   const {
@@ -269,7 +265,6 @@ function DashboardContent() {
                 isFetchingMore={false}
                 hasMore={false}
                 onLoadMore={undefined}
-                onTransactionClick={setSelectedTransaction}
                 cashbackRate={cashbackRate}
                 height={600}
               />
@@ -285,16 +280,6 @@ function DashboardContent() {
         </CardContent>
       </Card>
 
-      <TransactionDetailDialog
-        transaction={selectedTransaction}
-        open={selectedTransaction !== null}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            setSelectedTransaction(null);
-          }
-        }}
-        cashbackRate={cashbackRate}
-      />
     </div>
   );
 }

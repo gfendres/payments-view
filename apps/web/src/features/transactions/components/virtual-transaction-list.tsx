@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Loader2 } from 'lucide-react';
 import { Skeleton } from '@payments-view/ui';
 
 import { TransactionRow, type SerializedTransaction } from './transaction-row';
+import { TransactionDetailDialog } from './transaction-detail-dialog';
 
 interface VirtualTransactionListProps {
   transactions: SerializedTransaction[];
@@ -78,6 +79,8 @@ export function VirtualTransactionList({
   height = 600,
 }: VirtualTransactionListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<SerializedTransaction | null>(null);
 
   // Add extra row for "Load More" button if there are more items
   const itemCount = hasMore ? transactions.length + 1 : transactions.length;
@@ -101,6 +104,14 @@ export function VirtualTransactionList({
     }
   }, [hasMore, isFetchingMore, onLoadMore]);
 
+  const handleTransactionClick = useCallback(
+    (transaction: SerializedTransaction) => {
+      setSelectedTransaction(transaction);
+      onTransactionClick?.(transaction);
+    },
+    [onTransactionClick]
+  );
+
   if (isLoading) {
     return <VirtualListSkeleton />;
   }
@@ -112,70 +123,83 @@ export function VirtualTransactionList({
   const virtualItems = virtualizer.getVirtualItems();
 
   return (
-    <div
-      ref={parentRef}
-      className="overflow-auto rounded-xl"
-      style={{ height }}
-      onScroll={handleScroll}
-    >
+    <>
       <div
-        className="relative w-full"
-        style={{ height: `${virtualizer.getTotalSize()}px` }}
+        ref={parentRef}
+        className="overflow-auto rounded-xl"
+        style={{ height }}
+        onScroll={handleScroll}
       >
-        {virtualItems.map((virtualItem) => {
-          const isLoaderRow = virtualItem.index >= transactions.length;
+        <div
+          className="relative w-full"
+          style={{ height: `${virtualizer.getTotalSize()}px` }}
+        >
+          {virtualItems.map((virtualItem) => {
+            const isLoaderRow = virtualItem.index >= transactions.length;
 
-          if (isLoaderRow) {
+            if (isLoaderRow) {
+              return (
+                <div
+                  key="loader"
+                  className="absolute left-0 top-0 flex w-full items-center justify-center py-4"
+                  style={{
+                    height: `${virtualItem.size}px`,
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  {isFetchingMore ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Loading more...</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={onLoadMore}
+                      className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                    >
+                      Load More
+                    </button>
+                  )}
+                </div>
+              );
+            }
+
+            const transaction = transactions[virtualItem.index];
+
+            // This should never happen due to the isLoaderRow check above
+            if (!transaction) return null;
+
             return (
               <div
-                key="loader"
-                className="absolute left-0 top-0 flex w-full items-center justify-center py-4"
+                key={transaction.id}
+                className="absolute left-0 top-0 w-full pb-2"
                 style={{
                   height: `${virtualItem.size}px`,
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
               >
-                {isFetchingMore ? (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Loading more...</span>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={onLoadMore}
-                    className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-                  >
-                    Load More
-                  </button>
-                )}
+                <TransactionRow
+                  transaction={transaction}
+                  onClick={handleTransactionClick}
+                  cashbackRate={cashbackRate}
+                />
               </div>
             );
-          }
-
-          const transaction = transactions[virtualItem.index];
-
-          // This should never happen due to the isLoaderRow check above
-          if (!transaction) return null;
-
-          return (
-            <div
-              key={transaction.id}
-              className="absolute left-0 top-0 w-full pb-2"
-              style={{
-                height: `${virtualItem.size}px`,
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
-            >
-              <TransactionRow
-                transaction={transaction}
-                onClick={onTransactionClick}
-                cashbackRate={cashbackRate}
-              />
-            </div>
-          );
-        })}
+          })}
+        </div>
       </div>
-    </div>
+
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        open={selectedTransaction !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setSelectedTransaction(null);
+          }
+        }}
+        cashbackRate={cashbackRate}
+      />
+    </>
   );
 }

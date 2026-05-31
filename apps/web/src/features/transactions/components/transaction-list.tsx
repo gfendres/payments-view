@@ -1,8 +1,10 @@
 'use client';
 
+import { useCallback, useState } from 'react';
 import { Skeleton } from '@payments-view/ui';
 
 import { TransactionRow, type SerializedTransaction } from './transaction-row';
+import { TransactionDetailDialog } from './transaction-detail-dialog';
 
 interface TransactionListProps {
   transactions: SerializedTransaction[];
@@ -62,6 +64,17 @@ export function TransactionList({
   onTransactionClick,
   cashbackRate,
 }: TransactionListProps) {
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<SerializedTransaction | null>(null);
+
+  const handleTransactionClick = useCallback(
+    (transaction: SerializedTransaction) => {
+      setSelectedTransaction(transaction);
+      onTransactionClick?.(transaction);
+    },
+    [onTransactionClick]
+  );
+
   if (isLoading) {
     return <TransactionListSkeleton />;
   }
@@ -71,15 +84,28 @@ export function TransactionList({
   }
 
   return (
-    <div className="space-y-2">
-      {transactions.map((transaction) => (
-        <TransactionRow
-          key={transaction.id}
-          transaction={transaction}
-          onClick={onTransactionClick}
-          cashbackRate={cashbackRate}
-        />
-      ))}
-    </div>
+    <>
+      <div className="space-y-2">
+        {transactions.map((transaction) => (
+          <TransactionRow
+            key={transaction.id}
+            transaction={transaction}
+            onClick={handleTransactionClick}
+            cashbackRate={cashbackRate}
+          />
+        ))}
+      </div>
+
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        open={selectedTransaction !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setSelectedTransaction(null);
+          }
+        }}
+        cashbackRate={cashbackRate}
+      />
+    </>
   );
 }

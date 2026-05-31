@@ -7,7 +7,7 @@ import {
   TransactionType,
   CurrencyCode,
 } from '@payments-view/constants';
-import { Badge } from '@payments-view/ui';
+import { Badge, cn } from '@payments-view/ui';
 
 import { CategoryIcon } from '@/components/atoms/category-icon';
 
@@ -70,6 +70,7 @@ interface TransactionRowProps {
 export function TransactionRow({ transaction, onClick, cashbackRate }: TransactionRowProps) {
   const category = getCategory(transaction.merchant.categoryId, transaction.merchant.category);
   const isPositive = isPositiveTransaction(transaction);
+  const isInteractive = Boolean(onClick);
 
   // Calculate cashback if rate is provided and transaction is eligible
   const showCashback = cashbackRate && transaction.isEligibleForCashback && !isPositive;
@@ -82,7 +83,15 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
       type="button"
       onClick={() => onClick?.(transaction)}
       aria-label={`Open details for ${transaction.merchant.name} transaction`}
-      className="group bg-card/50 hover:bg-card flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:gap-4 sm:p-4"
+      disabled={!isInteractive}
+      className={cn(
+        'group flex w-full items-center gap-3 rounded-xl border p-2 text-left transition-all duration-200 sm:gap-4 sm:p-4',
+        'bg-muted/35 border-border/70 shadow-sm shadow-black/5 dark:bg-white/[0.03] dark:shadow-black/20',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        isInteractive
+          ? 'cursor-pointer hover:-translate-y-0.5 hover:border-primary/45 hover:bg-primary/10 hover:shadow-md hover:shadow-primary/10 dark:hover:bg-primary/15'
+          : 'cursor-default opacity-90'
+      )}
     >
       {/* Category Icon */}
       <div
@@ -136,7 +145,14 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
         </div>
       </div>
 
-      <ChevronRight className="text-muted-foreground/60 hidden h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground sm:block" />
+      <ChevronRight
+        className={cn(
+          'hidden h-4 w-4 shrink-0 transition-all sm:block',
+          isInteractive
+            ? 'text-muted-foreground/60 group-hover:translate-x-0.5 group-hover:text-primary'
+            : 'text-muted-foreground/30'
+        )}
+      />
     </button>
   );
 }
