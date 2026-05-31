@@ -8,11 +8,13 @@ import { useAuth } from '@/features/auth';
 import { useRewards, useCashbackStats, EarnedThisMonthCard } from '@/features/rewards';
 import {
   VirtualTransactionList,
+  TransactionDetailDialog,
   FilterPanel,
   SpendingChart,
   useAllTransactions,
   useTransactionFilters,
   useExportTransactions,
+  type SerializedTransaction,
 } from '@/features/transactions';
 import { applyTransactionFilters } from '@/features/transactions/lib/transaction-use-cases';
 
@@ -27,6 +29,8 @@ function DashboardContent() {
   const { filters, setFilters, hasActiveFilters } = useTransactionFilters();
   const { exportToCsv, exportToPdf, isExporting } = useExportTransactions();
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<SerializedTransaction | null>(null);
 
   // Fetch all transactions for display, stats, and charts
   const {
@@ -204,7 +208,12 @@ function DashboardContent() {
               </Button>
               {showExportMenu ? (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
+                  <button
+                    type="button"
+                    aria-label="Close export menu"
+                    className="fixed inset-0 z-40 cursor-default"
+                    onClick={() => setShowExportMenu(false)}
+                  />
                   <div className="border-border bg-card absolute right-0 z-50 mt-2 w-48 rounded-lg border shadow-lg">
                     <button
                       type="button"
@@ -260,6 +269,7 @@ function DashboardContent() {
                 isFetchingMore={false}
                 hasMore={false}
                 onLoadMore={undefined}
+                onTransactionClick={setSelectedTransaction}
                 cashbackRate={cashbackRate}
                 height={600}
               />
@@ -274,6 +284,17 @@ function DashboardContent() {
           )}
         </CardContent>
       </Card>
+
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        open={selectedTransaction !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setSelectedTransaction(null);
+          }
+        }}
+        cashbackRate={cashbackRate}
+      />
     </div>
   );
 }

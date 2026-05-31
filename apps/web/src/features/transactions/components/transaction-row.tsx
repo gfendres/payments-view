@@ -1,8 +1,8 @@
 'use client';
+import { ChevronRight } from 'lucide-react';
 import {
   TransactionKind,
   TransactionStatus,
-  CATEGORIES,
   CategoryId,
   TransactionType,
   CurrencyCode,
@@ -10,6 +10,17 @@ import {
 import { Badge } from '@payments-view/ui';
 
 import { CategoryIcon } from '@/components/atoms/category-icon';
+
+import {
+  calculateCashback,
+  formatCashback,
+  formatShortDate,
+  formatTime,
+  getCategory,
+  getStatusText,
+  getStatusVariant,
+  isPositiveTransaction,
+} from './transaction-display';
 
 /**
  * Serialized transaction from API
@@ -54,93 +65,11 @@ interface TransactionRowProps {
 }
 
 /**
- * Format date for display
- */
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-/**
- * Format time for display
- */
-function formatTime(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-}
-
-/**
- * Get category config by name
- */
-function getCategory(categoryId: CategoryId, categoryName: string) {
-  const category = CATEGORIES[categoryId];
-  if (category) {
-    return category;
-  }
-
-  const entries = Object.entries(CATEGORIES);
-  const fallback = entries.find(([, config]) => config.name === categoryName);
-  return fallback ? fallback[1] : CATEGORIES[CategoryId.OTHER];
-}
-
-/**
- * Get status badge variant
- */
-function getStatusVariant(
-  status: TransactionStatus,
-  isPending: boolean
-): 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'pending' {
-  if (isPending) return 'pending';
-  if (status === TransactionStatus.APPROVED) return 'success';
-  if (status === TransactionStatus.REVERSAL || status === TransactionStatus.PARTIAL_REVERSAL) {
-    return 'secondary';
-  }
-  return 'destructive';
-}
-
-/**
- * Get status display text
- */
-function getStatusText(status: TransactionStatus, isPending: boolean): string {
-  if (isPending) return 'Pending';
-  if (status === TransactionStatus.APPROVED) return 'Completed';
-  if (status === TransactionStatus.REVERSAL) return 'Reversed';
-  if (status === TransactionStatus.PARTIAL_REVERSAL) return 'Partial';
-  return status;
-}
-
-/**
- * Calculate cashback earned for a transaction
- */
-function calculateCashback(amount: number, rate: number): number {
-  return Math.abs(amount) * (rate / 100);
-}
-
-/**
- * Format cashback amount
- */
-function formatCashback(amount: number): string {
-  return `+€${amount.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-/**
  * Transaction row component
  */
 export function TransactionRow({ transaction, onClick, cashbackRate }: TransactionRowProps) {
   const category = getCategory(transaction.merchant.categoryId, transaction.merchant.category);
-  const isRefund = transaction.kind === TransactionKind.REFUND;
-  const isReversal = transaction.kind === TransactionKind.REVERSAL;
-  const isPositive = isRefund || isReversal;
+  const isPositive = isPositiveTransaction(transaction);
 
   // Calculate cashback if rate is provided and transaction is eligible
   const showCashback = cashbackRate && transaction.isEligibleForCashback && !isPositive;
@@ -152,7 +81,8 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
     <button
       type="button"
       onClick={() => onClick?.(transaction)}
-      className="group bg-card/50 hover:bg-card flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:shadow-md sm:gap-4 sm:p-4"
+      aria-label={`Open details for ${transaction.merchant.name} transaction`}
+      className="group bg-card/50 hover:bg-card flex w-full items-center gap-3 rounded-xl p-2 text-left transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:gap-4 sm:p-4"
     >
       {/* Category Icon */}
       <div
@@ -195,7 +125,7 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="text-muted-foreground text-[11px] leading-tight sm:text-xs">
-            {formatDate(transaction.createdAt)} · {formatTime(transaction.createdAt)}
+            {formatShortDate(transaction.createdAt)} · {formatTime(transaction.createdAt)}
           </span>
           <Badge
             variant={getStatusVariant(transaction.status, transaction.isPending)}
@@ -205,6 +135,8 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
           </Badge>
         </div>
       </div>
+
+      <ChevronRight className="text-muted-foreground/60 hidden h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground sm:block" />
     </button>
   );
 }
