@@ -89,7 +89,7 @@ export function TransactionRow({ transaction, onClick, cashbackRate }: Transacti
         'bg-muted/35 border-border/70 shadow-sm shadow-black/5 dark:bg-white/[0.03] dark:shadow-black/20',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         isInteractive
-          ? 'cursor-pointer hover:-translate-y-0.5 hover:border-primary/45 hover:bg-primary/10 hover:shadow-md hover:shadow-primary/10 dark:hover:bg-primary/15'
+          ? 'cursor-pointer hover:-translate-y-0.5 hover:border-primary/45 hover:bg-primary/10 hover:shadow-md hover:shadow-primary/10 active:translate-y-0 active:border-primary/60 active:bg-primary/15 dark:hover:bg-primary/15 dark:active:bg-primary/20'
           : 'cursor-default opacity-90'
       )}
     >
