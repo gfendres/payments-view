@@ -20,7 +20,7 @@ interface VirtualTransactionListProps {
   height?: number;
 }
 
-const ITEM_HEIGHT = 76; // Approximate height of TransactionRow
+const ITEM_HEIGHT = 76; // Initial estimate; rows are measured after render.
 const OVERSCAN = 5; // Number of items to render outside visible area
 
 /**
@@ -89,6 +89,7 @@ export function VirtualTransactionList({
     count: itemCount,
     getScrollElement: () => parentRef.current,
     estimateSize: () => ITEM_HEIGHT,
+    measureElement: (element) => element.getBoundingClientRect().height,
     overscan: OVERSCAN,
   });
 
@@ -173,9 +174,10 @@ export function VirtualTransactionList({
             return (
               <div
                 key={transaction.id}
+                ref={virtualizer.measureElement}
+                data-index={virtualItem.index}
                 className="absolute left-0 top-0 w-full pb-2"
                 style={{
-                  height: `${virtualItem.size}px`,
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
               >
